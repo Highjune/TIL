@@ -1,0 +1,38 @@
+주말과제
+1. 영문자 갯수 파악하기:CountEnglish.java
+  1)입력데이터 : dropbox/0131/usatoday.txt
+  2)출력형식
+   A = 9     B = 5   C = 0   D = 2    E = 0
+   F = 9     G = 5   H = 0   I = 2     J = 0
+   K = 9     L = 5   M = 0   N = 2    O = 0
+   P = 9     Q = 5   R = 0   S = 2    T = 0
+   U = 9     V = 5   W = 0  X = 2    Y = 0
+   Z = 9
+   a = 9     b = 5   c = 0    d = 2    e = 0
+   ...
+   z = 9
+   총 글자갯수 : 289개
+
+2. 암호프로그램 만들기 : Encryption.java
+   1)입력형식
+      키 : 5
+      입력데이터(평문) : I LOVE YOU.
+      변환데이터(암호문) : N QTAJ DTZ.
+ 
+3. 다음 파일을 열어서 오름차순으로 정렬해서 저장하기
+   1)파일명 : beforesort.txt
+     127
+      25
+      10
+     223
+
+      aftersort.txt
+      223
+      127
+      25
+      10     
+
+
+
+
+
