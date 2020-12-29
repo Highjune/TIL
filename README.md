@@ -22,6 +22,6 @@
 
 ### DataBase
 - Mysql
-    - Environment
-    - sql
+    - [Environment](https://github.com/Highjune/TIL/blob/master/DateBase/Mysql/mysql_environment.md)
+    - [sql](https://github.com/Highjune/TIL/blob/master/DateBase/Mysql/mysql_sql.md)
 
