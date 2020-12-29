@@ -1,4 +1,4 @@
-## Today I Learned
+## 💻Today I Learned
 ---
 - 매일 공부하는 것을 잊어버리지 않기 위해 기록으로 남기는 목적
 - 좋은 TIL 저장소([예시1](https://github.com/Integerous/TIL), [예시2](https://github.com/namjunemy/TIL), [예시3](https://github.com/Integerous/TIL-1), [예시4]() 들을 참조
@@ -13,12 +13,13 @@
 ---
 
 
-### 
+### Languages
+- [Java](https://github.com/Highjune/TIL/tree/master/Languages/Java)
 
 
 ### Configuration_Management
-- Git
-- Svn
+- [Git](https://github.com/Highjune/TIL/blob/master/Configuration_Management/git.md)
+- [Svn](https://github.com/Highjune/TIL/blob/master/Configuration_Management/svn.md)
 
 ### DataBase
 - Mysql
