@@ -221,9 +221,95 @@
     git fetch
     ```
     - 특정 commit 위치로 돌아가기(local의 상태만)
-        - 
+        - --hard 옵션은 특정 커밋 이후 기록 다 삭제
+        - --soft 옵션은 특정 커밋 이후 기록 보존
+        - git log로 확인한 hash 값
+        - 그래서 lcoal repo 확인해보면 특정 커밋 이후에 만들었던 파일 다 사라져있다
+    ```
+    git reset --hard 989dd3c3591fab797e07c3c674a8c18dcff3b11b
+    ```
+    - local repo의 상태를 특정 commit 시점으로 변경 후에 remote repo의 상태도 동일하게 하려면, git push 하게 되면 오류가 발생(둘의 구조 자체가 달라졌기 때문에)
+        - 그래서 강제로 push 를 하고자 하는 경우
+        ```
+        git push -f
+        ```
 
+    - 소스코드만 압축하기
+        - .git폴더를 제외한 모든 소스코드 압축 파일 형태로 압축
+        ```
+        git archive --format=zip master -o Master.zip
 
+        git archive --format=zip master -o ../Master.zip  (상위폴더로 압축파일 내보낼 때)
+
+        ```
+
+    - Git Rebase 명령어로 특정한 커밋을 수정
+        - [rebase관한 좋은 글 링크](https://junwoo45.github.io/2019-10-23-rebase/)
+        - i 옵션 - interactice 모드로 editor가 열린다
+        - HEAD~3 - HEAD를 기준으로 최근 3개까지의 커밋만 확인
+        - 특정 커밋만을 선택해서 확인할 수 있다.
+        - 수정하고자 하는 커밋에 관한 것을 pick을 `reword`로 바꿔주면 됨(해당 창 아래에 여러 명령어 참고하면 된다) 바꿔주고 나서 :wq! 로 나오면 나오자마자 바로 해당 커밋메시지 수정하면 된다
+        ```
+        git rebase -i HEAD~3
+        git rebase -i 1sidfowijlsdkfj1ljldkfjsdf (특정 커밋 - git log를 통해서 확인)
+        ```  
+    - Git Rebase 명령으로 특정한 커밋을 삭제
+        - 아래 명령어로 열어서(또는 특정 커밋 선택) pick을 drop으로 변경. 저장한 후 나와서 git log로 확인해보면 없음
+        ```
+        git rebase -i HEAD~3 
+        ```
+    - 파일생성
+        - touch "파일명"
+        - 파일이 없는 상태에서는 용량 0인 파일이 생성되고 기존 파일에 대해 touch 하면 파일에 대한 수정 일자가 최신화
+        ```
+        touch "example.txt"
+        ```
+    - commit 날짜, 시간 변경, committer 변경 (중간의 특정 커밋을 변경하면 그 이후의 커밋들의 해시값들이 다 변경된다)
+        1. rebase로 변경
+        ```
+        git rebase -i ebfba5375791476213c9352253e55437d0b88aa2
+
+        (pick -> edit) 으로 변경후 :wq! 로 나오기
+
+        GIT_COMMITTER_DATE="Feb 13 10:00:00 2020 +0000" git commit --amend --no-edit --date "Feb 13 10:00:00 2020 +0000"
+
+        git rebase --continue
+
+        git log (로 확인)
+
+        ```
+           
+        2. filter 기능으로 변경
+            - if문 사용가능
+            - if문 다음과 [ 안의 첫 공백 끝 공백, '=' 전후의 공백등을 빠짐없이 넣어줘야 한다.
+            ```
+            'if [ $GIT_COMMIT = 해시값 ]
+            then
+                export GIT_AUTHOR_DATE="Mon Oct 1 10:00:00 2018 +0000"
+                export GIT_COMMITER_DATE="Mon Oct 1 10:00:00 2018 +0000"
+            fi'
+            ```
+            ```
+            $ git filter-branch -f --env-filter '
+            > OLD_EMAIL="test@test.com"
+            > CORRECT_NAME="highjune"
+            > CORRECT_EMAIL="highjune37@gmail.com"
+            > if [ $GIT_COMMITTER_EMAIL = #OLD_EMAIL ]
+            > then
+            >   export GIT_COMMITTER_NAME="$CORRECT_NAME"
+            >   export GIT_COMMITTER_EMAIL="$CORRECT_EMAIL"
+            > fi
+            > if [ $GIT_AUTHER_EMAIL = $OLD_EMAIL ]
+            > then
+            >   export GIT_AUTHOR_NAME="$CORRECT_NAME"
+            >   export GIT_AUTHOR_EMAIL="$CORRECT_EMAIL"
+            > fi'
+ 
+            ```
+    - rebase취소
+    ```
+    git rebase --abort
+    ```
 
 ## 참고 자료
 
@@ -235,3 +321,6 @@
 
 [git-flow cheatsheet](https://danielkummer.github.io/git-flow-cheatsheet/index.ko_KR.html)
 [간편 안내서](https://rogerdudler.github.io/git-guide/index.ko.html)
+
+### 깃 템플릿 세팅법
+[깃 템플릿 사용법](https://jeong-pro.tistory.com/207)
