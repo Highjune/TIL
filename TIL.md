@@ -22,8 +22,8 @@
 - [Svn](https://github.com/Highjune/TIL/blob/master/Configuration_Management/svn.md)
 
 ### Tools
-- [Eclipse](https://github.com/Highjune/TIL/tree/master/Tools/Eclipse)
-- [VSCode](https://github.com/Highjune/TIL/blob/master/Tools/VSCode/vscode.md)
+- [Eclipse](https://github.com/Highjune/TIL/blob/master/Tools/eclipse.md)
+- [VSCode](https://github.com/Highjune/TIL/blob/master/Tools/vscode.md)
 
 ### DataBase
 - Mysql
