@@ -1,4 +1,5 @@
 ## VS코드 설치
+---
 - [링크](https://code.visualstudio.com/) 접속
     - 다운로드(관리자로 설치)
     - 위 홈페이지에 들어가서 중간에 있는 download로 말고 우층 상단 다운로드 - system 64bit 
@@ -6,6 +7,7 @@
 
 
 ## 유용한 extension 종료
+---
 1. Open in Browser
     - 버전 2점대
 1. Htmltagwrap
