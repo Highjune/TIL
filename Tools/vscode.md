@@ -31,8 +31,7 @@
     - 그런데 좀 더 가볍고 로컬에서 설치한 웹 서버상에서의 미리보기와 같은 것
 1. HTML CSS Class Completion
     - CSS의 selector중에 id와 class를 쓸 때 자동완성 기능
-1. Debuger for chrome
+1. Debuger for chrome(꼭 안해도 됨)
     - chrome에서의 디버그 모드로 실행가능 하므로 설치는 굳이.
-1. Git History
+1. Git History(꼭 안해도 됨)
 
-        12, 13은 꼭 안해도 됨 
