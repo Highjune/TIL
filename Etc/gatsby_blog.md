@@ -10,11 +10,12 @@
 ```
 1. node js 설치
 2. Git 설치
-3. starter 연결 및 dev-server 켜기
-4. C:\gatsby\blog로 이동 후 서버 on
-5. 확인
-6. 깃허브에 repository 만들고 push
-7. netlify 로 배포
+3. gatsby-cli 설치
+4. starter 연결 및 dev-server 켜기
+5. C:\gatsby\blog로 이동 후 서버 on
+6. 확인
+7. 깃허브에 repository 만들고 push
+8. netlify 로 배포
 ````
 
 ### 1. node js 설치
@@ -30,13 +31,13 @@ npm --version
 
 ### 2. Git 설치
 - [git 다운로드](https://git-scm.com/downloads)
-### gatsby-cli 설치
+### 3. gatsby-cli 설치
 - gatsby 프로젝트 생성을 하기 위해서는 gatsby-cli를 설치해야 한다
 ```
 npm install -g gatsby-cli
 ```
 
-### 3. starter 연결 및 dev-server 켜기
+### 4. starter 연결 및 dev-server 켜기
 - 프로젝트를 생성할 폴더를 먼저 만든다 `C:/gatsby`
 - 해당 프로젝트(gatsby)에 이동해서 blog(임의 이름) 폴더로 github 스타터 주소 연결해서 clone하기
     - gatsby new - 명령어 게츠비 프로젝트생성을 위한 명령어
@@ -47,19 +48,19 @@ npm install -g gatsby-cli
 gatsby new blog https://github.com/Highjune/gatsby-starter-bee
 ```
 
-### 4. C:\gatsby\blog로 이동 후 서버 on
+### 5. C:\gatsby\blog로 이동 후 서버 on
 ```
 cd blog (현재 위치 C:\gatsby\blog)
 gatsby develop
 ```
 
-### 5. 확인
+### 6. 확인
 ```
 http://localhost:8080/  또는
 http://localhost:8000/___graphql
 ```
 
-### 6. 깃허브에 repository 만들고 push
+### 7. 깃허브에 repository 만들고 push
 - 만든 gatsby 프로젝트를 올릴 "gatsby-blog"라는 repository 생성
 - C:\gatsby\blog 위치에서 아래 명령어 실행 (blog폴더 우클릭 `git bash here`)
 ```
@@ -70,7 +71,7 @@ $ git remote add origin [나의 "gatsby-blog" repository url]
 $ git push origin master
 ```
 
-### 7. netlify 로 배포
+### 8. netlify 로 배포
 - [접속](https://app.netlify.com/teams/highjune/sites)
 - 위 링크 접속
 - new site from git 클릭 → githup 클릭 

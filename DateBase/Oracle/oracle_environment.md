@@ -23,3 +23,5 @@ conn ID/Password@localhost:1521/ORCL
 ```
 
 
+### 링크
+[오라클실습-옛날 책이지만 기본기 좋음](http://blog.daum.net/why_i_am/category/%EC%98%A4%EB%9D%BC%ED%81%B4%EC%8B%A4%EC%8A%B5)
