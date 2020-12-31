@@ -23,3 +23,7 @@ Alt + Shift + A
 ```
 window - Perspective - Rest Perspective
 ```
+- 클래스 내 메서드 찾기
+```
+Ctrl + O
+```
