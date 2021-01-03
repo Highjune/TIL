@@ -5,7 +5,7 @@
     - c/users/ 에 설치되면 user용이고, c/program files/microsoft visual studio 는 관리자용
 
 
-## 유용한 extension 종료
+## 유용한 extension 종류
 1. Open in Browser
     - 버전 2점대
 1. Htmltagwrap
