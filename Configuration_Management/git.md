@@ -310,6 +310,60 @@
     ```
     git rebase --abort
     ```
+    - commit 메시지 템플릿 만들기([참조](https://jeong-pro.tistory.com/207))
+        1. 템플릿 포맷 파일 만들기(git 명령 프롬프트에서 .git 파일 있는 폴더로 이동한 후)
+        ```
+        touch git-commit-template.txt
+        ```
+        2. 템플릿 메시지 작성
+        ```
+        vim git-commit-template.txt
+        ```
+        3. git-commit-template.txt 파일 안에 내용 작성(작성 후 저장 및 나오기)
+        ```
+        <타입> : <제목>
+
+        ##### 제목은 최대 50글자까지만 입력 #####
+
+
+        #본문은 위에 작성
+        ######## 본문은 한 줄에 최대 72글자까지만 입력 #################
+
+        #꼬릿말은 아래에 작성 : ex) #이슈 번호
+
+        # ---COMMIT END ---
+        #<타입> 리스트
+        # feat : 기능(새로운 기능)
+        # fix : 버그(버그 수정)
+        # refactor : 리팩토링
+        # style : 스타일(코드 형식, 세미콜론 추가:비즈니스 로직에 변경 없음)
+        # docs : 문서(문서 추가, 수정, 삭제)
+        # test : 테스트(테스트 코드 추가, 수정, 삭제 : 비즈니스 로직에 변경 없음)
+        # chore : 기타 변경사항(빌드 스크립트 수정 등)
+
+        # -----------------
+        # 제목 첫 글자를 대문자로
+        # 제목은 명령문으로
+        # 제목 끝에 마침표(.) 금지
+        # 제목과 본문을 한 줄 띄워 분리하기
+        # 본문은 "어떻게"보다 "무엇을", "왜"를 설명한다.
+        # 본문에 여러줄의 메시지를 작성할 땐 "-" 로 구분
+        # -----------------
+        ```
+
+        4. config설정파일(.git 폴더 안에 있음) 에 등록. 파일 위치+파일명
+        ```
+        git commit commit.template /c/gatsby/blog/git-commit-template.txt
+        ```
+
+        5. 사용하면 됨.
+        ```
+        git commit -m "message" 대신
+
+        git commit 만 하면 템플릿 열림
+        ```
+
+        
 
 ## 참고 자료
 
@@ -322,5 +376,5 @@
 [git-flow cheatsheet](https://danielkummer.github.io/git-flow-cheatsheet/index.ko_KR.html)
 [간편 안내서](https://rogerdudler.github.io/git-guide/index.ko.html)
 
-### 깃 템플릿 세팅법
-[깃 템플릿 사용법](https://jeong-pro.tistory.com/207)
+### 커밋 템플릿 세팅법
+[커밋 템플릿 사용법](https://jeong-pro.tistory.com/207)

@@ -65,4 +65,7 @@ DELIMITER ;
 
 ```
 
-- 
+- 모든 데이터베이스에 있는 테이블 정보 조회
+```
+select * from INFORMATION_SCHEMA.columns
+```
