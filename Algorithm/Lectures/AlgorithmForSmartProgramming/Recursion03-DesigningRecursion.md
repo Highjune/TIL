@@ -36,4 +36,83 @@ int search(int [] data, int begin, int end, int target) {
 
 
 ## 순차탐색 다른 버전 1
-16:45초부터 이어서 듣기
+- 뒤에서 앞으로 찾는다.
+```
+int search(int [] data, int begin, int end, int target) {
+  if (begin > end)
+    return -1;
+  else if (target == data[end])
+    return end;
+  else
+    return search(data, begin, end-1, target);
+}
+```
+- 이 함수의 미션은 data[begin]에서 data[end] 사이에서 target을 검색한다.
+즉, 검색구간의 시작점을 명시적(explicit)으로 지정한다.
+
+## 순차탐색 다른 버전 2
+- 가운데 나누어서 찾기 (binary search와는 다르다)
+- 반(A/B)을 나누어서 중간값을 확인해보고 나서, 앞의 반(A)에서 다 찾은 후 없으면 그 뒤에 반(B)에서 찾는다.
+- 만약 B에서도 없다면 찾는 값은 없는 것
+```
+int search(int[] data, int begin, int end, int target) {
+  if (begin > end)
+    return -1;
+  else {
+    int middle = (begin+end)/2; //데이터의 갯수가 짝수개면 정확한 중간값이 아닐수도 있다.
+    if (data[middle] == target)
+      return middle;
+    int index = search(data, begin, middle-1, target);
+    if (index != -1)
+      return index;
+    else
+      return search(data, middle+1, end, target);
+  }
+}
+```
+
+## 매개변수의 명시화 : 최대값 찾기
+- 이 함수의 미션은 data[begin]에서 data[end] 사이에서 최대값을 찾아 반환한다. begin<=end 라고 가정한다.
+```
+int findMax(int [] data, int begin, int end) {
+  if (begin==end)
+    return data[begin];
+  else
+    return Math.max(data[begin], findMax(data, begin+1, end));
+}
+```
+- 최대값 찾기 다른버전
+  - 반으로 나누어서 앞쪽의 최대값과 뒤쪽의 최대값을 비교
+```
+int findMax( int [] data, int begin, int end) {
+  if (begin==end)
+    return data[begin]
+  else {
+    int middle = (begin+end)/2;
+    int max1 = findMax(data, begin, middle);
+    int max2 = findMax(data, middel+1, end);
+    return Math.max(max1,max2);
+}
+```
+
+
+## Binary Search
+- items[begin]에서 items[end] 사이에서 target을 검색한다.
+- 이진검색을 recursion으로.
+- 이진검색은 데이터가 크기순으로 정렬되어 있을 때만 사용 가능하다.
+```
+public static int binarySearch(String[] items, String target, int begin, int end) {
+  if (begin>end)
+    return -1;
+  else {
+    int middle = (begin+end)/2;
+    int compResult = target.compareTo(items[middle]); // 기준값이 비교대상 보다 크면 양수, 작으면 음수, 같으면 0
+    if (compResult == 0)
+      return middle;
+    else if (compResult<0)
+      return binarySearch(items, target, begin, middel-1);
+    else
+      return binarySearch(items, target, middle+1, end);
+  }
+}
+```
