@@ -353,8 +353,12 @@
 
         4. config설정파일(.git 폴더 안에 있음) 에 등록. 파일 위치+파일명
         ```
-        git commit commit.template /c/gatsby/blog/git-commit-template.txt
+        git config commit.template /c/gatsby/blog/git-commit-template.txt
         ```
+        또는 --global 옵션 줘서
+        ```
+        git config --global commit.template /c/gatsby/blog/git-commit-template.txt
+        ``` 
 
         5. 사용하면 됨.
         ```
