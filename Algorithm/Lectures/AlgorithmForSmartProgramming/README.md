@@ -1,1 +1,2 @@
-[인프런 - 영리한 프로그래밍을 위한 알고리즘 강좌](https://www.inflearn.com/course/%EC%95%8C%EA%B3%A0%EB%A6%AC%EC%A6%98-%EA%B0%95%EC%A2%8C) 강의를 듣고 정리한 내용
+- [인프런 - 영리한 프로그래밍을 위한 알고리즘 강좌](https://www.inflearn.com/course/%EC%95%8C%EA%B3%A0%EB%A6%AC%EC%A6%98-%EA%B0%95%EC%A2%8C) 강의를 듣고 정리한 내용
+- [자료-부경대학교(강의 + PDF), 인프런 강의랑 같음](http://www.kocw.net/home/search/kemView.do?kemId=1148815)
