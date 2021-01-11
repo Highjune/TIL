@@ -54,7 +54,7 @@ art + insert
     ```
     shift + f6
     ```
-- 라인 단위 삭제
+- 라인 단위 복사
     - 윈도우/리눅스
     ```
     ctrl + d
@@ -73,7 +73,7 @@ art + insert
 - 해당하는 메서드로 이동
     - 윈도우/리눅스
     ```
-    ctrl + art + b
+    ctrl + b
     ```
 
 
