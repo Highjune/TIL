@@ -3,7 +3,7 @@
  * method : public, (default), protected, private, static, final, abstract,
  * variable : public, (default), protected, private, static, final 
  */
-
+ 
 import kr.co.sist.libs.Student;
 
 public class MainClass extends Student{
