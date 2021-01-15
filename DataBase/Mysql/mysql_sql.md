@@ -6,7 +6,7 @@
 ```
 SELECT *
 FROM ex_table
-WHERE DATE_FORMAT(specific_day, '%Y-%m-%d 00:00:00')  AND DATE_FORMAT(specific_day, '%Y-%m-%d 23:59:59')
+WHERE BETWEEN DATE_FORMAT(specific_day, '%Y-%m-%d 00:00:00')  AND DATE_FORMAT(specific_day, '%Y-%m-%d 23:59:59')
 ```
 - 임의 번호 생성
     - 로그인시 keyPin 생성할 때 유용(중복접속X)
@@ -68,4 +68,19 @@ DELIMITER ;
 - 모든 데이터베이스에 있는 테이블 정보 조회
 ```
 select * from INFORMATION_SCHEMA.columns
+```
+
+
+- CASE WHEN 구문
+```
+SELECT  
+        case 
+        when home_score = FLOOR(entire_numbers / 2) + 1 
+                then (SELECT `name` FROM team_table WHERE id = home_team_id)
+        when away_score = FLOOR(entire_numbers / 2) + 1 
+                then (SELECT `name` FROM team_table WHERE id = away_team_id)
+        ELSE 'No data'
+        END AS winner_team_name		
+
+FROM dblol.pd_match pm
 ```

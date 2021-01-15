@@ -30,6 +30,8 @@ ctrl + O
 
 
 
-## STS(Spring Tool Suites4-spring4)
-- 다운로드 및 설치
-- 
+## STS(Spring Tool Suites4-spring4) 다운로드 및 설치
+- [깃헙 참고 자료](https://github.com/swacademy/Spring5/blob/master/2.%20Configure%20for%20Lab.pdf)
+- [영상 참고](https://www.youtube.com/watch?v=YjABboSVRRM&feature=youtu.be)
+- 다운로드 [링크](https://spring.io/) 접속
+
