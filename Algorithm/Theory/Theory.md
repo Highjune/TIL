@@ -1,5 +1,5 @@
 ## 알고리즘 이론 정리
-
+ 
 
 ## 좋은 개념글 링크
 - [Big-O 노테이션 쉽게 이해하기](https://joshuajangblog.wordpress.com/2016/09/21/time_complexity_big_o_in_easy_explanation/)
