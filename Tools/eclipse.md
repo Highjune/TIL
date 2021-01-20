@@ -27,7 +27,10 @@ window - Perspective - Rest Perspective
 ```
 ctrl + O
 ```
-
+- 이전 페이지로 돌아가기
+```
+art + (좌우 화살표, ↔)
+```
 
 
 ## STS(Spring Tool Suites4-spring4) 다운로드 및 설치
