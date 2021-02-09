@@ -2,6 +2,7 @@ package test;
 
 // fibonacci
 // sum until 50
+```
 public class test {
 	public static void main(String[] args) {
 		int n = 0;
@@ -14,3 +15,4 @@ public class test {
 		}
 	}
 }
+```
