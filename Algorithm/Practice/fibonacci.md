@@ -7,7 +7,7 @@ public class test {
 		int n = 0;
 		int a = 0;
 		int b = 1;
-		while(a<=50) {
+		while(a<=50) { 
 			System.out.println(a);
 			a += b;
 			b = a;			
