@@ -8,7 +8,7 @@ public class Solution {
 	}
 
 	public String solu(int N) { // N = 48
-		int k = -1; // 몫
+		int k = -1; // 몫 
 		String answer = "";
 //		while(N/2 > 2) {
 		while(N > 2) {
