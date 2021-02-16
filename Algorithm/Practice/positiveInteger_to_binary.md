@@ -1,4 +1,4 @@
-# 10진수 -> 2진수
+# 10진수 -> 2진수 
 
 ``` 
 public class Solution {
