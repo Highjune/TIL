@@ -378,7 +378,11 @@
 [우아한 형제들 - 기술 블로그](https://woowabros.github.io/experience/2017/10/30/baemin-mobile-git-branch-strategy.html)
 
 [git-flow cheatsheet](https://danielkummer.github.io/git-flow-cheatsheet/index.ko_KR.html)
+
 [간편 안내서](https://rogerdudler.github.io/git-guide/index.ko.html)
+
+[git-flow와 branch간 merge 충돌 해결 ](https://www.holaxprogramming.com/2018/11/01/git-commands/)
 
 ### 커밋 템플릿 세팅법
 [커밋 템플릿 사용법](https://jeong-pro.tistory.com/207)
+
