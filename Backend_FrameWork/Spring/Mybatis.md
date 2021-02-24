@@ -84,6 +84,38 @@
 	 </insert>
     ```
 
+- insert한 후 자동 생성되는 키 바로 들고오기
+    - useGeneratedKeys="true" 로 자동생성(mysql-autoincrement)
+    - keyProperty="id" 로 자동생성되는 키를 id값으로 사용
+    - test.xml
+    ```
+    <insert id="insert_id" parameterType="map" useGeneratedKeys="true" keyProperty="id">
+            
+            INSERT INTO db.test_table
+            (
+                name,
+                age,
+            )
+            VALUES
+            (
+                {name},
+                {age}
+            )
+    </insert>
+
+    ```
+    - testDao
+    ```
+     public Map<String, Object> insert(Map<String, Object> params) {
+        sqlSession.insert(NS + "insertEntryInfo", params);
+        return params;
+    }
+    ```
+
+    - testService
+    ```
+    params.get("id"); // 이렇게 사용가능
+    ```
 ### 링크
 - [#{}안에 jdbctype=VARCHAR와 같이 붙이는 이유](http://egloos.zum.com/uknowapps/v/1814539)
 

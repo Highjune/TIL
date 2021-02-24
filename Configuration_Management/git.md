@@ -10,7 +10,7 @@
 - 깃 시작
     - 해당 폴더 우클릭 - git bash로 실행해서 명령창 open
     - 시작(아래 명령어 실행시 .git 숨김 폴더 생성)
-    ```
+    ``` 
     git init
     ```
     - 명령 프롬프트(cmd 창)에서 해당 프로젝트로 이동한 후에 시작해도 된다.
@@ -378,7 +378,11 @@
 [우아한 형제들 - 기술 블로그](https://woowabros.github.io/experience/2017/10/30/baemin-mobile-git-branch-strategy.html)
 
 [git-flow cheatsheet](https://danielkummer.github.io/git-flow-cheatsheet/index.ko_KR.html)
+
 [간편 안내서](https://rogerdudler.github.io/git-guide/index.ko.html)
+
+[git-flow와 branch간 merge 충돌 해결 ](https://www.holaxprogramming.com/2018/11/01/git-commands/)
 
 ### 커밋 템플릿 세팅법
 [커밋 템플릿 사용법](https://jeong-pro.tistory.com/207)
+
