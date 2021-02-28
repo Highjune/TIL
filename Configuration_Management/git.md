@@ -381,6 +381,8 @@
 
 [간편 안내서](https://rogerdudler.github.io/git-guide/index.ko.html)
 
+[git remote branch 가져오기](https://cjh5414.github.io/get-git-remote-branch/)
+
 [git-flow와 branch간 merge 충돌 해결 ](https://www.holaxprogramming.com/2018/11/01/git-commands/)
 
 ### 커밋 템플릿 세팅법
