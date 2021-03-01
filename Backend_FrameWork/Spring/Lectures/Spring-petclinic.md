@@ -3,7 +3,6 @@
 # IoC
 Inversion of Control(제어의 역전)
 
-
 ```
 class OwnerController{
     private OwnerRepository repository = new OwnerRepository();
@@ -46,7 +45,8 @@ class OwnerControllerTest{
 ```
 
 - 물론 의존성에 입각해서 IoC를 설명하지만(보통), Inversion of Dependency Control 이라고 하지 않는 이유는 Dependency 이외의 다른 제어권을 역전시키는 경우가 있기 때문이다. ex) 서블릿도 사실 스스로 직접 실행하지 않고 container가 서블릿 코드를 initialization 한 후에 get, post 에 반응을 하는데 이것도 사실 IoP 라고 볼 수 있다.(서블릿 자체가 아니라 container가 하므로)
-
+- IoC의 장점은?
+    - Test코드를 작성하기가 편하다(Mock을 이용해 가짜 Bean을 주입받아서~. 등등)
 
 # IoC(Inversion of Control) 컨테이너
 
@@ -282,11 +282,21 @@ class AAAABBBB{
 
 - spring에서 제공해주는 PSA의 종류?
     - 사실 spring에서 제공해주는 대부분의 api가 다 PSA다.
+    - 스프링의 대부분의 library 는 다 PSA다.
     
 
 - 스프링 트랜잭션
     - PSA의 예제
-    - 트랜잭션의 과정 코딩을 담아놓은 것이 asepect
-    - PlatformTransactionManager 이라는 인터페이스를 사용해서 코딩해 놓은 것임.
-    - 이 인터페이스의 구현체들이 있는데, 그것들이 바뀌게 되더라도 트랜잭션의 aspect 코드는 바뀌지 않는다. 그리고 이 구현체는 Bean으로 등록이 된다. 예를 들어 SpringDataJpa를 사용하게 된다면 jpaTransactionManager가 등록이 된다(스프링부트의 자동설정에 의해서). 
-    - 1.40초부터~
+    - 트랜잭션을 처리하는 과정을 담은 것이 asepect
+    - aspect는 PlatformTransactionManager 이라는 인터페이스를 사용해서 코딩해 놓은 것임. 
+    - 이 인터페이스의 구현체(JpaTrasactionManager, DatasourceTransactionManager, HibernateTransactionManager)들이 있는데, 그것들이 바뀌게 되더라도 트랜잭션의 aspect 코드는 바뀌지 않는다. 그리고 이 구현체는 Bean으로 등록이 된다. 예를 들어 SpringDataJpa를 사용하게 된다면 jpaTransactionManager가 등록이 된다(스프링부트의 자동설정에 의해서). 
+ 
+- 스프링 캐시 (CacheManager)
+    - `@EnableCaching` 을 하면 cach와 관련된 기능이 활성화 되어서 @Cacheable이나 @CacheEvict 와 같은 것들을 사용할 수 있다.
+    - 그런데 그러려면 CacheManager 인터페이스를 구현해야 한다.
+    - (트랜잭션과 원리와 동일) 위와 같은 @어노테이션을 처리하는 aspect가 분명히 존재할 것이며 그 안에서는 CacheManager를 사용했을 것이다. 이것 역시 구현체들(JCacheManager, ConcurrentMapCacheManager, EhCacheCacheManager)이 변하더라도 asepct의 코드는 변하지 않는다.
+    
+- 웹 MVC
+    - 코드 상에서 @Controller, @RequestMapping, @GetMapping 등이 있는데 이것들만 봐서는 Servlet에서 쓰이는지, Reactive에서 쓰이는지 잘 알 수 없다. 그래서 추상화라고 볼 수 있다. 기술(구현체)을 독립적으로 만들어주는 것임.
+
+- 
