@@ -83,3 +83,4 @@ art + insert
 
 ## 참고자료
 [intellij 에서는 이클립스처럼 여러 프로젝트를 한 번에 열수 있는가?](https://jojoldu.tistory.com/334#ref=facebook)
+[intelliJ gitBash 연동하는 법](https://goddaehee.tistory.com/250)
