@@ -7,7 +7,7 @@
 SELECT *
 FROM ex_table
 WHERE BETWEEN DATE_FORMAT(specific_day, '%Y-%m-%d 00:00:00')  AND DATE_FORMAT(specific_day, '%Y-%m-%d 23:59:59')
-```
+``` 
 - 임의 번호 생성
     - 로그인시 keyPin 생성할 때 유용(중복접속X)
 ```
