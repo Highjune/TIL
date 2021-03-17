@@ -458,7 +458,11 @@
 
 [git pull 충돌 때 merge 취소해서 충돌 해결2](https://wikidocs.net/17171)
 
+[git pull 충돌 때 충돌 해결3](https://goddaehee.tistory.com/2530)
+
 [코퀄리티 개발 컨텐츠 모음 - Git](https://github.com/Integerous/goQuality-dev-contents/tree/master/5.%20%EA%B8%B0%ED%83%80)
+
+[git flow model - 생활코딩](https://www.youtube.com/watch?v=EzcF6RX8RrQ)
 
 ### 커밋 템플릿 세팅법
 
