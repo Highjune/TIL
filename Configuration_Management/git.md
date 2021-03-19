@@ -464,6 +464,8 @@
 
 [git flow model - 생활코딩](https://www.youtube.com/watch?v=EzcF6RX8RrQ)
 
+[누구나 쉽게 이해할 수 있는 Git 입문](https://backlog.com/git-tutorial/kr/intro/intro1_1.html)
+
 ### 커밋 템플릿 세팅법
 
 [커밋 템플릿 사용법](https://jeong-pro.tistory.com/207)
