@@ -458,6 +458,8 @@
 
 [git pull 충돌 때 merge 취소해서 충돌 해결2](https://wikidocs.net/17171)
 
+[git pull 충돌 때 merge 취소해서 충돌 해결3](https://goddaehee.tistory.com/253?category=381481)
+
 [코퀄리티 개발 컨텐츠 모음 - Git](https://github.com/Integerous/goQuality-dev-contents/tree/master/5.%20%EA%B8%B0%ED%83%80)
 
 ### 커밋 템플릿 세팅법
