@@ -108,3 +108,86 @@ ON DUPLICATE KEY UPDATE
         column2 = 'update_data'
 
 ```
+
+- 테이블 정의서에 맞게 컬럼 select 하는 것
+```
+SELECT 
+        t1.`column_name`
+        , t1.column_comment
+        , CASE 
+                WHEN t1.numeric_precision IS NULL THEN t1.column_type
+                ELSE CONCAT(t1.data_type, '(', t1.numeric_precision, ')')
+          END AS column_type1
+        , '' AS length
+        , t1.is_nullable
+        , t1.column_key
+        , IFNULL(t1.column_default, '') AS column_default
+FROM INFORMATION_SCHEMA.columns t1
+WHERE t1.table_schema='database_schema_name' 
+AND t1.table_name='ex_table_name'
+ORDER BY t1.ordinal_position;
+```
+
+- 여러 query에 하나의 변수 값으로 세팅해서 넣고자 할 때 `SET @변수 = ''`
+```
+SET @specific_day_from = '2021-03-01 00:00:00:'
+SET @specific_day_to = '2021-04-01 00:00:00:'
+
+SELECT * 
+FROM db_schema.ex_table
+WHERE 1=1
+AND insert_time BETWEEN DATE_FORMAT(@specific_day_from, '%Y-%m-%d %H:%i:%s') AND DATE_FORMAT(@specific_day_to, '%Y-%m-%d %H:%i:%s')
+```
+
+- SubQuery의 명칭이 동일할 경우, 제일 바깥에서 쓴 쿼리의 명칭이 유효하다. 아래에서 T1.column 에서의 컬럼은 제일 바깥 FROM (A)를 의미하는 것임. 
+
+```
+SELCET *
+FROM(A) (
+        SELECT *
+        FROM(B) (
+                SELECT *
+                FROM(C)
+        ) T1
+) T1
+GROUP BY T1.column
+```
+
+
+- 월별 등록자수(1명이 여러번 신청해도 1번으로). cf) 일별이면 제일 안의 DATE_FORMAT(insert_time, `%Y-%m`) 을 DATE_FORMAT(insert_time, `%Y-%m-%d`)으로 수정
+```
+SET @from_time = '2021-01-01 00:00:00';
+SET @end_time = '2021-12-31 00:00:00';
+
+SELECT regMonth, COUNT(*) AS monthUserCount
+FROM (
+	SELECT regMonth, member_id, COUNT(*) AS cnt
+	FROM (
+		SELECT t1.member_id, t1.name, DATE_FORMAT(t1.insert_time, '%Y-%m') AS regMonth
+		FROM schema.event_entry AS t1
+		WHERE insert_time BETWEEN DATE_FORMAT(@stime, '%Y-%m-%d %H:%i:%s') AND DATE_FORMAT(@etime, '%Y-%m-%d %H:%i:%s')
+	) AS T1
+	GROUP BY T1.regMonth, T1.member_id
+) AS T1
+GROUP BY T1.regMonth
+ORDER BY T1.regMonth
+;
+```
+
+- 월별 신청수(한명이 여러번 가능). cf) 일별이면 제일 안의 DATE_FORMAT(insert_time, `%Y-%m`) 을 DATE_FORMAT(insert_time, `%Y-%m-%d`)으로 수정
+```
+SET @from_time = '2021-01-01 00:00:00';
+SET @end_time = '2021-12-31 00:00:00';
+
+SELECT regMonth, COUNT(*) AS monthRegistCounts
+FROM (
+	SELECT id, name DATE_FORMAT(insert_time, '%Y-%m') AS regMonth
+	FROM schema.user AS t1
+	WHERE insert_time BETWEEN DATE_FORMAT(@from_time, '%Y-%m-%d %H:%i:%s') AND DATE_FORMAT(@end_time, '%Y-%m-%d %H:%i:%s')
+) AS T1
+GROUP BY T1.regMonth
+ORDER BY T1.regMonth
+;
+```
+
+
