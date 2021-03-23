@@ -5,6 +5,8 @@ TapeEquilibrium
 
 ## 내 풀이.
 - 풀다가 중단
+- 원래 알면 다 쉬운 것임. `Integer.MAX_VALUE` 란 것도 처음 알았고 몰랐어도 충분히 풀었어야 하는 문제
+
 ```
 import java.util.*;
 
@@ -36,3 +38,28 @@ public class Solution {
 ```
 
 ## 타인 풀이 100%
+```
+class Solution {
+    public int solution(int[] A) {
+        
+        int left = 0;
+        int right = 0;
+        
+        for(int i=0; i<A.length; i++) {
+            right += A[i];
+        }
+        
+        int gap = Integer.MAX_VALUE;
+        
+        for(int i=0; i<A.length-1; i++) {
+            left += A[i];
+            right -= A[i];
+            
+            gap = Math.min(gap, Math.abs(left-right));
+        }
+        
+        return gap;   
+    }
+}
+```
+
