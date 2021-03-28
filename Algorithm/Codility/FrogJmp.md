@@ -26,7 +26,7 @@ class Solution {
         if( (Y-X)%D == 0)
             return (Y-X)/D;
         else
-            return (int)Math.floor((Y-X)/D)+1;
+            return (int)Math.floor((Y-X)/D)+1;  
     }
 }
 ```
