@@ -30,3 +30,28 @@ class Solution {
     }
 }
 ```
+
+
+## 타인 풀이. 100%
+- Set에서의 contains 함수(boolean 리턴) 사용하면 편함
+```
+import java.util.*;
+
+class Solution {
+    public int solution(int[] A) {
+        
+        Set<Integer> checkSet = new HashSet<>();
+        
+        for(int i=0; i<A.length; i++) {
+            checkSet.add(A[i]);
+        }
+        
+        for(int x=1; x<Integer.MAX_VALUE; x++) {
+            if(!checkSet.contains(x))
+                return x;
+        }
+        
+        return -1;
+    }
+}
+```
