@@ -20,7 +20,7 @@ class Solution {
         	}
         }
         
-        if (result > 100000 || result < -1) {
+        if (result > 1000000000 || result < 0) {
         	result = -1;
         }
         
