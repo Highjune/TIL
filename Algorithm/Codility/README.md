@@ -6,5 +6,3 @@
 [StoneWall](https://github.com/Highjune/TIL/blob/master/Algorithm/Codility/StoneWall.md) 
     - 문제 다시 읽어보고 풀어보기
 
-
-    
