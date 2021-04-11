@@ -38,3 +38,52 @@ class Solution {
     }
 }
 ```
+
+```
+import java.util.Arrays;
+
+class Solution {
+	public static void main(String[] args) {
+		int[] arr = new int[] {3, 4, 3, 2, 3, -1, 3, 3};
+		Solution ss = new Solution();
+		System.out.println(ss.solution(arr));
+	}
+	
+    public int solution(int[] A) {
+    	int result = -2;
+    	
+    	int[] B = new int[A.length];
+    	
+    	// 미리 배열 복사
+    	for (int k = 0 ; k < A.length ; k++) {
+    		B[k] = A[k];
+    	}
+    	
+    	Arrays.sort(A);
+    	
+    	int dominator = A[A.length/2 + 1];
+    	int domi_occur = 0;
+    	
+    	for (int i = 0 ; i < A.length ; i++) {
+    		if (A[i] == dominator) {
+    			domi_occur++;
+    		}
+    	}
+    	
+    	for (int j = 0 ; j < B.length ; j++) {
+    		if (domi_occur >= B.length/2 + 1) {
+    			if (B[j] == dominator) {
+    				result = j;
+    			}  
+    			
+    		} else {
+    			result = -1;
+    		}
+    	}
+    	
+    	return result;
+    }
+}
+
+
+```
