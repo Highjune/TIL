@@ -40,6 +40,13 @@ class Solution {
 ```
 ## 내 풀이2, 75%(정확도가 62%라서)
 - array의 범위가 작거나 아주 큰 경우에 대해서 고려하지 못한 것 같다.
+- `half more than` 의 의미는, 8개 중 4개는 포함 안된다는 말.
+    - 배열의 길이가 홀수 또는 짝수에 집착할 필요 없었다. 그래서 아래와 같이 표현 가능
+    ```
+    if(dominator_num <= A.length / 2) {
+        return -1;
+    }
+    ```
 
 ```
 import java.util.Arrays;
