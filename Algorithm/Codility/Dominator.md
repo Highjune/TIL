@@ -3,7 +3,7 @@ Dominator
 > [문제링크](https://app.codility.com/programmers/lessons/8-leader/dominator/)
 
 
-## 내 풀이, 50% 다시 풀어보기
+## 내 풀이, 50% 
 - 기초지만, 반복문과 제어문 속에서 적절한 return문의 위치에 대해서 다시 정리할 수 있었다.
 ```
 import java.util.*;
@@ -38,19 +38,16 @@ class Solution {
     }
 }
 ```
+## 내 풀이2, 75%(정확도가 62%라서)
+- array의 범위가 작거나 아주 큰 경우에 대해서 고려하지 못한 것 같다.
 
 ```
 import java.util.Arrays;
 
 class Solution {
-	public static void main(String[] args) {
-		int[] arr = new int[] {3, 4, 3, 2, 3, -1, 3, 3};
-		Solution ss = new Solution();
-		System.out.println(ss.solution(arr));
-	}
-	
+
     public int solution(int[] A) {
-    	int result = -2;
+    	int result = -1;
     	
     	int[] B = new int[A.length];
     	
@@ -62,6 +59,7 @@ class Solution {
     	Arrays.sort(A);
     	
     	int dominator = A[A.length/2 + 1];
+        
     	int domi_occur = 0;
     	
     	for (int i = 0 ; i < A.length ; i++) {
@@ -70,20 +68,100 @@ class Solution {
     		}
     	}
     	
-    	for (int j = 0 ; j < B.length ; j++) {
-    		if (domi_occur >= B.length/2 + 1) {
+    	if (domi_occur >= B.length/2 + 1) {
+    		for (int j = 0 ; j < B.length ; j++) {
     			if (B[j] == dominator) {
     				result = j;
-    			}  
-    			
-    		} else {
-    			result = -1;
+    				break;
+    			}
     		}
+    	} else {
+    		result = -1;
     	}
     	
     	return result;
     }
 }
+```
 
+## 내 풀이3, 83%(정확도가 75%라서)
+- dominator 결정시 stack 활용
+    - stack이 비어있으면 push
+    - stack에 들어있는 값이 지금 값이랑 같으면 push
+    - stack에 들어있는 값이 지금 값이랑 다르면 pop & 지금 값 삭제
+```
+class Solution {
 
+    public int solution(int[] A) {
+            int result = -1;
+            
+            int dominator = 0;
+            
+            Stack<Integer> stack = new Stack<Integer>();
+            
+            for (int i = 0 ; i < A.length ; i++) {
+                if (stack.isEmpty()) {
+                    stack.push(A[i]);
+                } else if (stack.peek() != A[i]) {
+                    stack.pop();
+                } else if (stack.peek() == A[i]) {
+                    stack.push(A[i]);
+                }
+            }
+                
+            if (stack.isEmpty()) {
+                return -1;
+            } else {
+                dominator = stack.peek();
+            }
+            
+            for (int i = 0 ; i < A.length ; i++) {
+                if (A[i] == dominator) {
+                    result = i;
+                    break;
+                }
+            }
+            
+            return result;
+        }
+}
+```
+
+## 타인 풀이, 100%
+https://rooted.tistory.com/47
+- 깔끔쓰
+- map.getOrDefault(값, 없으면 default) 유용한 함수를 알게 됨
+```
+import java.util.*;
+
+class Solution {
+    public int solution(int[] A) {
+    
+        HashMap<Integer, Integer> map = new HashMap<>();
+        
+        for(int i=0; i<A.length; i++) {
+            map.put(A[i], map.getOrDefault(A[i], 0) + 1);
+        }
+        
+        int max = 0;
+        int maxKey = 0;
+        for(Integer key : map.keySet()) {
+            int count = map.get(key);
+            if(count > max) {
+                max = count;
+                maxKey = key;
+            }
+        }
+        
+        if(max <= A.length / 2)
+            return -1;
+        
+        for(int i=0; i<A.length; i++) {
+            if(A[i] == maxKey)
+                return i;
+        }
+        
+        return -1;
+    }
+}
 ```
