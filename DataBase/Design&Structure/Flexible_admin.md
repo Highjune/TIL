@@ -40,14 +40,42 @@
     - 예를 들어 A라는 role_group에 속한 홍길동은, A에 새로운 권한(삭제)이 추가되면 홍길동은 자동으로 삭제 권한을 부여받는다.
 
 ## menu
+- 재귀쿼리로 계층 구조를 알 수 있게 던져줘야 함
+- 중요컬럼
+    - depth
+        - 몇 단계인지
+    - parent 
+        - 자신의 부모(id)가 누구인지, 부모의 id
+        - 제일 위는 root
+
+    - order
+        - 같은 부모 안에서의 순서
+- ex)
+
+
+|id|name|dept|parent|order|
+|:---:|:---:|:---:|:---:|:---:|
+|1|home|1|N|1|
+|2|menu1|2|1|1|
+|3|menu2|1|1|2|
+|4|menu2|1|1|3|
+
+
+## user_menu
+- user가 `개별적으로`(그룹으로 부여받는 권한 이외의) 받은 `메뉴`에 대한 권한
+- user가 그룹으로 부여받는 권한(user_role_group 테이블) 보다 우선순위가 더 높음
+
+## user_role_group
+- user가 `그룹단위`로 부여받는 `메뉴` 권한
 
 
 ## sub_menu
-- 여러 메뉴 목록 중 하나의 메뉴 안에 있는 여러 
+- 하나의 `메뉴 밑에 있는 기능`들 정의
 
 
-## sub_menu
-- 하나의 메뉴 안에서 
+## user_sub_menu
+- 하나의 `메뉴 밑에 있는 기능`들에 대한 권한
+- ex) `수정하기` 버튼이 A유저에게는 보이지 않도록
 
 
 ## action_log
@@ -69,7 +97,22 @@
     
 
 ## multi_language
-- user, role_group, data-source, menu, sub_menu 테이블과 연결되는 건데 연결하면 테이블 관계 육안으로 너무 복잡하기에 그냥 독립적으로 뒀음. multi_lanauge 
+- user, role_group, data_source, menu, sub_menu 테이블에 multi_language가 포함이 되어 연결되는 건데 연결하면 테이블 관계 육안으로 너무 복잡하기에 그냥 독립적으로 뒀음.
+- 중요컬럼
+    - id
+        - location과 같이 pk   
+- ex)
+
+|id|location|name|
+|:---:|:---:|:---:|
+|1|kr|농구|
+|1|eng|야구|
+|1|ch|축구|
+|1|jp|테니스|
+|2|kr|농구|
+|2|eng|야구|
+|2|ch|축구|
+|2|jp|테니스|
 
 
 ## data_source
@@ -80,4 +123,12 @@
         - ex) Korea BaseBall PlayOff Season, korea Soccer, China Soccer 등
 
 ## ip_access_control
-- 
+- 중요 컬럼
+    - user_id
+        - ex) hong1234
+    - ip
+        - ex) 192.168.0.~
+    - desc
+        - ex) hong1234의 집 pc, hong1234의 회사 pc
+
+## ㅇ
