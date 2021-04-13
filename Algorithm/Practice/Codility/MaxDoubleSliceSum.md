@@ -7,6 +7,7 @@ MaxDoubleSliceSum
 - https://github.com/Mickey0521/Codility/blob/master/MaxDoubleSliceSum.java
 - https://sustainable-dev.tistory.com/25
 - 이해하는데 시간이 좀 걸렸다. 
+- 배열을 생성했을 때 해당하는 데이터 타입으로 자동 초기화(interger일 경우 0) 되는 것 깜빡.
 - Math.max(0, value) 에서 0과 비교해주는 이유는, X,Y가 인접한 경우와 Y,Z가 인접한 경우 값이 0이므로 값으로 넣을 수 있는 가장 작은 값이기 때문. 따라서 0과 이전 인덱스 까지의 최대 부분합 + 현재 인덱스 값과 비교해서 더 큰 값을 넣어줌.
 
 ```
