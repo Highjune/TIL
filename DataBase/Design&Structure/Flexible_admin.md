@@ -21,7 +21,7 @@
 
 
 
-## user
+## admin_user
 - role_group 테이블과 더불어 가장 중요한 테이블
 - 중요 컬럼
     - id 
@@ -34,7 +34,7 @@
         - ex) 홍길동
     - password
 
-## role_group
+## admin_role_group
 - user 테이블과 더불어 가장 중요한 테이블
 - 상속 개념
     - 예를 들어 A라는 role_group에 속한 홍길동은, A에 새로운 권한(삭제)이 추가되면 홍길동은 자동으로 삭제 권한을 부여받는다.
@@ -61,21 +61,27 @@
 |4|menu2|1|1|3|
 
 
-## user_menu
+## admin_user_menu
 - user가 `개별적으로`(그룹으로 부여받는 권한 이외의) 받은 `메뉴`에 대한 권한
 - user가 그룹으로 부여받는 권한(user_role_group 테이블) 보다 우선순위가 더 높음
 
-## user_role_group
+## admin_user_role_group
 - user가 `그룹단위`로 부여받는 `메뉴` 권한
 
 
-## sub_menu
+## menu_function
 - 하나의 `메뉴 밑에 있는 기능`들 정의
-
-
-## user_sub_menu
-- 하나의 `메뉴 밑에 있는 기능`들에 대한 권한
+- 기능 리스트
 - ex) `수정하기` 버튼이 A유저에게는 보이지 않도록
+- 미리 버튼들을 만들어 두는 것임
+- 중요컬럼
+    - name
+        - `조회 버튼`, `삭제 버튼` 
+    
+
+## admin_user_menu_function
+- 하나의 `메뉴 밑에 있는 기능`들에 대한 권한
+
 
 
 ## action_log
@@ -101,7 +107,7 @@
 - 중요컬럼
     - id
         - location과 같이 pk   
-- ex)
+- ex) (다시 확인해보기)
 
 |id|location|name|
 |:---:|:---:|:---:|
@@ -122,7 +128,7 @@
     - id
         - ex) Korea BaseBall PlayOff Season, korea Soccer, China Soccer 등
 
-## ip_access_control
+## ip_access
 - 중요 컬럼
     - user_id
         - ex) hong1234
@@ -131,4 +137,3 @@
     - desc
         - ex) hong1234의 집 pc, hong1234의 회사 pc
 
-## ㅇ
