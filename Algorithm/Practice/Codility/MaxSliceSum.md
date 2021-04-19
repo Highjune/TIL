@@ -13,7 +13,8 @@ CountFactors
 class Solution {
     public int solution(int N) {
 		int result = 0;
-		for(int i = 1 ; i * i <= N ; i++) {
+
+		for (int i = 1 ; i * i <= N ; i++) {
 			if (N % i == 0) {
 				result++;
 				if (i * i < N) {
@@ -26,3 +27,23 @@ class Solution {
 }   
 ```
 
+## 타인 풀이, 100%
+- int -> long
+- 주의할 점이 있는데 N의 범위는 int 범위로 [1 ~ 약 21억]까지이므로 i^2를 구하기 위해서는 더 큰 범위를 가지는 long 자료형을 사용해야 한다.
+```
+class Solution {
+    public int solution(int N) {
+		int result = 0;
+
+		for (long i = 1 ; i * i <= N ; i++) {
+			if (N % i == 0) {
+				result++;
+				if (i * i < N) {
+					result++;
+				}
+			}
+		}		
+		return result;
+	}
+}   
+```
