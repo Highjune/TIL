@@ -1,6 +1,6 @@
-# 내 풀이1
+# 내 풀이1-1
 - 이중 for문
-- 뒤에서부터 정렬함(앞에서 시작해도 상관없음)
+- 뒤에서부터 정렬
 ```
 
 public class BubbleSort {
@@ -25,6 +25,31 @@ public class BubbleSort {
 }
 ```
 
+# 내 풀이1-2
+- 이중 for문
+- 앞서부터 정렬
+```
+public class BubbleSort {
+
+	public static void main(String[] args) {
+		int[] arr = new int[] {3, 5, 4, 2, 1};
+		
+		for (int i = 0 ; i < arr.length - 1 ; i++) {
+			for (int j = 0 ; j < arr.length - 1 - i ; j++) {
+				if (arr[j] > arr[j+1]) {
+					int temp = arr[j];
+					arr[j] = arr[j+1];
+					arr[j+1] = temp;
+				}
+			}
+		}
+		
+		for (int k : arr) {
+			System.out.println(k);
+		}
+	}
+}
+```
 
 # 내 풀이2
 - 재귀호출
