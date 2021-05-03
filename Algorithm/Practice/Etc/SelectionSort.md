@@ -25,7 +25,7 @@ public class SelectionSort {
 ```
 
 # 타인 풀이
-- 재귀적으로 
+- 재귀호출
 - https://www.youtube.com/watch?v=uCUu3fF5Dws
 
 ```
