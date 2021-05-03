@@ -1,4 +1,4 @@
-# 내가 만든 것
+# 내 풀이
 
 ```
 public class SelectionSort {
@@ -24,8 +24,9 @@ public class SelectionSort {
 
 ```
 
-# 재귀함수로 구현
-https://www.youtube.com/watch?v=uCUu3fF5Dws
+# 타인 풀이
+- 재귀적으로 
+- https://www.youtube.com/watch?v=uCUu3fF5Dws
 
 ```
 public class Test {
