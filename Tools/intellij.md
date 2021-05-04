@@ -13,6 +13,11 @@ ctrl + space
   sout 후 tab키
   ```
 
+- 메인메서드 단축키
+  - 맥
+  ```
+  psvm 후 tab키
+  ```
 - action
 
   - 윈도우
