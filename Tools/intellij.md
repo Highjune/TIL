@@ -7,6 +7,11 @@
 ```
 ctrl + space
 ```
+- System.out.println()
+  - 맥
+  ```
+  sout 후 tab키
+  ```
 
 - action
 
