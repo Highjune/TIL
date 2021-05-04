@@ -143,8 +143,6 @@ public class test {
 		bubbleSort(arr);
 		printArray(arr);
 	}
-	
 }
 ```
-
 
