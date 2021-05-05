@@ -1,9 +1,10 @@
 # 인텔리J
 
 ## 단축키
+- [단축키참고링크](https://gmlwjd9405.github.io/2019/05/21/intellij-shortkey.html)
+  
 
 - build.gradle안에서 compile메소드의 자동완성
-
 ```
 ctrl + space
 ```
