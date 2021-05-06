@@ -127,7 +127,7 @@ java -jar  hello-spring-0.0.1-SNAPSHOT.jar
             return "hello-template";
         }
         ```
-        - url 에서 http://localhost:8080/hello-mvc?name=june 하게 되면 templates/hello-templates.html이 열리면서 파라미터로 name=june이 들어간다. 화면에서 페이지 우클릭 - 소스보기로 확인가능
+        - url 에서 http://localhost:8080/hello-mvc?name=june 하게 되면 templates/hello-templates.html이 열리면서 파라미터로 name=june이 들어간다. 화면에서 페이지 우클릭 - 소스보기로 확인가능. 만약에 ?name=june 이란 것(파라미터)을 넘기지 않고 http://localhost:8080/hello-mvc만 넣으면 에러난다. 왜냐하면 파라미터를 @RequestParam으로 반드시 받기로 했으므로, 파라미터를 포함(get메서드이므로 url에) 시켜줘야 한다.
         - `viewResolver`(view를 찾아주고 템플릿 엔진 연결해줌) 가 /templates/hello-templates.html 찾아서 Thymeleaf템플릿 엔진에게 연결. 그러면 템플릿 엔진은 렌더링해서 `변환된` html을 웹브라우저에 넘겨준다. 
         ```
         <p th:text="'hello ' + ${name}">hello! empty</p>
