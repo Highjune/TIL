@@ -188,7 +188,7 @@ java -jar  hello-spring-0.0.1-SNAPSHOT.jar
         - 과거에는 xml를 많이 썼지만, 무겁고 태그를 열고 닫고 등의 번거로움 존재. 요즘에는 훨씬 더 깔끔한 JSON 데이터 형식으로 주고받음. 
         - 이렇게 스프링에서는 `객체 반환 & @ResponseBody` 를 사용하면 웹브라우저나 서버에게 JSON 형식의 데이터(http의 body에 실어서)를 리턴해주는 것이 기본.(물론 xml로 변환할 수도 있음)
         - @ResponseBody가 오면 `HttpMessageConverter`가 동작한다.
-            - 기본 객체처리 : `Mappin`gJackson2HttpMessageConverter가 JSON 으로 변환할 수 있게 작동. `객체를 JSON으로 변환해주는 대표 라이브러리가 2개 있는데 jackson, gson`. 스프링에서는 jackson을 기본적으로 탑재하도록 세팅.(물론 gson으로 변경도 가능)
+            - 기본 객체처리 : `MappingJackson2HttpMessageConverter`가 JSON 으로 변환할 수 있게 작동. `객체를 JSON으로 변환해주는 대표 라이브러리가 2개 있는데 jackson, gson`. 스프링에서는 jackson을 기본적으로 탑재하도록 세팅.(물론 gson으로 변경도 가능)
         - 기본 문자처리 : `StringHttpMessageConverter`가 작동
 
 
