@@ -61,7 +61,7 @@
 - 맥에서 빌드, 실행
 ```
 ./gradlew build
-cd build.libs
+cd build/libs
 java -jar  hello-spring-0.0.1-SNAPSHOT.jar
 ```
 
@@ -71,13 +71,13 @@ java -jar  hello-spring-0.0.1-SNAPSHOT.jar
         2. gradlew build
 ```
 gradlew 
-cd build.libs
+cd build/libs
 java -jar  hello-spring-0.0.1-SNAPSHOT.jar
 ```
 또는 
 ```
 gradlew build
-cd build.libs
+cd build/libs
 java -jar  hello-spring-0.0.1-SNAPSHOT.jar
 ```
 - 윈도우에서 빌드, 실행 (git bash 터미널 연결한 intelli J 의 터미널 창 - 맥처럼)
