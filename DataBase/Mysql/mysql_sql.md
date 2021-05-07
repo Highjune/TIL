@@ -27,7 +27,7 @@ INSERT INTO db.user_table(
 ```
 SELECT *
 FROM ex_table
-WHERE specific_day BETWEEN DATE_FORMAT(now(), '%Y-%m-%d 00:00:00')  AND DATE_FORMAT(now(), '%Y-%m-%d 23:59:59')
+WHERE specific_day BETWEEN DATE_FORMAT(now(), '%Y-%m-%d 00:00:00') AND DATE_FORMAT(now(), '%Y-%m-%d 23:59:59')
 ``` 
 - 임의 번호 생성
     - 로그인시 keyPin 생성할 때 유용(중복접속X)
