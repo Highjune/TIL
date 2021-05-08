@@ -5,6 +5,43 @@
   - settings - keymap 확인가능
 - [단축키참고링크](https://gmlwjd9405.github.io/2019/05/21/intellij-shortkey.html)
   
+- 입력하고 있는 줄에서 바로 밑으로 내력기
+```
+command + shift + 엔터
+```
+- 메서드 사용시 필요한 파라미터 인자 확인
+```
+괄호 안에서
+command + p
+```
+
+- 포커스 뒤/앞으로 가기
+  - 이전 커서가 있던 화면으로 돌아갈 때 편함
+```
+command + [ 또는 ]
+```
+
+
+- 테스트 클래스 바로 만들기
+```
+해당하는 클래스 이름 코드줄 위에 커서 두고
+command + shift + t
+```
+
+- 리턴값 자동 생성
+```
+command + option + v
+```
+- 리팩토링과 관련된 여러 기능 확인
+```
+ctrl + t
+```
+
+- 특정 부분 함수로 뽑아내기(extract method)
+```
+블럭지정 후
+command + option + m
+```
 
 - 액션창 열기
 ```

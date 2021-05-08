@@ -264,3 +264,123 @@ java -jar  hello-spring-0.0.1-SNAPSHOT.jar
         }
     }
     ```
+
+# 컴포넌트 스캔과 자동 의존관계 설정
+- 컨트롤러는 서비스를 통해서 로직을 수행해야 하고(회원가입) 서비스를 통해서 데이터를 조회(회원조회)헤야 한다. -> `컨트롤러가 서비스를 의존한다.`
+- spring이 동작을 할 때 spring container라는 통이 생기는데, @Controller 등을 설정해주면 해당 어노테이션들이 붙어있는 클래스들을 객체를 생성해서 그 통에 넣어둔다. 그리고 스프링이 관리한다.(=스프링에서 bean이 관리된다고 표현한다)
+- 스프링이 관리를 하게 되면 다 spring container에 등록을 하고 그 spring container 로부터 다 받아서 쓸 수 있도록 변경해야 한다. 그래야만 하나의 객체를 등록만 하고 공용으로 그것만 쓰면 되는데, controller 마다 `new ~` 를 통해 생성하게 되면 비효율적
+- 스프링이 뜰 때 아래에서 스프링이 관리하고 있는 MemberService를 아래 생성자에 넣어준다. 생성자가 1개만 있으면 @Autowired 는 생략할 수 있다.
+```
+@Autowired
+    public MemberController(MemberService memberService) {
+        this.memberService = memberService;
+    }
+```
+- 그런데 에러(`Parameter 0 of constructor in hello.hellospring.controller.MemberController required a bean of type 'hello.hellospring.service.MemberService' that could not be found.`) 라는 에러가 난다. MemberService 를 Bean으로 등록하라는 `Consider defining a bean of type 'hello.hellospring.service.MemberService' in your configuration.` 메시지가 있는데, 즉 MemberService 는 순수한 자바 클래스이므로 스프링이 알 수 있는 방법 자체가 없다.
+- 그래서 `@Service` 애너테이션을 MemberService 클래스에 붙여줘야 한다. 또한 `@Repository` 애너테이션을 MemoryMemberRepository 클래스에 붙여준다. 그래야만 스프링이 뜰 때 이들을 스프링 컨테이너에 객체로 등록 후 관리를 하는 것이다.
+- 의존성(`Dependency Injection`)
+    - 스프링이 뜰 때 @Controller, @Service 에너테이션이 붙은 클래스를 컨테이너에 객체에 등록하고 그 생성자를 호출한다. 그런데 그 생성자에 `@Autowired`가 있으면 스프링 컨테이너에 있는 객체를 넣어준다(의존), 생성자에 @Autowired 가 있으면 스프링이 연관된 객체를 스프링 컨테이너에서 찾아서 넣어준다. 이렇게 객체 의존관계를 외부에서 넣어주는 것을 DI (Dependency Injection), 의존성 주입이라 한다.
+
+- 스프링을 쓰게 되면 웬만한 것들은 다 스프링 빈으로 등록해서 하는 것이 편하다. 그래야 이점이 많으므로.
+- 컴포넌트 스캔의 범위는?
+    - 메인 메서드가 존재하는 패키지(메인메서드가 있는 메인클래스의 package `선언부`) 를 포함한 그 하위 패키지에서만 `@Component` 를 scan한다. 물론 따로 설정으로 그 범위를 수정할 수는 있다.
+    - 그래서 이 패키지를 벗어난 곳의 특정한 패키지와 클래스에 @Component 스캔을 붙인다고 해도 의미가 없다. 
+    - 참고) `@SpringBootApplication` 애너테이션에 들어가보면 `@ComponentScan` 이 붙어있고 이것이 동작.
+
+- 스프링 빈은 `싱글톤` 이다.
+    - 스프링은 스프링 컨테이너에 스프링 빈을 등록할 때, 기본으로 싱글톤으로 등록한다. 유일하게 하나만 등록해서 공유. 따라서 같은 스프링 빈이면 모두 같은 인스턴스다. 설정으로 싱글톤이 아니게 설정할 수 있지만, 특별한 경우를 제외하면 대부분 싱글톤을 사용한다. 메모리 절약면에서 좋음.
+    - 그래서 여러 서비스들이 하나의 리포지토리를 의존했을 때, 여러 서비스들은 단 하나의 리포지토리 객체를 공유하는 것이다. 
+- 의존성 주입하는 방법이 크게 2가지 (2가지 방법 다 알아야 한다) 
+    1. 컴포넌트 스캔과 자동 의존관계 설정
+        - 위에서 @Controller, @Service 등으로 한 것이 바로 이 방법
+        - @Controller, @Service, @Repisotory 등의 어노테이션 내부에 들어가보면 다 `@Component`라는 것이 붙어있다. 스프링은 이것이 붙어있는 것들을 다 스프링 객체로 생성해서 컨테이너에 등.
+        - @Autowired 는 서로 의존관계를 설정해줌으로써 서로를 사용하게 할 수 있게끔 해주는 것이다. 
+
+
+    2. 자바 코드로 직접 스프링 빈 등록하기
+        - @Service, @Repository, @Autowired 애노테이션 제거
+    ```
+    @Configuration  
+    public class SpringConfig {
+
+        @Bean
+        public MemberService memberService() {
+            return new MemberService(memberRepository());
+        }
+
+        @Bean
+        public MemberRepository memberRepository() {
+            return new MemoryMemberRepository();
+        }
+    }        
+    ```
+    3. (추가) XML로 설정하는 방식도 있지만 최근에는 잘 사용하지 않으므로 생략한다.
+
+- 참고) DI에는 필드 주입, setter 주입, 생성자 주입 이렇게 3가지 방법이 있다. 의존관계가 실행중에 동적으로 변하는 경우는 거의(사실 아예) 없으므로 생성자 주입을 권장한다. (실행중에 동적으로 변한다는 것은 서버가 run되어 있는 상태에서 중간에 변경된다는 의미이다. 만약 그럴 일이 있을 때는 config 파일을 수정하고 서버를 다시 올리면 된다.) 실무에서는 주로 정형화된 컨트롤러, 서비스, 리포지토리 같은 코드는 컴포넌트 스캔을 사용한다.  
+    - 생성자 주입이 제일 좋다. application 이 처음에 실행이 될 때 조립(세팅)이 되는데, 그 후로 변경될 일이 없음으로 애초에 다 끝나는 것이 제일 좋다. 처음 조립시점에 생성자로 조립을 끝내는 것이 좋다. 
+    - setter주입은 비추천, setter는 public으로 열려있어야 하기 때문에 여기저기서 불필요하게 호출될 위험이 있다. 
+    - 필드주입도 비추천, 왜냐하면 중간에 바꿀 수 있는 방법이 없다. 
+- 그리고 정형화 되지 않거나, 상황에 따라 구현 클래스를 변경해야 하면 설정을 통해 스프링 빈으로 등록한다.
+- @Autowired 를 통한 DI는 helloConroller , memberService 등과 같이 스프링이 관리하는 객체에서만(컨테이너에 올라가는) 동작한다. 스프링 빈으로 등록하지 않고 내가 직접 생성한 객체에서는 동작하지 않는다. 즉 @Service도 붙이지 않고 @Configuration 붙어있는 클래스에서도 직접 생성하지 않은 클래스에서 @Autowired 를 사용하면 동작하지 않는다. 
+    
+
+# 회원 웹 기능 - 홈 화면 추가
+- 컨트롤러에서 아래와 같이 지정하고, `localhost:8080` 으로 들어가면 templates/home.html 이 나온다.
+```
+@Controller
+public class HomeController {
+
+    @GetMapping("/")
+    public String home() {
+        return "home";
+    }
+}
+```
+- 그런데 만약 `localhost:8080`으로 들어갔는데 컨트롤러에서 "/" 에 대한 설정이 되어 있지 않으면 static/index.html 을 찾아간다.
+
+# 회원 웹 기능 - 등록
+- 컨트롤러에서의 String return 경로
+    - 아래에서 createMembersForm.html 의 위치는 templates/members/createMembersForm.html 이다.
+```
+@GetMapping("/members/new")
+    public String createForm() {
+        return "members/createMembersForm";
+    }
+```
+
+- 한 컨트롤러 안에서 경로는 완전 동일한데 메서드가 같을 때
+    - 아래에서 GetMapping("/members/new") 는 uri 에 localhost:8080/members/new 라고 입력하면 templates/members 밑에 있는 createMembersForm.html 가 연결되는 것이고, @PostMapping("/members/new") 는 말 그대로 어디에선가 Post방식으로 /members/news 로 방향을 지정했을 경우에 작동된다.
+    ```
+    @GetMapping("/members/new")
+    public String createForm() {
+        return "members/createMembersForm";
+    }
+
+    @PostMapping("/members/new")
+    public String create(MemberForm form) {
+        Member member = new Member();
+        member.setName(form.getName());
+
+        System.out.println("member = " + member.getName());
+
+        memberService.join(member);
+
+        return "redirect:/";
+    }
+    ```
+    - createMembersForm.html
+    ```
+    ...
+    <form action="/members/new" method="post">
+        <div class="form-group">
+            <label for="name">이름</label>
+            <input type="text" id="name" name="name" placeholder="이름을입력하세요">
+        </div>
+        <button type="submit">등록</button>
+    </form>
+    ...
+    ```
+
+- http 메서드 중 get은 조회할 때 주로 사용하고, post는 데이터를 폼에 넣어서 전달할 때 주로 씀
+
+
