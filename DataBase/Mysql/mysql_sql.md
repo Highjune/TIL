@@ -1,12 +1,33 @@
 ## SQL 
 > 유용하거나 생소한 SQL 기록
 
+- 기존에 존재하는 key값을 제외하고(중복제외) insert 하고 싶을 때
+```
+INSERT INTO db.user_table(
+			id
+			, `name`
+			, admin_pw
+			) 
+			
+			SELECT 
+			'google_login_id'
+			, 'google'
+			, SHA2(1q2w3e4r, 256)
+			FROM DUAL
+			WHERE NOT EXISTS (
+						SELECT id
+						FROM db.user_table
+						WHERE id = 'id'
+					);
+```
+
+
 - 특정한 날(1일)의 범위 선택(between 으로)
     - 사실 아래처럼 말고 부등호로 표현하면 더 간단할 수 있다.
 ```
 SELECT *
 FROM ex_table
-WHERE specific_day BETWEEN DATE_FORMAT(now(), '%Y-%m-%d 00:00:00')  AND DATE_FORMAT(now(), '%Y-%m-%d 23:59:59')
+WHERE specific_day BETWEEN DATE_FORMAT(now(), '%Y-%m-%d 00:00:00') AND DATE_FORMAT(now(), '%Y-%m-%d 23:59:59')
 ``` 
 - 임의 번호 생성
     - 로그인시 keyPin 생성할 때 유용(중복접속X)
