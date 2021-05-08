@@ -1,8 +1,15 @@
 # 인텔리J
 
 ## 단축키
+- intelli J 툴 안에서 단축키 확인하는 방법
+  - settings - keymap 확인가능
 - [단축키참고링크](https://gmlwjd9405.github.io/2019/05/21/intellij-shortkey.html)
   
+
+- 액션창 열기
+```
+command + shift + a
+```
 
 - build.gradle안에서 compile메소드의 자동완성
 ```
