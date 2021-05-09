@@ -595,5 +595,28 @@ implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     spring.jpa.hibernate.ddl-auto=none
     ```
 - jpa 는 인터페이스, hibernate는 구현체
+    - jpa는 자바진영의 표준인터페이스, 구현은 여러업체들이라 생각하면 된다. 
 - jpa를 쓰기 위해서는 Entity를 맵핑해야 한다.
+    - ORM(Object - Relational - Mapping)    
+    - @Entity를 붙이면 jpa가 관리하는 객체가 된다.
+    - @GeneratedType(strategy = GenerationType.IDENTITY) 는 db에서 자동생성 해주는 값 설정. cf) db가 알아서 생성해주는 것을 identity 라고 한다.
+    ```
+    @Entity
+    public class Member {
+
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
+        
+        private String name;
+
+        public Long getId() {
+            return id;
+        }
+        ...
+    ```
+
+- Repository
+    - EntityManager를 주입받아야 한다. jpa는 모든 것들이 다 EntityManager를 통해서 동작한다. application.properties에서 `implementation 'org.springframework.boot:spring-boot-starter-data-jpa'` 해주면 스프링부트가 알아서 EntityManager를 생성주고 db와 연결을 해준다. 이 만들어진 것을 Injection 받으면 된다. 
+    - findByName일 경우에는 `jpql`이라는 객체지향 쿼리를 사용해야 한다.
     - 
