@@ -586,11 +586,11 @@ implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 ```
 - application.properties
-    - 아래를 추가하면 jpa가 날리는 sql문을 직접 확인할 수 있다.
+    - 아래를 추가하면 jpa가 날리는 sql문을 직접 확인할 수 있다. 왜냐하면 결국의 db에는 쿼리가 날아가야 된다. 
     ```
     spring.jpa.show-sql=true
     ```
-    - 객체에 대한 테이블 자동생성을 취소. jpa는 객체를 보고 테이블을 자동으로 다 만든다. 그런데 여기에서는 이미 테이블 다 만들어놨기 때문에 자동생성을 none으로 전환
+    - 객체에 대한 테이블 자동생성을 취소. jpa는 객체를 보고 테이블을 자동으로 다 만든다. 그런데 여기에서는 이미 테이블 다 만들어놨기 때문에 자동생성을 none으로 전환. create를 사용하면 엔티티 정보를 바탕으로 테이블도 직접 생성해준다.
     ```
     spring.jpa.hibernate.ddl-auto=none
     ```
@@ -617,6 +617,305 @@ implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     ```
 
 - Repository
-    - EntityManager를 주입받아야 한다. jpa는 모든 것들이 다 EntityManager를 통해서 동작한다. application.properties에서 `implementation 'org.springframework.boot:spring-boot-starter-data-jpa'` 해주면 스프링부트가 알아서 EntityManager를 생성주고 db와 연결을 해준다. 이 만들어진 것을 Injection 받으면 된다. 
+    - EntityManager를 주입받아야 한다. jpa는 모든 것들이 다 `EntityManager`를 통해서 동작한다. application.properties에서 `implementation 'org.springframework.boot:spring-boot-starter-data-jpa'` 해주면 스프링부트가 알아서 EntityManager를 생성주고 db와 연결을 해준다. 이 만들어진 것을 Injection 받으면 된다. 
     - findByName일 경우에는 `jpql`이라는 객체지향 쿼리를 사용해야 한다.
-    - 
+        - 객체를 대상으로 쿼리를 날리는 것. 그러면 이것이 sql로 번역이 된다. from의 대상이 객체(member)이며 select도 m.id 와 같은 것이 아니라 객체(m, 즉 Member) 자체를 select한다. 
+        - 원래는 m.id, m.name 등을 select 해와서 따로 mapping을 해야 하는데 jpa에서는 자동적으로 맵핑을 다 해준다.
+        ```
+        select m from Member m
+        ```
+        - 조회, 저장, 업데이트와 같은 것들은 sql(jpql) 을 짤 필요 없다. 하지만 pk 기반이 아닌 것들은 필요. 하지만 `jpa`말고 스프링으로 다시 감싼 `스프링 데이터 JPA`는 pk 기반이 아닌 것들도 필요가 없다. 
+
+    - 코드
+    ```
+    package hello.hellospring.repository;
+
+    import hello.hellospring.domain.Member;
+
+    import javax.persistence.EntityManager;
+    import java.util.List;
+    import java.util.Optional;
+
+    public class JpaMemberRepository implements MemberRepository{
+
+        private final EntityManager em;
+
+        public JpaMemberRepository(EntityManager em) {
+            this.em = em;
+        }
+
+        @Override
+        public Member save(Member member) {
+            em.persist(member);
+            return member;
+        }
+
+        @Override
+        public Optional<Member> findById(Long id) {
+            Member member = em.find(Member.class, id);
+            return Optional.ofNullable(member);
+        }
+
+        @Override
+        public Optional<Member> findByName(String name) {
+            List<Member> result = em.createQuery("select m from Member m where m.name = :name", Member.class)
+                    .setParameter("name", name)
+                    .getResultList();
+
+            return result.stream().findAny();
+        }
+
+        @Override
+        public List<Member> findAll() {
+            return em.createStoredProcedureQuery("select m from Member m", Member.class)
+                    .getResultList();
+        }
+    }
+    ```
+
+- jpa 를 쓰려면 항상 트랜잭션이 있어야 한다. 그래서 Service에 @Transactional 추가
+JPA를 통한 모든 데이터 변경은 트랜잭션 안에서 실행해야 한다.
+```
+
+@Transactional
+public class MemberService {
+    ...
+
+```
+- jpa를 세팅하면 기본적으로 jpa인터페이스의 구현체는 hibernate로 세팅이 된다.
+
+- SpringConfig에 인터페이스 구현체 교체하기
+    - 전
+    ```
+    @Configuration
+    public class SpringConfig {
+
+        private DataSource dataSource;
+
+        @Autowired
+        public SpringConfig(DataSource dataSource) {
+            this.dataSource = dataSource;
+        }
+
+        @Bean
+        public MemberService memberService() {
+            return new MemberService(memberRepository());
+        }
+
+        @Bean
+        public MemberRepository memberRepository() {
+            return new JdbcTemplateMemberRepository(dataSource);
+        }
+        
+    }
+    ```
+
+    - 후
+    ```
+    @Configuration
+    public class SpringConfig {
+
+        private DataSource dataSource;
+        private EntityManager em;
+
+        public SpringConfig(DataSource dataSource, EntityManager em) {
+            this.dataSource = dataSource;
+            this.em = em;
+        }
+
+        @Bean
+        public MemberService memberService() {
+            return new MemberService(memberRepository());
+        }
+
+        @Bean
+        public MemberRepository memberRepository() {
+            return new JpaMemberRepository(em);
+        }
+    ```
+
+# 스프링 데이터 JPA
+- 주의) 스프링 데이터 JPA는 JPA를 편리하게 사용하도록 도와주는 기술이다. 따라서 JPA를 먼저 학습한 후에 스프링 데이터 JPA를 학습해야 한다.
+- 실무에서는 JPA와 스프링 데이터 JPA를 기본으로 사용하고, 복잡한 동적 쿼리는 Querydsl이라는 라이브러리를 사용하면 된다. Querydsl을 사용하면 쿼리도 자바 코드로 안전하게 작성할 수 있고, 동적 쿼리도 편리하게 작성할 수 있다. 이 조합으로 해결하기 어려운 쿼리는 JPA가 제공하는 네이티브 쿼리(일반 sql) 를 사용하거나, 앞서 학습한 스프링 JdbcTemplate를 사용하면 된다. 
+- 실무에서는 jpa, spring data jpa, Querydsl 을 다 조합해서 사용한다. 
+- SpringDataMemberRepository 인터페이스
+    - JpaRepository 인터페이스를 받으면, 스프링 데이터 JPA가 SpringDataMemberRepository 의 구현체를 자동으로 만들어 주고 스프링 빈으로 자동 등록을 해준다. 그래서 그것을 그대로 사용하면 된다. 
+```
+public interface SpringDataMemberRepository extends JpaRepository<Member, Long>, MemberRepository {
+
+    @Override
+    Optional<Member> findByName(String name);
+}
+```
+- SpringConfig에서 스프링 데이터 JPA가 만든 것을 그대로 사용하면 된다.
+```
+@Configuration
+public class SpringConfig {
+
+    private final MemberRepository memberRepository;
+
+    public SpringConfig(MemberRepository memberRepository) {
+        this.memberRepository = memberRepository;
+    }
+
+    @Bean
+    public MemberService memberService() {
+        return new MemberService(memberRepository);
+    }
+}
+```
+
+- 테스트를 돌려서 로그를 살펴보면 JPA와 마찬가지로 hibernate를 사용한다. 즉, 스프링 데이터 JPA는 JPA의 기술을 가져다가 사용하는 것임
+
+- 스프링 데이터 JPA 내부에 공통적으로 사용할 수 있는 기본메서드들이 다 존재한다. 그런데 공통으로 존재할 수 없는 메서드들은?
+    - 인터페이스 명명 규칙에 비밀이 있다. findByName 이라고 하면 이것은 `select m from Member m where m.name = ?` 와 같은 의미를 가지게 된다. 쿼리는 대략적으로 단순한 것들(80%) + 복잡한 것들(20%)가 있을텐데, 이 중에서 단순한 것들은 인터페이스 정의만으로 다 해결이 된다.
+
+- 스프링 데이터 JPA 제공 기능
+    - 인터페이스를 통한 기본적인 CRUD
+    - findByName(), findByEmail() 처럼 메서드 이름만으로 조회 기능 제공
+    - 페이징 기능 자동 제공
+
+
+
+# AOP
+- AOP가 필요한 상황
+    - 모든 메소드의 호출 시간을 측정하고 싶다면?
+    - 공통 관심 사항(cross-cutting concern) vs 핵심 관심 사항(core concern)
+    - 회원 가입 시간, 회원 조회 시간을 측정하고 싶다면?
+- MemberService 수정 전 (매번 시간 측정하는 로직 넣기 전)
+```
+...
+public Long join(Member member) {
+            // 같은 이름이 있는 중복 회원X
+            validateDuplicateMember(member); // 중복회원 검증
+            memberRepository.save(member);
+            return member.getId();
+    }
+
+...
+
+public List<Member> findMembers() {
+            return memberRepository.findAll();
+        }
+    }
+```
+
+- MemberService 수정 후 (매번 시간 측정하는 로직 넣기) 
+```    
+public Long join(Member member) {
+
+...
+        long start = System.currentTimeMillis();
+        try {
+            // 같은 이름이 있는 중복 회원X
+            validateDuplicateMember(member); // 중복회원 검증
+            memberRepository.save(member);
+            return member.getId();
+        } finally {
+            long finish = System.currentTimeMillis();
+            long timeMs = finish - start;
+            System.out.println("join = " + timeMs + "ms");
+        }
+    }
+
+...
+
+public List<Member> findMembers() {
+        long start = System.currentTimeMillis();
+        try {
+            return memberRepository.findAll();
+        } finally {
+            long finish = System.currentTimeMillis();
+            long timeMs = finish - start;
+            System.out.println("findMembers " + timeMs + "ms");
+        }
+    }
+
+```
+
+- 이렇게 되면 문제점은? 위와 같은 메서드가 999개라면??..
+    - 회원가입, 회원 조회에 시간을 측정하는 기능은 핵심 관심 사항이 아니다. 
+    - 시간을 측정하는 로직은 공통 관심 사항이다.
+    - 시간을 측정하는 로직과 핵심 비즈니스의 로직이 섞여서 유지보수가 어렵다. 
+    - 시간을 측정하는 로직을 별도의 공통 로직으로 만들기 매우 어렵다.
+    - 시간을 측정하는 로직을 변경할 때 모든 로직을 찾아가면서 변경해야 한다.
+
+
+# AOP 적용
+- AOP: Aspect Oriented Programming
+- 공통 관심 사항(cross-cutting concern) vs 핵심 관심 사항(core concern) 분리
+
+- 위에서 각각 메서드에 작업한 시간 측정 로직을 한 곳에 모으고 원하는 곳에 공통 관심 사항 적용
+
+- aop 코드  
+    - 아래 클래스를 스프링 빈으로 등록해야 하는데, @Component를 붙여도 되는데 보통은 따로 `스프링 빈으로 직접 등록`한다. 왜냐하면 단순하게 @Component를 달아서 사용하는 것은 정형화된 것들에 붙인다. 그런데 AOP같은 경우에는 정형화 된 것이라기보다 좀 특별한 것이기 때문에 따로 bean 으로 등록하는 것이 더 옳다. 그래야지 따로 `AOP가 등록되어 쓰이는구나`라고 인지하기 쉬움.
+```
+@Aspect
+@Component
+public class TimeTraceAop {
+
+    public Object execute(ProceedingJoinPoint joinPoint) throws Throwable {
+        long start = System.currentTimeMillis();
+        System.out.println("START: " + joinPoint.toString());
+        try {
+            return joinPoint.proceed();
+        } finally {
+            long finish = System.currentTimeMillis();
+            long timeMs = finish - start;
+            System.out.println("END: " + joinPoint.toString() + " " + timeMs + "ms");
+        }
+    }
+```
+
+- SpringConfig 
+    - 이곳에 직접 등록
+    - 그런데 이 프로젝트에서는 그냥... TimeTraceAop 클래스에 간단하게 @Component 붙임
+```
+@Configuration
+public class SpringConfig {
+
+    private final MemberRepository memberRepository;
+
+    ...
+
+    @Bean
+    public TimeTraceAop timeTraceAop() {
+        return new TimeTraceAop();
+    }
+```
+
+- AOP의 타겟팅 설정
+    - TimeTraceAop 클래스의 execute위에 어노테이션 설정
+    - `@Around("execution(* hello.hellospring..*(..))")`의 의미는 hello.hellospring 패키지 밑으로 다 적용했다는 의미.  
+        - 보통 패키지 레벨로 많이 한다.
+        - 만약에 `@Around("execution(* hello.hellospring.service..*(..))")` 로 하게 되면 service 패키지 밑에 있는 애들만 적용된다. 
+```
+@Aspect
+@Component
+public class TimeTraceAop {
+
+    @Around("execution(* hello.hellospring..*(..))")
+    public Object execute(ProceedingJoinPoint joinPoint) throws Throwable {
+        long start = System.currentTimeMillis();
+        System.out.println("START: " + joinPoint.toString());
+        try {
+            return joinPoint.proceed();
+        } finally {
+            long finish = System.currentTimeMillis();
+            long timeMs = finish - start;
+            System.out.println("END: " + joinPoint.toString() + " " + timeMs + "ms");
+        }
+    }
+}
+```
+
+- 해결
+    - 회원가입, 회원 조회등 핵심 관심사항과 시간을 측정하는 공통 관심 사항을 분리한다.
+    - 시간을 측정하는 로직을 별도의 공통 로직으로 만들었다.
+    - 핵심 관심 사항을 깔끔하게 유지할 수 있다.
+    - 변경이 필요하면 이 로직만 변경하면 된다.
+    - 원하는 적용 대상을 선택할 수 있다.
+
+- 원리  
+    - 실제 클래스들의 복제라고 할 수 있는 프록시객체를 서로 의존관계들이 가리키게 되어서 AOP가 이루어진다. 물론 프록시 동작 이후에는 `joinPoint.proceed()`를 통해서 진짜 클래스 객체들이 실행되긴 한다. 
+    - 이 모든 것들은 스프링 컨테이너 안에서 `DI` 이루어지기 때문에 가능한 것이다. 왜냐하면 가짜를 만들어서 DI를 해줄 수 있기 때문이다. 이것이 바로 `DI의 장점` 이라고 볼 수 있다. DI를 사용하지 않고 직접 new를 해서 사용하게 된다면 이런 작업들을 할 수 없다. 각각의 빈들은 뭐가 DI 되는지 모르는 상태에서 프록시가 들어오고 그냥 그대로 사용하게 된다. 
