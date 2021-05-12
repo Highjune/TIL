@@ -20,6 +20,21 @@ command + p
 command + e
 ```
 
+- 리턴의 값을 한줄로 표현하기
+  ```
+  command + option + n
+  ```
+ex) 
+  - 전
+  ```
+  List<Member> list = find~~
+  return list;
+  ```
+  - 후
+  ```
+  return find~
+  ```
+
 - 포커스 뒤/앞으로 가기
   - 이전 커서가 있던 화면으로 돌아갈 때 편함
 ```
