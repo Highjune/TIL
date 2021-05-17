@@ -353,7 +353,7 @@ public class HomeController {
 package hello.hellospring.controller;
 public class MemberForm {
 
-    private String name;
+    private String name; // html의 form에서 post방식으로 넘길때의 name과 같도록.
     
     public String getName() {
        return name;
