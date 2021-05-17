@@ -401,6 +401,16 @@ public class MemberForm {
 - http 메서드 중 get은 조회할 때 주로 사용하고, post는 데이터를 폼에 넣어서 전달할 때 주로 씀
 
 # 회원 웹 기능 - 조회
+- 회원 컨트롤러에서 조회 기능
+```
+@GetMapping(value = "/members")
+public String list(Model model) {
+    List<Member> members = memberService.findMembers();
+    model.addAttribute("members", members);
+    return "members/memberList";
+}
+```
+
 - 템플릿 언어가 렌더링 해서 여러 데이터들을 테이블에 넣어서 보여주는 것
 ```
 <table>
