@@ -26,7 +26,7 @@
 - IntelliJ 로 압축푼 폴더(`hello-spring`)의 build.gradle 파일 클릭 후 open
 - 스프링 부트는 톰캣 웹 서버를 내장하고 있다.
 - 메인 메서드 실행할 때 바로 자바를 실행하지 않고 gradle을 통해서 실행하게 된다면? 좀 느릴 때가 있음
-    - Setting에서 Build, Exe.. - Bulid Toos - Gradle 에서 Build and run using 과 Run tests Using을 gradle -> IntellI IDEA 로 변경
+    - Preferences - Setting에서 Build, Exe.. - Bulid Toos - Gradle 에서 Build and run using 과 Run tests Using을 gradle -> IntellI IDEA 로 변경
     - 바로 intelli J 에서 자바를 바로 띄워서 돌리기 때문에 빠르다. gradle을 통하지 않고 바로 실행 
 
 
