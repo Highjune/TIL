@@ -450,7 +450,7 @@ create table member
 
 # 순수 JDBC
 - db에 접속하려면 datasource라는 것이 필요하다. 
-- application.propertiedp 
+- application.properties 
 ```
 spring.datasource.url=jdbc:h2:tcp://localhost/~/test
 spring.datasource.driver-class-name=org.h2.Driver
