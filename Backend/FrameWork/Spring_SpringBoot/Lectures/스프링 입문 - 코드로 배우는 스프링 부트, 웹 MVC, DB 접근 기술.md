@@ -348,6 +348,23 @@ public class HomeController {
     }
 ```
 
+- 웹 등록 화면에서 데이터를 전달 받을 폼 객체
+```
+package hello.hellospring.controller;
+public class MemberForm {
+
+    private String name;
+    
+    public String getName() {
+       return name;
+    }
+    
+    public void setName(String name) {
+       this.name = name;
+    }
+}
+```
+
 - 한 컨트롤러 안에서 경로는 완전 동일한데 메서드가 같을 때
     - 아래에서 GetMapping("/members/new") 는 uri 에 localhost:8080/members/new 라고 입력하면 templates/members 밑에 있는 createMembersForm.html 가 연결되는 것이고, @PostMapping("/members/new") 는 말 그대로 어디에선가 Post방식으로 /members/news 로 방향을 지정했을 경우에 작동된다.
     ```
