@@ -293,7 +293,7 @@ java -jar  hello-spring-0.0.1-SNAPSHOT.jar
 - 의존성 주입하는 방법이 크게 2가지 (2가지 방법 다 알아야 한다) 
     1. 컴포넌트 스캔과 자동 의존관계 설정
         - 위에서 @Controller, @Service 등으로 한 것이 바로 이 방법
-        - @Controller, @Service, @Repisotory 등의 어노테이션 내부에 들어가보면 다 `@Component`라는 것이 붙어있다. 스프링은 이것이 붙어있는 것들을 다 스프링 객체로 생성해서 컨테이너에 등.
+        - @Controller, @Service, @Repisotory 등의 어노테이션 내부에 들어가보면 다 `@Component`라는 것이 붙어있다. 스프링은 이것이 붙어있는 것들을 다 스프링 객체로 생성해서 컨테이너에 등록.
         - @Autowired 는 서로 의존관계를 설정해줌으로써 서로를 사용하게 할 수 있게끔 해주는 것이다. 
 
 
