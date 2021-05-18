@@ -512,6 +512,7 @@ public class JdbcMemberRepository implements MemberRepository{
 
         @Bean 
         public MemberRepository memberRepository() {
+            // return new MemoryMemberRepository(); 변경
              return new JdbcMemberRepository(dataSource);
         }
     }
