@@ -26,7 +26,7 @@
 - IntelliJ 로 압축푼 폴더(`hello-spring`)의 build.gradle 파일 클릭 후 open
 - 스프링 부트는 톰캣 웹 서버를 내장하고 있다.
 - 메인 메서드 실행할 때 바로 자바를 실행하지 않고 gradle을 통해서 실행하게 된다면? 좀 느릴 때가 있음
-    - Setting에서 Build, Exe.. - Bulid Toos - Gradle 에서 Build and run using 과 Run tests Using을 gradle -> IntellI IDEA 로 변경
+    - Preferences - Setting에서 Build, Exe.. - Bulid Toos - Gradle 에서 Build and run using 과 Run tests Using을 gradle -> IntellI IDEA 로 변경
     - 바로 intelli J 에서 자바를 바로 띄워서 돌리기 때문에 빠르다. gradle을 통하지 않고 바로 실행 
 
 
@@ -55,7 +55,7 @@
 
 
 # 빌드하는 법, 실행 
-- 이제껏은 그냥 intelli J 안에서 실행한 것이다. (8080포트 중복될 수 있으니 intelli J 안의 )
+- 이제껏은 그냥 intelli J 안에서 실행한 것이다. (8080포트 중복될 수 있으니 intelli J 안의 프로젝트는 꺼야 한다.)
 - 콘솔로 이동
 - 해당 프로젝트로 이동해서 (~~/hello-spring)
 - 맥에서 빌드, 실행
@@ -186,9 +186,9 @@ java -jar  hello-spring-0.0.1-SNAPSHOT.jar
         {"name":"hellohellojune"}
         ```
         - 과거에는 xml를 많이 썼지만, 무겁고 태그를 열고 닫고 등의 번거로움 존재. 요즘에는 훨씬 더 깔끔한 JSON 데이터 형식으로 주고받음. 
-        - 이렇게 스프링에서는 `객체 반환 & @ResponseBody` 를 사용하면 웹브라우저나 서버에게 JSON 형식의 데이터(http의 body에 실어서)를 리턴해주는 것이 기본.(물론 xml로 변환할 수도 있음)
+        - 이렇게 스프링에서는 `객체 반환 & @ResponseBody` 를 사용하여 웹브라우저나 서버에게 JSON 형식의 데이터(http의 body에 실어서)를 리턴해주는 것이 기본.(물론 xml로 변환할 수도 있음)
         - @ResponseBody가 오면 `HttpMessageConverter`가 동작한다.
-            - 기본 객체처리 : `Mappin`gJackson2HttpMessageConverter가 JSON 으로 변환할 수 있게 작동. `객체를 JSON으로 변환해주는 대표 라이브러리가 2개 있는데 jackson, gson`. 스프링에서는 jackson을 기본적으로 탑재하도록 세팅.(물론 gson으로 변경도 가능)
+            - 기본 객체처리 : `MappingJackson2HttpMessageConverter`가 JSON 으로 변환할 수 있게 작동. `객체를 JSON으로 변환해주는 대표 라이브러리가 2개 있는데 jackson, gson`. 스프링에서는 jackson을 기본적으로 탑재하도록 세팅.(물론 gson으로 변경도 가능)
         - 기본 문자처리 : `StringHttpMessageConverter`가 작동
 
 
@@ -246,7 +246,7 @@ java -jar  hello-spring-0.0.1-SNAPSHOT.jar
 
 # 회원 서비스 개발
 - @BeforeEach 설정
-    - 테스트클래스마다 새로운 Repository를 생성하게 되면 각각 다 다른 메모리 Repository를 사용하는 것이므로 부적합.
+    - 테스트클래스마다 새로운 Repository를 생성하게 되면 각각 다 다른 메모리 Repository를 사용하는 것이므로 부적합. 그래서 하나의 객체(bean)을 만들어서 주입받는 식으로 서로 공유해서 쓴다.
     - 기존에는 회원 서비스가 메모리 회원 리포지토리를 직접 생성하게 함 -> 회원 리포지토리의 코드가 회원 서비스 코드를 DI 가능하게 변경한다.
     - 기존
     ```
@@ -293,7 +293,7 @@ java -jar  hello-spring-0.0.1-SNAPSHOT.jar
 - 의존성 주입하는 방법이 크게 2가지 (2가지 방법 다 알아야 한다) 
     1. 컴포넌트 스캔과 자동 의존관계 설정
         - 위에서 @Controller, @Service 등으로 한 것이 바로 이 방법
-        - @Controller, @Service, @Repisotory 등의 어노테이션 내부에 들어가보면 다 `@Component`라는 것이 붙어있다. 스프링은 이것이 붙어있는 것들을 다 스프링 객체로 생성해서 컨테이너에 등.
+        - @Controller, @Service, @Repisotory 등의 어노테이션 내부에 들어가보면 다 `@Component`라는 것이 붙어있다. 스프링은 이것이 붙어있는 것들을 다 스프링 객체로 생성해서 컨테이너에 등록.
         - @Autowired 는 서로 의존관계를 설정해줌으로써 서로를 사용하게 할 수 있게끔 해주는 것이다. 
 
 
@@ -348,6 +348,23 @@ public class HomeController {
     }
 ```
 
+- 웹 등록 화면에서 데이터를 전달 받을 폼 객체
+```
+package hello.hellospring.controller;
+public class MemberForm {
+
+    private String name; // html의 form에서 post방식으로 넘길때의 name과 같도록.
+    
+    public String getName() {
+       return name;
+    }
+    
+    public void setName(String name) {
+       this.name = name;
+    }
+}
+```
+
 - 한 컨트롤러 안에서 경로는 완전 동일한데 메서드가 같을 때
     - 아래에서 GetMapping("/members/new") 는 uri 에 localhost:8080/members/new 라고 입력하면 templates/members 밑에 있는 createMembersForm.html 가 연결되는 것이고, @PostMapping("/members/new") 는 말 그대로 어디에선가 Post방식으로 /members/news 로 방향을 지정했을 경우에 작동된다.
     ```
@@ -384,6 +401,16 @@ public class HomeController {
 - http 메서드 중 get은 조회할 때 주로 사용하고, post는 데이터를 폼에 넣어서 전달할 때 주로 씀
 
 # 회원 웹 기능 - 조회
+- 회원 컨트롤러에서 조회 기능
+```
+@GetMapping(value = "/members")
+public String list(Model model) {
+    List<Member> members = memberService.findMembers();
+    model.addAttribute("members", members);
+    return "members/memberList";
+}
+```
+
 - 템플릿 언어가 렌더링 해서 여러 데이터들을 테이블에 넣어서 보여주는 것
 ```
 <table>
@@ -423,7 +450,7 @@ create table member
 
 # 순수 JDBC
 - db에 접속하려면 datasource라는 것이 필요하다. 
-- application.propertiedp 
+- application.properties 
 ```
 spring.datasource.url=jdbc:h2:tcp://localhost/~/test
 spring.datasource.driver-class-name=org.h2.Driver
@@ -485,6 +512,7 @@ public class JdbcMemberRepository implements MemberRepository{
 
         @Bean 
         public MemberRepository memberRepository() {
+            // return new MemoryMemberRepository(); 변경
              return new JdbcMemberRepository(dataSource);
         }
     }
