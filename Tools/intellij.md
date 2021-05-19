@@ -15,6 +15,11 @@ command + shift + 엔터
 command + p
 ```
 
+- 과거 히스토리(내역, history) 검색
+```
+command + e
+```
+
 - 최근에 봤던 것 목록 보기
 ```
 command + e
