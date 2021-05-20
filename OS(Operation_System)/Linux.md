@@ -45,13 +45,28 @@ shift + g
 
 
 - `top` 시스템 상태 전반적으로 확인(cp, memory, process)
-  - `shift + m` cpu사용률 내림차순으로
-  - (shift + m 누른 후) `c`자세히 보여줌.
+  - `shift + m` 메모리사용률 내림차순으로, `shift + t` CPU시간 순서, `shift + p` CPU 사용량 순서.
+  - (shift + m 누른 후) `c` 상세표시 전환
+
 
 ```
 top
 shift + m
 c
+q(top 모드 종료, quit 의미)
+```
+
+- 실행중인 프로세스 종료 
+```
+kill PID
+```
+```
+다른 사용자의 프로세스라면 sudo 붙여야됨
+sudo kill PID
+```
+```
+여러 프로세스 ID를 동시에 띄워서 나열하면 동시에 종료 가능
+sudo kill 111 222 333 444 ...C
 ```
 
 - 디렉토리 삭제
