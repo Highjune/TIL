@@ -29,7 +29,7 @@ class Solution {
 ```
 
 # 타인 풀이
-- 꽤 시간들여 이해함
+- 꽤 시간써서 이해함
 ```
 class Solution {
 
