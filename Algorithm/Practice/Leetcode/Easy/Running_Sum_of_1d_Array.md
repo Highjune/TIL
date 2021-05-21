@@ -39,6 +39,8 @@ public int[] runningSum(int[] nums) {
     }
 }
 ```
+
+
 # 정답2
 - 시간복잡도 O(N)
 - 더 깔끔
@@ -53,4 +55,3 @@ class Solution {
     }
 }
 ```
-
