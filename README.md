@@ -10,8 +10,6 @@
 
 ## 분류
 
-
-
 ### Languages
 - [Java](https://github.com/Highjune/TIL/tree/master/Languages/Java)
 
@@ -30,3 +28,4 @@
     - [sql](https://github.com/Highjune/TIL/blob/master/DateBase/Mysql/mysql_sql.md)
 
 ## OS(Operation_System)
+- Linux
