@@ -309,6 +309,78 @@ chmod +x practice.sh
     latest=${base}/access.log
     prev=${base}/access.log.7.gz
     ```
+- 환경변수
+  - 작업하는 서버에 따라 관리용 사용자 이름이 달라서 실행할 내용이 다른 경우 등
+  - 쉘 스크립트로 만들어도 서버가 바뀌면 재사용할 수 없는 경우
+  - `환경변수는 자기가 정의하지 않아도 $변수명으로 값을 참조할 수 있는 특수한 변수`
+  - 환경변수를 사용하면 셸 스크립트 실행 시 값이 변하므로 환경에 맞는 처리가 가능해진다.
+  ```
+  $HOME 
+  
+  또는
+
+  {HOME}
+  ```
+  - ex) `HOME`은 홈 디렉터리 경로라는 의미의 환경변수
+    - 어떤 사용자로 로그인 하든간에 그 사용자의 홈 디렉터리 경로가 된다.
+    ```
+    user로 로그인
+      #HOME -> /home/user
+    tucker로 로그인
+      #HOME -> /home/tucker
+    highjune로 로그인
+      #HOME -> /home/highjune
+    ```
+  - 아래와 같은 쉘 스크립트가 있을 경우
+  ```
+  #!/bin/bash
+  mkdir #{HOME}/result
+  ```
+  위처럼 작성해두면 로그인한 user에 따라 다르게 적용가능
+  ```
+  #!/bin/bash
+  mkdir /home/user/result
+
+  #!/bin/bash
+  mkdir /home/tucker/result
+
+  #!/bin/bash
+  mkdir /home/highjune/result
+  ```
+  - 이렇게 환경 변숫값은 스크립트를 실행할 때의 환경에 맞게 변하니까 이런 작업들이 가능한 것
+  - 지금 환경에서 어떤 환경 변수를 쓸 수 있는지는 `env` 명령어를 실행해서 목록을 볼 수 있다. 대부분은 프로그램에서 사용하기 위한 정보이다.
+  ```
+  env
+  ```
+  - 파일명 역시 `명령어 치환`으로 쉽게 가능하다
+    - 셸이나 셸 스크립트에서 아래처럼 적으면 그 부분이 명령어열 실행 결과(표준 출력)의 문자열로 치환된다.
+    ```
+    ${명령어열} 또는 `명령어열` , 그런데 보통 {명령어열} 처럼 사용한다.
+    ```
+    - 명령어 치환을 조합해서 그 날의 날짜를 파일명에 포함시키는 경우
+    ``` 
+    mv result.txt result-#(data +%Y-%m-%d).txt
+    ```
+    - 명령어 치환은 겹칠 수 있다.
+      - 파일이나 디렉터리 경로를 넘기면 부모 디렉터리 경로를 돌려주는 dirname이라는 명령어가 있다
+      ``` 
+      dirname /data/2013-01-01/files/file.txt -> /data/2013-01-01/files
+      dirname /data/2013-01-01/files -> /data/2013-01-01
+      ```
+      명령어 치환 겹치게 해서 아래처럼 사용할 수 있다.
+      ```
+      path=/data/2013-01-01/files/file.txt
+      parent=${dirname $path}
+      grandparent=$(dirname $parent) -> /data/2013-01-01
+
+      위의 grandparent를 아래처럼 변경가능
+
+      grandparent=${dirname $(dirname $path)}
+      ```
+    - 명령어 치환에서 파이프라인이나 변수 등도 사용 가능
+
+
+
 
 
 # 가상단말(tmux)
