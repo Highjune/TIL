@@ -43,6 +43,7 @@ class Solution {
 
 # 타인 풀이
 - https://leetcode.com/problems/make-the-string-great/discuss/781009/Java-Simple-Solution-using-Stack-Explained
+- 훨씬 더 깔끔
 ```
 class Solution {
     public String makeGood(String s) {
@@ -60,6 +61,7 @@ class Solution {
         }
         return new String(res);
     }
-
 ```
+
+
 
