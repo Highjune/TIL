@@ -165,7 +165,7 @@ class Solution {
         
         for(int i=0; i<A.length; i++) {
             if(A[i] == maxKey)
-                return i;
+                return A[i];
         }
         
         return -1;
