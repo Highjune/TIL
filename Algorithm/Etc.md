@@ -37,3 +37,7 @@
 - 기술 면접에서 코테에서 제출한 코드 다시 보여주면서 어디가 문제인지 찾아보라는 질문
   - 그래서 복기해둔 것을 면접에서 바로 활용가능
 - 손 코딩, 화이트보드 코딩 테스트가 있는 회사에 지원할 경우 지하철에서 코테 푸는 연습을 강력하게 추천
+
+
+## 알고리즘 관련 좋은 글
+- https://kwiki.devserum.com/ko/articles/tech-articles/2021-05-31-518-consecutive-days-algorithm-challenge
