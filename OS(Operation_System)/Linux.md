@@ -142,6 +142,28 @@ grep "orange" /var/log/apache2/access.log
   tail -F access.log
   ```
 
+- cut
+  - 필요한 줄만 뽑고 싶을 때
+  - 포인트는 구분자(delimiter), 구분자는 글자 하나만 지정 가능
+  - 옵션은 -d, -f 2가지. 보통 2가지를 같이 쓴다.
+  ```
+  --delimiter "구분자"
+  또는
+  -d "구분자"
+
+  --fields 추출할 위치
+  또는
+  -f 추출할 위치
+  ```
+  - ex1) " " 공백으로 끊었을 때 7번째 것
+  ```
+  cut -d " " -f 7
+  ```
+  - ex2) access.log에서 "/live" 포함한 것 빼고, 공백으로 끊었을 때 7번째 것을 출력
+  ```
+  cat /var/log/apache2/access.log | grep -v "/live" | cut -d " " -f 7 | less
+  ```
+
 
 
 
