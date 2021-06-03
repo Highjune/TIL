@@ -9,7 +9,7 @@
 
 
 # 리눅스 명령어
-- 명령어 내역 확인
+## 명령어 내역 확인
 ```
 history
 ```
@@ -17,11 +17,11 @@ history
 vim ~/.bash_history
 ```
 
-- 명령어 후방 검색
+## 명령어 후방 검색
 ```
 ctrl + r 후에 찾고자 하는 것 입력 ex) vim  후에 ctrl + r 계속 누르면서 찾기.(위로 올라감)
 ```
-- 명령어 전방 검색
+## 명령어 전방 검색
   - 설정 변경이 필요함
   ```
   vim ~/.bashrc 로 설정 파일 열기
@@ -35,12 +35,12 @@ ctrl + r 후에 찾고자 하는 것 입력 ex) vim  후에 ctrl + r 계속 누�
 
 
 
-- 파일 끝으로 이동
+## 파일 끝으로 이동
 ```
 shift + g
 ```
 
-- 파이프라인(|)
+## 파이프라인(|)
   - 어떤 명령어 실행 결과 출력을 그대로 다른 명령어에 넘김. 즉 앞의 출력이 뒤의 입력이 됨
   - 받는 쪽 명령어는 열어야 할 파일 지정을 생략한다. 
   - 여러 번 사용 가능
@@ -54,7 +54,7 @@ grep "/retro" access.log.1 | grep -v "/live" | less
 ```
 
 
-- `top` 시스템 상태 전반적으로 확인(cp, memory, process)
+## `top` 시스템 상태 전반적으로 확인(cp, memory, process)
   - `shift + m` 메모리사용률 내림차순으로, `shift + t` CPU시간 순서, `shift + p` CPU 사용량 순서.
   - (shift + m 누른 후) `c` 상세표시 전환
 
@@ -65,7 +65,7 @@ c
 q(top 모드 종료, quit 의미)
 ```
 
-- 실행중인 프로세스 종료 
+## 실행중인 프로세스 종료 
 ```
 kill PID
 ```
@@ -78,7 +78,7 @@ sudo kill PID
 sudo kill 111 222 333 444 ...C
 ```
 
-- 디렉토리 삭제
+## 디렉토리 삭제
   - rm는 파일은 삭제할 수 있지만 디렉토리는 삭제하지 못한다. 디렉토리와 그 내용물을 모두 삭제하려면 rm -r 으로 하면 된다. 이 때 정말 삭제하시겠습니까 ? 라는 문구가 각 파일 하나씩 다 나온다
   - 삭제 질문이 뜨지 않게 하려면 rm -rf으로. rm -rf는 확인절차 없이 삭제하므로 극도로 조심해서 사용해야 한다. 리눅스에서는 삭제된 파일이나 디렉토를 절대 복구 못한다.
   - cf) rm 이라고 치면 도움말을 확인할 수 있다.
@@ -91,13 +91,13 @@ rm -rf 디렉토리_이름
 rmdir -rf 디렉토리_이름
 ```
 
-- 우분투 패키지 관리툴 업데이트
+## 우분투 패키지 관리툴 업데이트
 
 ```
 sudo apt-get update
 ```
 
-- grep
+## grep
   - `-r`은 서브 폴더까지 검색하도록 지정. 재귀적으로 찾는 것임
   - `-i`는 ignore case, 즉 알파벳 대문자, 소문자 차이 무시하고 검색
   - grep -r -i "검색하고 싶은 문자열" 찾을 파일이 있는 폴더 경로(검색 시작점) 및 파일
@@ -127,7 +127,7 @@ grep -r -i -E "((야메로) *(타로)|yamero +tarou)" /home/docs/
 grep "orange" /var/log/apache2/access.log
 ```
 
-- 로그 파일 압축 출력
+## 로그 파일 압축 출력
   - 오래된 로그 파일은 디슼 용량을 아끼기 위해 압축한다. 그 압축파일들을 grep으로 직접 사용할 수 없다.
   - `cat` 비압축 테스트 파일용. 지정한 파일 내용을 읽어서 그대로 출력
   - `zcat` gzip형식 전용 .gz .tgz 가능
@@ -135,14 +135,14 @@ grep "orange" /var/log/apache2/access.log
   - `unzip` zip형식 전용
 
 
-- `지금 이 순간` 실시간 로그 확인
+## `지금 이 순간` 실시간 로그 확인
   - tail은 파일 내용 끝부분만 출력
   - `-F` 옵션은 파일 변경을 감시해서 내용이 추가될 때마다 그 부분을 실시간으로 출력
   ```
   tail -F access.log
   ```
 
-- cut
+## cut
   - 필요한 줄만 뽑고 싶을 때
   - 포인트는 구분자(delimiter), 구분자는 글자 하나만 지정 가능
   - 옵션은 -d, -f 2가지. 보통 2가지를 같이 쓴다.
@@ -164,11 +164,83 @@ grep "orange" /var/log/apache2/access.log
   cat /var/log/apache2/access.log | grep -v "/live" | cut -d " " -f 7 | less
   ```
 
+## sort와 uniq
+- 같은 내용의 줄을 셀 때 유용
+- 둘은 거의 붙어다님
+- sort는 알파벳 순서로 재정렬. 각 줄의 내용을 앞에서부터 비교해서 숫자순, 알파벳순으로 정렬. 기본은 오름차순. `--reverse` 또는 `-r`옵션은 내림차순
+```
+cat input.txt | sort
+```
+- uniq는 중복제거
+  - 그런데 연속으로 위치해있는 중복밖에 제거하지 못한다. 같은 내용이 띄엄띄엄 있으면 중복제거 하지 못함. 
+  ```
+  cat input.txt | uniq
+  ```
+- sort와 uniq를 동시에 사용
+  - 미리 sort해서 정렬후에 uniq하면 띄엄띄엄 있는 것들을 중복 제거 가능
+  ```
+  cat input.txt | sort | uniq
+  ```
+- uniq는 같은 내용이 몇 번 등장했는가를 셀 수도 있다. `--count`옵션, `-c` 도 마찬가지
+  ```
+  uniq -c
+  ```
+  - 위와 같이 쓰게 되면 제일 앞에 횟수가 나온다. 즉 중복도 제거하고 등장 횟수도 셈
+  - 접속한 페이지 경로 목록에 같은 경로의 등장 횟수 세기
+  ```
+  cat /var/log/apache2/access.log | grep -v "/live" | cut -d " " -f 7 | sort | uniq -c | less
+  ```
+  - 위와 같은 uniq 결과를 보면 경로 등장 횟수가 줄 맨 앞에 출력되어 있다.
+  - 그래서 위의 결과를 파이프 라인을 통해 다시 sort 로 보내면 된다.
+  ```
+  cat /var/log/apache2/access.log | grep -v "/live" | cut -d " " -f 7 | sort | uniq -c | sort | less
+  ```
+  - 역순. sort에 `-c` 옵션
+  ```
+  ```
+  cat /var/log/apache2/access.log | grep -v "/live" | cut -d " " -f 7 | sort | uniq -c | sort -c | less
+  ```
+  ```
+  - 모든 것에 대한 목록(오름차순이든 내림차순이든)은 필요없으니 tail, head 명령어를 사용하면 된다.
+  ```
+  cat /var/log/apache2/access.log | grep -v "/live" | cut -d " " -f 7 | sort | uniq -c | sort -r | tail
+  ```
+- 예시(shell script로)
+```
+#!/bin/bash
+log=/var/log/apache2/access.log
+count=10
 
+echo "접속수가 많은 ${count}개 페이지:"
+cat $log | grep -v "/live" | cut -d " " -f 7 | sort | uniq -c | sort -c | head -n $count
 
+echo "접속수가 적은 ${count}개 페이지:"
+cat $log | grep -v "/live" | cut -d " " -f 7 | sort | uniq -c | sort -c | tail -n $count
+```
+  
+
+## tail, head
+- tail은 파일이나 파이프라인 입력 `끝에서` 10줄만 추출하는 것
+- head는 파일이나 파이프라인 입력 `앞에서` 10줄만 추출하는 것
+- `-n`옵션으로 출력하는 줄 수 조정 가능
+  - 앞에서부터 3줄 추출
+  ```
+  head -n 3 
+  ```
+  - 뒤에서부터 3줄 추출
+  ```
+  tail -n 3
+  ```
+- 부분출력
+ex) a b c d e f g h i j k l m n o p q r s t u v w x y z (head쪽 <---> tail쪽)
+```
+head -n 5 // 앞에서 5줄째까지. a b c d e 출력
+head -n -5 // 앞에서 뒤에서 5개(v w x y z) 제외까지. a b c d e f g h i j k l m n o p q r s t u
+tail -n +6 // 뒤에서 앞에서 5개(a b c d e) 제외까지. f g h i j k l m n o p q r s t u v w x y z, tail -n +6 만 지정하는 숫자가 조금 다름.
+tail -n 5 // 뒤에서 5줄째까지. v w x y z
+```
 
 # vim
-
 [cheat-sheet](https://vim.rtorr.com/lang/ko)
 
 - 실행
