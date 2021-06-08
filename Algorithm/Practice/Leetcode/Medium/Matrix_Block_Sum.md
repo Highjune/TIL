@@ -12,6 +12,8 @@
 # 타인 풀이
 - https://leetcode.com/problems/matrix-block-sum/discuss/477041/Java-Prefix-sum-with-Picture-explain-Clean-code-O(m*n)
 - 범위로 설정
+- 이해를 덜함, 시간 가지고 다시 보기
+
 ```
 class Solution {
     public int[][] matrixBlockSum(int[][] mat, int K) {
