@@ -165,6 +165,19 @@ grep "orange" /var/log/apache2/access.log
   ```
   cat /var/log/apache2/access.log | grep -v "/live" | cut -d " " -f 7 | less
   ```
+  - 일부열만 제거하는 것도 가능
+  - 그래서 CSV(Comma Separated File) 파일을 cut을 써서 간단히 열 단위로 정보 추출 가능
+    - `-f` 옵션으로 열 번호 지정, 여러 숫자를 지정하거나 열 범위를 지정할 수도 있다.
+    - 연속한 열일 경우 `범위 시작-끝` 
+    ```
+    cat items.csv | cut -d "," -f 1-3
+    ```
+    - 어떤 열 이후의 모든 열을 지정한다면 끝을 생략하고 `시작-`, 아래는 4부터 모든 열 지정
+    ```
+    cat items.csv | cut -d "," -f 4-
+    ```
+  - cut 구분자 문자가 지정되지 않으면 cut명령어는 `탭문자를 구분자로 사용`한다. 셸 스크립트 안에서라면 `cut -d "(탭문자)"`로 사용가능.
+
 
 ## sort와 uniq
 - 같은 내용의 줄을 셀 때 유용
@@ -183,12 +196,13 @@ cat input.txt | sort
   ```
   cat input.txt | sort | uniq
   ```
-- uniq는 같은 내용이 몇 번 등장했는가를 셀 수도 있다. `--count`옵션, `-c` 도 마찬가지
+- uniq는 같은 내용이 몇 번 등장했는가를 셀 수도 있다. `--count`옵션, `-c` 도 마찬가지. 
+  - 참고) `uniq -c` 옵션은 숫자가 오른쪽 정렬이다. `uniq -c` 결과는 sort에서 사용하는 경우가 많으니까 `단순 정렬`로도 문제없도록 만들어 둔 것.
   ```
   uniq -c
   ```
   - 위와 같이 쓰게 되면 제일 앞에 횟수가 나온다. 즉 중복도 제거하고 등장 횟수도 셈
-  - 접속한 페이지 경로 목록에 같은 경로의 등장 횟수 세기
+  - ex) 접속한 페이지 경로 목록에 같은 경로의 등장 횟수 세기
   ```
   cat /var/log/apache2/access.log | grep -v "/live" | cut -d " " -f 7 | sort | uniq -c | less
   ```
@@ -199,14 +213,13 @@ cat input.txt | sort
   ```
   - 역순. sort에 `-c` 옵션
   ```
-  ```
   cat /var/log/apache2/access.log | grep -v "/live" | cut -d " " -f 7 | sort | uniq -c | sort -c | less
-  ```
   ```
   - 모든 것에 대한 목록(오름차순이든 내림차순이든)은 필요없으니 tail, head 명령어를 사용하면 된다.
   ```
   cat /var/log/apache2/access.log | grep -v "/live" | cut -d " " -f 7 | sort | uniq -c | sort -r | tail
   ```
+
 - 예시(shell script로)
 ```
 #!/bin/bash
@@ -219,7 +232,45 @@ cat $log | grep -v "/live" | cut -d " " -f 7 | sort | uniq -c | sort -c | head -
 echo "접속수가 적은 ${count}개 페이지:"
 cat $log | grep -v "/live" | cut -d " " -f 7 | sort | uniq -c | sort -c | tail -n $count
 ```
-  
+- sort명령어도 cut처럼 특정 구분자로 나누는 기능이 있다.
+  - 구분자 지정은 `--field-separator` 또는 `-f`
+  - `-k`옵션으로 열 번호를 지정하면 그 열 내용으로 재정렬
+  - ex) , 를 구분자로 구분했을 때 3번째 열 기준으로 정렬
+  ```
+  sort -t "," -k 3
+  ```
+  - 그런데 sort는 문자열을 한 문자씩 비교해서 재배치하므로 `단순정렬` 기준이다. 예를 들어 `10`은 `2`보다 앞에 정렬이 되는 것처럼. 왜냐하면 `10`의 `1`이 `2`보다 앞이므로 앞에 정렬되는 것임. 
+  - `숫자정렬`을 하려면 `--number` 또는 `-n` 옵션. 
+  - ex)
+  ```
+  cat items.csv | cut -d "," -f 1-3 | sort -t "," -k 3 -n | less
+  ```
+- `-b`옵션은 ? 
+  - `uniq -c` 결과는 기본적으로 숫자가 오른쪽 정렬이라 sort에서 `단순 정렬` 하더라도 문제가 없긴 했었다. 하지만 스페이스로 칸을 채워서 오른쪽으로 줄맞춤한 문자열은 단순 정렬해도 기대한 것과 다른 결과. 
+  - 그래서 `--ignore-leading-blanks` 또는 `-b` 옵션을 사용하면 오른쪽 줄맞춤을 위해서 넣은 스페이스를 무시하고 문자열을 정렬할 수 있다.
+  - 데이터 예시
+  ```
+   8,          딱풀, 44, 220, 재고없음
+   9,      샤프펜슬, 50, 401, 재고있음
+  10,          볼펜, 10, 222, 재고있음 
+  ```
+  - `-b`옵션 사용 예시
+  ```
+  cat items.csv | cut -d "," -f 1-3 | sort -t "," -k 2 -b
+  ```
+
+## 리다이렉트 >, >>
+- 명령어 실행 결과를 저장하는 기본 테크닉
+- `|`대신에 `>`를 사용하면 보통은 파이프라인으로 넘어가는 것과 같은 내용이 텍스트 파일로 출력된다
+- `>`가 하나뿐인 리다이렉트는 이미 파일이 있으면 지우고 새로운 파일 만든다. `>`를 두 번 이어서 쓴 `>>` 리다이렉트면 기존 파일에 추가한다.
+- 그래서 `>`는 파일명이 같으면 덮어쓰므로 반드시 다른 이름을 지정해야 한다.
+- ex)
+```
+cat items.csv | cut =d "." -f 1-3 | sort -t "," -k 3 -n > ./items-sorted.csv
+echo "12345, 추가항목, 0" >> ./items-sorted.csv
+```
+- 위처럼 `echo`명령어를 사용해서 임의의 문자열을 파일에 추가 가능하다.
+   
 
 ## tail, head
 - tail은 파일이나 파이프라인 입력 `끝에서` 10줄만 추출하는 것
