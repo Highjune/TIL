@@ -365,7 +365,7 @@ yum install vim
   :%s/new/older
   ```
 
-# 쉘 스크립트
+# 쉘 스크립트(shell script)
 - 단순한 텍스트 파일, 내부는 명령어 내부 실행 절차
 - 명령어를 직접 순서대로 실행하는 대신에 셸이 실행하도록 맡기는 것
 - 셸이라는 것은 bash나 zsh 같은 셸로 실행하는 스크립트의 총칭
@@ -525,7 +525,116 @@ chmod +x practice.sh
     - 명령어 치환에서 파이프라인이나 변수 등도 사용 가능
 
 
+## 쉘 스크립트(shell script) 안에서 명령어 라인 사용
+- 상황) 처리하고 싶은 파일명만이 다를 뿐인데 별도의 스크립트 수가 많이 늘어날 경우
+- `category1.sh`
+```
+#!/bin/bash
+directory=/tmp
+source="${directory}/items_category1.csv"
+result="${directory}/items_category1_sorted.csv"
+..(중략)..
+```
+- `category2.sh`
+```
+#!/bin/bash
+directory=/tmp
+source="${directory}/items_category2.csv"
+result="${directory}/items_category2_sorted.csv"
+..(중략)..
+```
+- 위의 두 파일의 차이는 1<->2 만 다를 뿐. 처리 대상 파일명(source)과 출력 파일명(result)만 다름.
+- 이럴 경우 명령어 라인 인수 사용하면 된다.
+- 명령어에 대해 추가 지시를 내리는 게 명령어 라인 인수, 줄여서 인수.
+- 일반적으로 특정 명령어의 옵션으로 사용하는 `-c`, `-r` 등, 옵션은 실제로 인수의 한 종류.
+  - 옵션?
+    - `-r`같이 "생략 가능한(지정하면 행동이 변하는) 인수"를 옵션 인수, 줄여서 옵션이라고 함.
+    - option은 선택 가능하다는 것
+    - ex) original을 copied위치에 디렉터리 내용도 포함해서 복사
+    ```
+    cp /tmp/original /tmp/copied
+    ```
+    - ex) original을 copied위치에 복사
+    ```
+    cp -r /tmp/original /tmp/copied
+    ```
+    - 위의 2가지 명령에서 `-r`은 `옵션 인수` 이고 나머지들, `/tmp/original`, `/tmp/copied` 는 일반인수이다.
+- 그래서 위 2가지 파일(`category1.sh`, `category2.sh`) 중에서 하나의 파일을 아래와 같이 수정.
+```
+#!/bin/bash
+directory=/tmp
+source="${directory}/$1"
+result="${directory}/$2"
+..(중략)..
+```
+- 그리고 파일 이름을 범용적인 이름으로 수정. 
+```
+mv category1.sh category.sh
+```
 
+- 아래와 같이 실행. 즉, 이전에는 파일 안에 직접 적었던 처리 대상 파일명과 출력 파일명을 스크립트 이름 뒤에 지정해서 실행
+```
+./category.sh items_category1.csv items_category1_sorted.csv
+```
+```
+./category.sh items_category2.csv items_category2_sorted.csv
+```
+- 쉘 스크립트 내부에서는 지금처럼 실행 시 지정한 인수 값을 $1, $2, $3 와 같은 변수로 참조할 수 있다. 각각 first, second, third 지칭. 이런식으로 처리하고 싶은 파일 이름을 스크립트에 직접 적지 않아도 실행할 때 지정할 수 있다.
+```
+./script.sh first second third
+```
+- 인수가 여러 개 있어서 헷갈릴 경우, 인수를 이름으로 참조하기, 몇 번째가 뭐였는지 헷갈림
+  - 상황, 인수 순서대로(기준일 로그, 다음날 로그, 전날 로그, 출력 파일0)
+  ```
+  ./accesses.sh /var/log/apache2/access.log.2.gz 
+                  /var/log/apache2/access.log.1.gz
+                    /var/log/apache2/access.log.3.gz
+                      /tmp/day2-reuslt.txt
+  ```
+  - 아래와 같이 수정. `b->base(기준일)`, `n->next(다음날)`, `p->previous(전날)`, `o->output(출력)`
+  ```
+  ./accesses.sh -b /var/log/apache2/access.log.2.gz 
+                  -n /var/log/apache2/access.log.1.gz
+                    -p /var/log/apache2/access.log.3.gz
+                      -o /tmp/day2-reuslt.txt
+  ```
+  - 스크립트 변경
+  ```
+  #!/bin/bash
+
+  while getopts b:n:p:o: OPT
+  do 
+    case #OPT in
+      b) base="$OPTARG" ;;
+      n) next="$OPTARG" ;;
+      p) previous="$OPTARG" ;;
+      o) output="$OPTARG" ;;
+  ```
+- 쉘 스크립트(shell script)에서 인수를 사용하는 방법
+  1. 지정한 순서대로 값을 참조함
+  ```
+  # script.sh filename1 filename2
+  ```
+  ```
+  #!/bin/bash
+  source=$1
+  target=$2
+  ...
+  ```
+  2. 옵션 이름으로 값을 참조함
+  ```
+  # script.sh -s filename1 -t filename2
+  ```
+  ```
+  #!/bin/bash
+  while getopts s:t: OPT
+  do
+    case OPT in
+      s) source="#OPTARG" ;;
+      t) target="#OPTARG" ;;
+    esac
+  done
+  ```
 
 # 가상단말(tmux)
 - 접속이 끊기기 쉬운 WiFi나 테더링 경유로 SSH 접속할 때 좋음
