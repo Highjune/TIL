@@ -4,8 +4,14 @@
 - intelli J 툴 안에서 단축키 확인하는 방법
   - settings - keymap 확인가능
 - [단축키참고링크](https://gmlwjd9405.github.io/2019/05/21/intellij-shortkey.html)
-  
-- 입력하고 있는 줄에서 바로 밑으로 내력기
+
+- 현재 클래스의 멤버변수들 확인하기. outline. 롬복이 실행되었는지도 확인가능
+```
+command + fn + f12
+```
+
+
+- 입력하고 있는 줄에서 바로 밑으로 한 줄 내려가기
 ```
 command + shift + 엔터
 ```
