@@ -5,7 +5,7 @@
 - 윈도우 버전 다운로드 및 설치
 - 그러면 명령 프롬프트에서도 git 명령어를 사용할 수 있다.
 
-## 코드 정리
+## 명령어 정리
 
 - 깃 시작
   - 해당 폴더 우클릭 - git bash로 실행해서 명령창 open
@@ -437,6 +437,55 @@
 
     git commit 만 하면 템플릿 열림
     ```
+
+## GitLab 코드관리
+- NAS서버를 별도로 설치해서 그 곳에 GitLab. 내부IP사용
+- [NAS란?](https://itblogpro.tistory.com/81)
+- 순서
+  - GitLab에서 특정 issue를 등록한다(기존 코드가 remote에 있는 상태) ex) login_issue1
+    - milestone은 이슈를 포함한 큰 개념(user로그인, 결제 등)
+    - 담당자 설정 : june
+    - 라벨 : 로그인
+    - 기타 항목들 설정 후 이슈 등록
+  - 이슈에 해당하는 branch 생성(login_issue1), master코드를 그대로 복사
+  - tool(ex. intelliJ, VS코드 등)에서 remote tool에 새로운 branch(login_issue1) 생성된 것 확인하기
+    ```
+    git branch -r
+    ```
+    - 만약 안 보이면 아래 명령 후 다시  `git branch -r`로 확인
+    ```
+    git remote update
+    ``` 
+    - 현재 local에는 `login_issue1` 브런치 없는 상태임
+    ```
+    git branch
+    ```
+  - remote에 생성된 브런치 local로 당겨오기
+  ```
+  git checkout -t login_issue1
+  ```
+  - local로 들고왔는지 확인하기. 목록에 `login_issue1` 있는지 확인
+  ```
+  git branch
+  ```
+  - 이제 이 branch에서 작업하기(tool에서)
+  - 커밋하고 push까지 하기
+    ```
+    git add .
+    git commit -m "update login_issue"
+    git push origin
+    ```
+    - `git push origin`하면 remote의 `login_issue1` branch에 적용된 것. master에는 아직 적용이 된 것이 아니다.
+  - remote(GitLab) 의 master branch로 merge 하기
+    - GitLab에서 드랍다운 branch 설정하는 탭에서 `login_issue1`선택.
+    - `create merge requets` 버튼 떠 있음. 클릭
+    - 담당자, 라벨 등 설정
+    - `submit merge request` ㅡ `merge` 클릭.
+    - cf) 기존 브런치 삭제한다고 체크하면 merge가 되면서 `login_issue1` branch는 사라짐
+  - 만약 충돌이 나면?
+    - merge버튼이 안 뜨고 경고가 뜬다. 그런 경우에는 경고 부분 해결하기.
+
+
 
 ## 참고 자료
 
