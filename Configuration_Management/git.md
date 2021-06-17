@@ -461,13 +461,13 @@
     git branch
     ```
   - remote에 생성된 브런치 local로 당겨오기
-  ```
-  git checkout -t login_issue1
-  ```
+    ```
+    git checkout -t login_issue1
+    ```
   - local로 들고왔는지 확인하기. 목록에 `login_issue1` 있는지 확인
-  ```
-  git branch
-  ```
+    ```
+    git branch
+    ```
   - 이제 이 branch에서 작업하기(tool에서)
   - 커밋하고 push까지 하기
     ```
