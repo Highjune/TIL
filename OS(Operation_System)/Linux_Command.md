@@ -1,5 +1,6 @@
-# 개념
+- [만화로 배우는 리눅스 시스템관리 1](http://www.yes24.com/Product/Goods/30705473)를 보고 정리한 내용
 
+# 개념
 - 셸(shell)
   - 사용자가 콘솔 환경에서 대화식으로 명령어를 입력하면서 사용하는 소프트웨어
   - 리눅스에서 bash나 dash라는 셸을 사용하는 경우 많음
@@ -526,7 +527,7 @@ chmod +x practice.sh
   log1=/var/log/apache2/access.log
   ```
 
-  - 변수명에는 \_언더스코어를 사용많이 함
+  - 변수명에는 _언더스코어를 사용많이 함
 
   ```
   JAVA_HOME=/usr/bin
@@ -648,11 +649,175 @@ chmod +x practice.sh
 
     - 명령어 치환에서 파이프라인이나 변수 등도 사용 가능
 
+## 조건분기(if문)
+- 단순 조건 분기
+  - 주의) then은 줄바꿈 다음에 써야함
+  - 주의) if[$a="문자열"] 이렇게 붙여서 쓰면 안된다. `[`도 명령어임. /usr/bin/[ 에서 확인가능. $a = "문자열" ] 은 각각 다 인수이므로 명령어와 인수니까 사이를 띄워써야 함. 그런데 줄바꿈 대신에 ;(세미콜론)을 사용하면 여러 줄을 한번에 합칠 수 있다. ex) `if [ $? != 0 ]; then exit; fi` 주의) then 뒤에는 ;쓰지 않는다.
+```
+if [ $a = "문자열" ]
+then
+  $a 내용이
+  "문자열"과 같다면
+  실행하는 처리
+fi
+```
+- 부정 조건으로 조건 분기
+```
+if [ $a != "문자열" ]
+then
+  $a 내용이
+  "문자열"과 다르면
+  실행하는 처리
+fi
+```
+- 조건에 해당하지 않을 때 처리
+```
+if [ 조건 ]
+then
+  조건을 만족하면
+  실행하는 처리
+else
+  조건을 만족하지 않으면
+  실행하는 처리
+fi
+```
+- `$#` 스크립트에 지정한 인수 개수를 의미하는 특수한 변수
+  - script.sh first_param second_param
+    - 변수가 총 2개(first_param, second_param)
+    - `#$ = 2`
+  - script.sh first_param second_param third_param
+    - 변수가 총 3개((first_param, second_param, third_param)
+    - `#$ = 3`
+  - ex) 변수가 2개 들어오면 "Hello!" 출력
+  ```
+  if [ $# = 2 ]
+  then
+    echo "Hello!"
+  fi
+  ```
+
+## 명령어 이상 종료에 대응하고 싶을 때(종료)
+- 에러가 발생했을 때 멈추거나 하고 싶은 경우.
+- `$?` 은 바로 직전에 실행한 명령어 종료 상태
+  - 명령어가 실행한 다음에 명령어가 정샂억으로 종료했는지 알려주는 값을 $?라는 이름의 변수로 참조 가능
+  - ex) (실행성공) 아래처럼 명령어를 실행하면 0이 나온다.
+  ```
+  cp ./test.txt /tmp/
+  echo $?
+  ```
+  - 0은 실행 성공(여기서는 복사)을 의미한다. 
+  - ex) (실행실패) 아래처럼 명령어를 실행하면 1이 나온다.
+  ```
+  cp ./missing /tmp/
+  (./missing`를 설명할 수 없음. 그런 파일이나~~...대충 복사실행이 에러났다는 메시지)
+  echo $?
+  ```
+  - 실행 실패의 종료 값은 0이 아니다. 1은 복사 실패를 의미한다.
+  - 정상 종료는 0이고 그 외에는(이상 종료는) 0이 아닌 값이(1~255)라는 건 모든 명령어에서 공통 규칙. 즉 종료는 무조건 0~255 상태값 안에 다 존재. ex) apt명령어의 종료값은 100, 200 ls명령어의 종료값은 1, 2 이런 식.
+- exit할 때 인수를 숫자로 지정하면, 즉 exit 0 또는 exit 1 이라고 적으면 그게 shell script 자체의 `종료 상태`가 된다.
+  - ex) exit 100 이라고 하면 스크립트를 종료하면서 100을 리턴한다
+  - exit만 적으면 exit 0 과 같다
+  - 0 이외라면 무엇을 지정해도 된다.(특별히 에러 종류를 구별할 필요가 없으면 1을 지정하는 것이 보통이다)
+  - 다른 스크립트에서 실행할 때 일반 명령어 종료 상태처럼 사용할 수 있다.
+  - ex)
+  ```
+  #!/bin/bash
+
+  if [ $1 = "" ]
+  then
+    echo "에러임, 처리할 파일을 지정해야 된다"
+    exit 1
+  fi
+  ```
+- ex) 파일을 복사 가능할 때만 실행하고 싶은 처리를 할 때. (즉, 에러에서 복귀. 에러나더라도 shell script 즉시 종료 말고)
+```
+#!/bin/bash
+
+(..중략..)
+
+cp $source_access $temp_file
+if [ $? = 0 ]
+then
+  (복사 가능할 때 실행하고 싶은 처리)
+else
+  echo "파일이 존재하지 않음. 생략함"
+fi
+```
+
+## for 반복문
+- 같은 처리를 조금씩 인수(처리 대상 파일명 등) 를 바꿔가면서 반복 실행하는 구문
+- 상황) 아래와 같은 명령어를 4번 실행, 수백개일 수도 있음
+  - 접속 로그 월별 리포트를 한번에 정리
+  ```
+  ./create-report.sh redmine.log
+  ./create-report.sh kintai.log
+  ./create-report.sh download.log
+  ./create-report.sh notice.log
+  ```
+- 위처럼 4번 실행하지 않고 for문을 담은 shell script 만들기(create_reports.sh)
+  ```
+  #!/bin/bash
+
+  for filename in redmine.lon kintai.log download.log notice.log
+  do 
+    ./create-report.sh filename
+  done
+  ```
+  - redmine.lon kintai.log download.log notice.log 라는 4개의 값을 filename이라는 하나의 변수명으로 순서대로 참조하는 것. 
+  - do에서 done 사이에 적힌 내용은 리스트 값 각각에 대해 반복해서 실행
+  - for ~ in 열은 아래같이 줄바꿈을 넣으면 안된다. 
+  - ex1) vim practice.sh 만들어서 ./practice.sh 로 실행
+  ```
+  for filename in redmine.lon 
+                  kintai.log 
+                  download.log 
+                  notice.log
+  do 
+    ./create-report.sh filename
+  done
+  ```
+  - ex2) vim practice.sh 만들어서 ./practice.sh 로 실행
+  ```
+  #!/bin/bash
+
+  for param in june mom fafa bro
+  do 
+    echo "hi" + $param
+  done
+  ```
+  - 줄바꿈 하려면 앞에 `\`(백슬래쉬)를 넣어서 이스케이프해야 한다.
+  ```
+  for filename in redmine.lon \
+                  kintai.log  \
+                  download.log \
+                  notice.log
+  do 
+    ./create-report.sh filename
+  done
+  ```
+  - 또는 변수로 만들어서 좀 더 가독성을 높일 수 있다.
+  ```
+  file="redmine.lon kintai.log download.log notice.log"
+  for filename in $files
+  ```
+- for 문 안에서 명령어 치환을 사용할 수 있다.
+  - 상황) /var/log/apache2/ 위치에 있는 확장자가 .log인 파일들을 다 실행. 그런데 그 중에서 error.log는 제외
+  ```
+  for filename in `cd /var/log; ls *.log | grep -v error.log
+  do
+    ./create-report.sh $filename
+  done
+  ```
+- for문은 셸 스크립트가 아니더라도 사용할 수 있다. 줄바꿈 대신에 ;(세미콜론)을 쓰면 한 줄로 만들어서 일반 명령어처럼 실행가능하다. 주의) do뒤에는 ;가 없다
+```
+for file in data log scripts; do echo $file; done
+```
+## 
+
 ## 쉘 스크립트(shell script) 안에서 명령어 라인 사용
 
 - 상황) 처리하고 싶은 파일명만이 다를 뿐인데 별도의 스크립트 수가 많이 늘어날 경우
 - `category1.sh`
-
 ```
 #!/bin/bash
 directory=/tmp
@@ -686,7 +851,7 @@ result="${directory}/items_category2_sorted.csv"
     ```
     cp -r /tmp/original /tmp/copied
     ```
-    - 위의 2가지 명령에서 `-r`은 `옵션 인수` 이고 나머지들, `/tmp/original`, `/tmp/copied` 는 일반인수이다.
+    - 위의 2가지 명령에서 `-r`은 `옵션 인수` 이고 나머지들, `/tmp/original`, `/tmp/copied` 는 `일반인수`이다.
 - 그래서 위 2가지 파일(`category1.sh`, `category2.sh`) 중에서 하나의 파일을 아래와 같이 수정.
 
 ```
