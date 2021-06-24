@@ -812,7 +812,223 @@ fi
 ```
 for file in data log scripts; do echo $file; done
 ```
-## 
+## 셸 함수(shell function)
+- 셸 스크립트 안에서 스크립트 일부에 이름을 붙여서 함수로 만들 수 있게 한 것
+- 사실 grep같은 명령어 안에는 많은 함수가 내장되어 있다(파일열기, 문자열 비교하기 등)
+- 함수 정의
+```
+#!/bin/bash
+
+hello() {
+  echo "안녕하세요"
+  echo "저는 june입니다"
+  echo "반갑습니다"
+}
+```
+- 함수 실행
+   - 그냥 shell 안에서 함수 이름 호출만 하면 된다. (아래선 총 3번 실행). 당연히 스크립트 자체를 ./practice.sh 로 실행은 따로 해야 함
+  ```
+  #!/bin/bash
+
+  hello() {
+    echo "안녕하세요"
+    echo "저는 june입니다"
+    echo "반갑습니다"
+  }
+
+  hello
+  hello
+  hello
+  ```
+- 함수를 호출할 때 일반 명령어나 셸 스크립트처럼 인수를 지정하면 함수 안에서 $1, $2 .. 라는 변수로 인수 값을 참조할 수 있다. (주의 : 셸 스크립트 인수를 참조하는 것이지 함수 인수를 참조하는 것이 아니다)
+```
+#!/bin/bash
+
+  hello() {
+    echo "안녕하세요"
+    echo "저는 $1 입니다"
+    echo "반갑습니다"
+  }
+
+  hello june1
+  hello june2
+  hello june3
+```
+- 그래서 함수의 공통 부분, 다른 부분들을 인수로 컨트롤 할 수 있다. 다른 부분들이 2개 이상인 경우.
+  - 참고) 다른 부분들이 1개면 for문으로 가능하지만 그 이상일 경우 함수로 해결 가능
+  - 원래 코드
+  ```
+  source=marketing.log
+  report=mail-${date +%Y-%m-%d}.csv
+  ourdir=/shared/marketing/reports
+  ./analyze_mail_log.sh $source $report
+  mkdir -p $outdir
+  mv /tmp/${report} ${outdir}/
+  echo "$source 처리 완료"
+
+  source=system.log
+  report=a${date +%Y-%m-%d}.csv
+  ourdir=/shared/system/mail-reports
+  ./analyze_mail_log.sh $source $report
+  mkdir -p $outdir
+  mv /tmp/${report} ${outdir}/
+  echo "$source 처리 완료"
+
+  source=develop.log
+  report=mail-${date +%Y-%m-%d}.txt
+  ourdir=/shared/develop/reports/mail
+  ./analyze_mail_log.sh $source $report
+  mkdir -p $outdir
+  mv /tmp/${report} ${outdir}/
+  echo "$source 처리 완료"
+  ```
+
+  - 수정 코드
+  ```
+  #!/bin/bash
+
+  report() {
+    source=$1
+    report=$2
+    outdir=$3
+    ./analyze_mail_log.sh $source $report
+    mkdir -p $ourdir
+    mv /tmp/${report} ${outdir}/
+    echo "$source 처리 완료"
+  }
+
+  report marketing.log mail-${date +%Y-%m-%d}.csv /shared/marketing/reports
+  report system.log ${date +%Y-%m-%d}.csv /shared/system/mail-reports
+  report develop.log ${date +%Y-%m-%d}.txt /shared/develop/reports/mail
+  ```
+- 스크립트와 함수는 종료 상태도 비슷
+  - $? 로 확인시 이전 명령어가 정상종료면 0, 아니면 0이외의 숫자
+  - 다만 함수 종료 상태는 `return`이다. (`exit`아님)
+  - 함수 종료. return.  함수 실행을 중단하고 종료 상태를 1로 지정
+  ```
+  #!/bin/bash
+
+  report() {
+    if [ #1 = "" ]
+    then
+      echo "인수가 필요함"
+      return 1
+    fi
+  }
+  ```
+  - 스크립트 종료. exit. 스크립트 실행을 중단하고 종료 상태를 1로 지정. exit는 함수뿐만 아니라 스크립트 자체 처리까지 도중에 중단함. 
+  ```
+  #!/bin/bash
+
+  if [ #1 = "" ]
+  then
+    echo "인수가 필요함"
+    exit 1
+  fi
+  ```
+
+- 함수는 명령어 치환도 사용가능
+  - 수정 전 코드
+  ```
+  report marketing.log mail-$(date +%Y-%m-%d).csv /shared/..(중략)
+  report system.log $(date +%Y-%m-%d).csv /shared/..(중략)
+  report develop.log $(date +%Y-%m-%d).txt /shared/..(중략)
+  ```
+  - 수정 후 코드
+    - 함수(today함수) 실행 결과는 명령어 실행 결과의 문자열이 된다.
+  ```
+  today() {
+    date +%Y-%m-%d
+  }
+
+  report marketing.log mail-$(today).csv /shared/..(중략)
+  report system.log $(today).csv /shared/..(중략)
+  report develop.log $(today).txt /shared/..(중략)
+  ```
+
+- 셸 스크립트는 기본적으로 실행하고 싶은 명령어를 실행 순서대로 작성하지만, 함수를 사용한다면 실행 순서를 신경쓰지 않고 중요한 부분부터 스크립트 작성함. 그래서 스크립트 작성하는 자유도가 높아진다.
+  - 상황) 처리 대상 하는 파일명이 셸 스크립트의 제일 마지막 부분에 가서야 볼 수 있어서 혼란스러움
+  - 수정 전 코드
+  ```
+  #!/bin/bash
+
+  report() {
+    source=$1
+    report=$2
+    outdir=$3
+    ./analyze_mail_log.sh $source $report
+    mkdir -p $ourdir
+    mv /tmp/${report} ${outdir}/
+    echo "$source 처리 완료"
+  }
+
+  today() {
+    date +%Y-%m-%d
+  }
+
+  report marketing.log mail-$(today).csv /shared/..(중략)
+  report system.log $(today).csv /shared/..(중략)
+  report develop.log $(today).txt /shared/..(중략)
+  ```
+  - 수정 후 코드
+    - 중요한 처리를 main함수로 미리 정의해두고 마지막에 그걸 호출하는 게 보통 (중요한 처리 내용을 최초에 정의해둠. 이 시점에서는 아직 실행되지 않으므로 다른 함수는 아직 정의되지 않아도 괜찮음)
+    - 중요한 부분 이외를 main 함수 뒤에 정의
+    - 마지막에 main 함수를 한 번만 노출
+    ```
+    main() {
+      report marketing.log mail-$(today).csv /shared/..(중략)
+      report system.log $(today).csv /shared/..(중략)
+      report develop.log $(today).txt /shared/..(중략)
+    }
+    report() {
+      source=$1
+      report=$2
+      outdir=$3
+      ./analyze_mail_log.sh $source $report
+      mkdir -p $ourdir
+      mv /tmp/${report} ${outdir}/
+      echo "$source 처리 완료"
+    }
+
+    today() {
+      date +%Y-%m-%d
+    }
+
+    main
+    ```
+- 셸 스크립트의 인수와 함수의 인수
+  - copy_files.sh
+  ```
+  #!/bin/bash
+
+  do_copy() {
+    cp /tmp/source $1
+    ..(중략)...
+  }
+  ...
+  do_copy
+  ...
+  ```
+  - 실행 시 명령어열
+  ```
+  ./copy_files.sh /tmp/target
+  ```
+  - 위와 같이 하면 에러난다.
+  - 이유) 함수 안에서 $1 이라고 하면 셸 스크립트의 인수가 아니라 함수의 인수를 참조한다. 함수 안과 밖에서 #1 의미가 다르다는 것
+  - 셸 스크립트 자체의 인수를 함수 안에서 참조하려면 함수 밖에서 일단 다른 이름의 변수로 정의해둬야 한다. 아래와 같이 사용
+  ```
+  #!/bin/bash
+
+  target=$1
+
+  do_copy() {
+    cp /tmp/source #target
+    ..(중략)...
+  }
+  ...
+  do_copy
+  ...
+  ```
 
 ## 쉘 스크립트(shell script) 안에서 명령어 라인 사용
 
