@@ -1,7 +1,13 @@
-# 
+# 완주하지 못한 선수
+- https://programmers.co.kr/learn/courses/30/lessons/42576
 
 ## 내 풀이
 - 깔끔쓰
+- 보완점
+    - 2번째 for문에서 map.put(s, map.get(s) -1); 로 변경
+    - 3번째 for문에서 keySet로 변경
+    - 
+    
 ```
 import java.util.*;
 
@@ -47,6 +53,7 @@ class Solution {
         for (String key : hm.keySet()) {
             if (hm.get(key) != 0){
                 answer = key;
+                break;
             }
         }
         return answer;
