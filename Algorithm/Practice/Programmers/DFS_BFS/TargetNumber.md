@@ -32,11 +32,13 @@
 - 제일 깔끔
 ```
 class Solution {
+
     public int solution(int[] numbers, int target) {
         int answer = 0;
         answer = dfs(numbers, 0, 0, target);
         return answer;
     }
+
     int dfs(int[] numbers, int n, int sum, int target) {
         if(n == numbers.length) {
             if(sum == target) {
@@ -72,8 +74,8 @@ class Solution {
         int cur2 = prev - numbers[index];
 
         int ans = 0;
-        ans += dfs(cur1, index+1, numbers, target);
-        ans += dfs(cur2, index+1, numbers, target);
+        ans += dfs(cur1, index + 1, numbers, target);
+        ans += dfs(cur2, index + 1, numbers, target); 
 
         return ans;
     }
@@ -90,6 +92,7 @@ class Solution {
 
 - BFS 풀이
     - dfs 를 while 문으로 풀어 쓴 것
+    - 참고로 모든 dfs는 bfs로 풀 수 있다고 함
 ```
 import java.util.Queue;
 import java.util.LinkedList;
