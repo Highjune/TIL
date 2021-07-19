@@ -57,6 +57,20 @@ ex)
 command + [ 또는 ]
 ```
 
+- 리턴 값 합치기
+```
+command + option + n
+```
+  - ex)
+  ```
+  int count = ac.getCount();
+  return count;
+  ```
+  - 단축키로 합치면(count 위에 커서 두고)
+  ```
+  return ac.getCount();
+  ```
+
 
 - 테스트 클래스 바로 만들기
 ```
