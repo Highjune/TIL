@@ -25,10 +25,14 @@
 - Structure
 
 ### Algorithm
-- Lectures
+- [Lectures](https://github.com/Highjune/TIL/tree/main/Algorithm/Lectures)
 - Practice
-- Test
-- Theory
+    - [Codility](https://github.com/Highjune/TIL/tree/main/Algorithm/Practice/Codility)
+    - [Etc](https://github.com/Highjune/TIL/tree/main/Algorithm/Practice/Etc)
+    - [LeetCode](https://github.com/Highjune/TIL/tree/main/Algorithm/Practice/Leetcode)
+    - [Programmers](https://github.com/Highjune/TIL/tree/main/Algorithm/Practice/Programmers)
+- [Test](https://github.com/Highjune/TIL/tree/main/Algorithm/Test)
+- [Theory](https://github.com/Highjune/TIL/tree/main/Algorithm/Theory)
 
 
 ### Cloud
@@ -54,12 +58,12 @@
 
 ### Languages
 - [Java](https://github.com/Highjune/TIL/tree/master/Languages/Java)
-    - BasicConcept
-    - CodePrcatice
-    - JavaConcept
-    - Notepad
-    - Project
-    - UsefulCode
+    - [BasicConcept](https://github.com/Highjune/TIL/tree/main/Languages/Java/BasicConcept)
+    - [CodePrcatice](https://github.com/Highjune/TIL/tree/main/Languages/Java/CodePractice)
+    - [JavaConcept](https://github.com/Highjune/TIL/tree/main/Languages/Java/JavaConcept)
+    - [Notepad](https://github.com/Highjune/TIL/tree/main/Languages/Java/Notepad)
+    - [Project](https://github.com/Highjune/TIL/tree/main/Languages/Java/Project)
+    - [UsefulCode](https://github.com/Highjune/TIL/tree/main/Languages/Java/UsefulCode)
     - reference_link.md(자바 좋은 링크)
 - Python
 - JavaScript
