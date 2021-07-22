@@ -9,24 +9,12 @@
 
 ## 분류
 
-### Algorithm
-- Lectures
-- Practice
-- Test
-- Theory
 
 ### Backend
 - Concept
 - FrameWork
     - Spring_SpringBoot
     - Lectures
-
-### Cloud
-- AWS
-
-### Configuration_Management
-- [Git](https://github.com/Highjune/TIL/blob/master/Configuration_Management/git.md) 
-- [Svn](https://github.com/Highjune/TIL/blob/master/Configuration_Management/svn.md)
 
 ### DataBase
 - Mysql
@@ -36,12 +24,22 @@
 - Redis
 - Structure
 
-### DevOps
+### Algorithm
+- Lectures
+- Practice
+- Test
+- Theory
 
-### Etc
-- Gatsby_blog
-- GoodLink
-- Piece
+
+### Cloud
+- AWS
+
+### Configuration_Management
+- [Git](https://github.com/Highjune/TIL/blob/master/Configuration_Management/git.md) 
+- [Svn](https://github.com/Highjune/TIL/blob/master/Configuration_Management/svn.md)
+
+
+### DevOps
 
 ### Frontend
 - CSS
@@ -78,17 +76,14 @@
 ### Seminars & Conference
 - etc.md
 
-### Server
-
 ### Theory
 
 ### Tools
 - [Eclipse](https://github.com/Highjune/TIL/blob/master/Tools/eclipse.md)
 - [VSCode](https://github.com/Highjune/TIL/blob/master/Tools/vscode.md)
 
-
-### OS(Operation_System)
-- Linux
-
-### Network
+### Etc
+- Gatsby_blog
+- GoodLink
+- Piece
 
