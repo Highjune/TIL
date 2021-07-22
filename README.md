@@ -7,35 +7,88 @@
 ## 작성규칙
 - 디렉토리와 파일명은 영어로 작성 
 
-
 ## 분류
 
+### Algorithm
+- Lectures
+- Practice
+- Test
+- Theory
+
+### Backend
+- Concept
+- FrameWork
+    - Spring_SpringBoot
+    - Lectures
+
 ### Cloud
-
-### Languages
-- [Java](https://github.com/Highjune/TIL/tree/master/Languages/Java)
-
-### Frontend
-
-### Theory
-
-### Tools
+- AWS
 
 ### Configuration_Management
 - [Git](https://github.com/Highjune/TIL/blob/master/Configuration_Management/git.md) 
 - [Svn](https://github.com/Highjune/TIL/blob/master/Configuration_Management/svn.md)
 
+### DataBase
+- Mysql
+    - [Environment](https://github.com/Highjune/TIL/blob/master/DataBase/Mysql/mysql_environment.md)
+    - [Sql](https://github.com/Highjune/TIL/blob/master/DateBase/Mysql/mysql_sql.md)
+- Oracle
+- Redis
+- Structure
+
+### DevOps
+
+### Etc
+- Gatsby_blog
+- GoodLink
+- Piece
+
+### Frontend
+- CSS
+- FrameWork
+- HTML
+- Library
+- TemplateEngine
+    - Freemarker
+    - Mustache
+    - Thymeleaf
+
+
+### Languages
+- [Java](https://github.com/Highjune/TIL/tree/master/Languages/Java)
+    - BasicConcept
+    - CodePrcatice
+    - JavaConcept
+    - Notepad
+    - Project
+    - UsefulCode
+    - reference_link.md(자바 좋은 링크)
+- Python
+- JavaScript
+- Kotlin
+
+### Network
+
+### OS(Operation_System)
+- Linux_Command.md
+- Ubuntu_Install_Mysql.md
+- Ubuntu_Install_Nginx(Web_Server).md
+- VirtualBox.md
+
+### Seminars & Conference
+- etc.md
+
+### Server
+
+### Theory
+
 ### Tools
 - [Eclipse](https://github.com/Highjune/TIL/blob/master/Tools/eclipse.md)
 - [VSCode](https://github.com/Highjune/TIL/blob/master/Tools/vscode.md)
 
-### DataBase
-- Mysql
-    - [Environment](https://github.com/Highjune/TIL/blob/master/DateBase/Mysql/mysql_environment.md)
-    - [sql](https://github.com/Highjune/TIL/blob/master/DateBase/Mysql/mysql_sql.md)
 
 ### OS(Operation_System)
 - Linux
 
 ### Network
-###
+
