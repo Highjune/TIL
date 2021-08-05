@@ -22,7 +22,7 @@
     - [Sql](https://github.com/Highjune/TIL/blob/master/DateBase/Mysql/mysql_sql.md)
 - Oracle
 - Redis
-- Structure
+- Structure 
 
 ### [Algorithm](https://github.com/Highjune/TIL/tree/main/Algorithm)
 - [Lectures](https://github.com/Highjune/TIL/tree/main/Algorithm/Lectures)
