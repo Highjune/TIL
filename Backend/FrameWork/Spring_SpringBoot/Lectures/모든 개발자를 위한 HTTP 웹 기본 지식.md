@@ -351,4 +351,4 @@
         - 지금은 HTTP 지속 연결(Persistent Connections)로 문제 해결
             - 기본적으로 HTTP는 지속 연결을 쓴다. 예전의 keep-alive
         - HTTP/2, HTTP/3에서 더 많은 최적화
-    - 
+    -   
