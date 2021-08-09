@@ -1522,3 +1522,498 @@
     - 참고: 표현 헤더는 표현 메타데이터와, 페이로드 메시지를 구분해야 하지만, 여기서는 생략
 
 ## 표현
+- 만약 회원 리소스가 있다고 가정한다면, 회원 리소스를 HTML 리소스로 전송하든지(표현), JSON 형식으로 전송하든지(표현). 그래서 표현이라고 말함. 사실 리소스 자체는 추상적이다. DB에 있을수도 있고 바이트코드로 어딘가에 저장. 
+- 클라이언트 서버간에 주고받을 때는 서로 이해할 수 있는 무엇인가로 변환(표현)해서 데이터를 전달해야 한다. DB 안의 바이너리 데이터를 그대로 전달할 수는 없으니.
+- Content-Type: 표현 데이터의 형식
+- Content-Encoding: 표현 데이터의 압축 방식
+- Content-Language: 표현 데이터의 자연 언어
+- Content-Length: 표현 데이터의 길이
+- 표현 헤더는 전송, 응답 둘다 사용
+
+```
+HTTP/1.1 200 OK
+Content-Type: text/html;charset=UTF-8
+Content-Length: 3423
+
+<html>
+    <body>...</body>
+</html>
+```
+
+
+- Content-Type
+    ```
+    HTTP/1.1 200 OK
+    Content-Type: text/html;charset=UTF-8
+    Content-Length: 3423
+
+    <html>
+        <body>...</body>
+    </html>
+    ```
+    ```
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 16
+    
+    {
+        "data":"hello"
+    }
+    ```
+    - 미디어 타입, 문자 인코딩
+    - 컨텐트 바디에 들어가는 종류가 뭐니? 를 말해준 것
+    - text/html; charset=utf-8
+    - application/json (기본이 utf-8)
+    - image/png
+
+- Content-Encoding
+    ```
+    HTTP/1.1 200 OK
+    Content-Type: text/html;charset=UTF-8
+    Content-Encoding: gzip
+    Content-Length: 521
+
+    lasdhfsadhfkajshdfklsajhdflksajhdf
+    asdkjfhaskldjfh
+    ```
+    - 표현 데이터를 압축하기 위해 사용
+    - 데이터를 전달하는 곳에서 압축 후(바디 부분을) 인코딩 헤더 추가
+    - 데이터를 읽는 쪽에서 인코딩 헤더의 정보로 압축 해제
+    - 예)
+        - gzip
+        - defalte
+        - identity(압축 안한다는 것)
+
+- Content-Language
+    ```
+    HTTP.1.1 200 OK
+    Content-Type: text/html;charset=UTF-8
+    Content-Language: ko
+    Content-Length: 521
+
+    <html>
+    안녕하세요
+    </html>
+    ```
+    ```
+    HTTP.1.1 200 OK
+    Content-Type: text/html;charset=UTF-8
+    Content-Language: en
+    Content-Length: 521
+
+    <html>
+    hello
+    </html>
+    ```
+    - 표현 데이터의 자연 언어
+    - 표현 데이터의 자연 언어를 표현
+    - 예)
+        - ko
+        - en
+        - en-US
+
+- Content-Length
+    ```
+    HTTP/1.1 200 OK
+    Content-Type: text/html;charset=UTF-8
+    Content-Length: 5
+
+    hello
+    ```
+    - 표현 데이터의 길이
+    - 바이트 단위
+    - Transfer-Encoding(전송 코딩)을 사용하면 Content-Length를 사용하면 안됨
+
+## 협상(컨텐츠 네고시에이션)
+- Accept: 클라이언트가 선호하는 미디어(컨텐트) 타입 전달
+- Accept-Charset: 클라이언트가 선호하는 문자 인코딩
+- Accept-Encoding: 클라이언트가 선호하는 압축 인코딩
+- Accept-Language: 클라이언트가 선호하는 자연 언어
+- 클라이언트가 선호하는 표현 요청을 서버에게 부탁하는 것(꼭 서버가 다 맞춰줄 순 없지만 클라이언트가 원하는 양식으로 최대한 맞춰줌)
+- 협상 헤더는 요청시에만 사용
+- 서버가 만약에 제공할 수 있는 컨텐트 타입이 JSON, xml 둘 다 가능한 상태. 만약 클라이언트A는 json을 선호, 클라이언트B는 xml을 선호. 클라이언트A, B는 각각 Accpet 속성에 원하는 데이터 타입 넣어서 보내면 된다. 물론 사전에 서버가 둘을 다 제공하는지는 미리 알고 있어야 한다. 
+
+
+- Accpet-Languge 적용 전
+    - 클라이언트는 한국어 브라우저를 사용중. 
+        - 요청 메시지
+        ```
+        GET /event
+        ```
+    - 서버는 다중 언어 지원 서버
+        1. 기본 영어(en)
+        2. 한국어 지원(ko)
+        - 응답 메시지
+        ```
+        Content-Language: en
+        
+        hello(영어)
+        ```
+    - 그래서 클라이언트는 한국어 브라우저를 사용중이지만 영어(hello)를 받게 된다. 즉 서버는 클라이언트의 입장, 선호 언어를 모르기 때문에.
+- Accept-Language 적용 후
+    - 클라이언트는 한국어 브라우저를 사용중. 그리고 선호 언어를 미리 말해줌
+        - 요청 메시지
+        ```
+        GET /event
+        Accept-Language: ko
+        ```
+    - 서버는 다중 언어 지원 서버
+        1. 기본 영어(en)
+        2. 한국어 지원(ko)
+        - 응답 메시지
+        ```
+        Content-Language: ko
+        
+        안녕하세요
+        ```
+    - 그래서 클라이언트는 원하는 언어(ko)를 받게 된다.
+
+- Accpet-Language 복잡한 예시
+    - 클라이언트는 한국어 브라우저를 사용중. 그리고 선호 언어를 미리 말해줌
+        - 요청 메시지
+        ```
+        GET /event
+        Accept-Language: ko
+        ```
+    - 서버는 다중 언어 지원 서버
+        1. 기본 독일어(de)
+        2. 영어도 지원(en)
+        - 응답 메시지
+        ```
+        Content-Language: de
+        
+        Hallo (독일어)
+        ```
+    - 문제) 클라이언트 입장에서는 한국어(ko)를 원하지만 만약 없다면 영어(en)로 왔으면 좋겠다라는 입장. 독일어는 어려움 ㅠㅠ
+        - 그래서 협상과 우선순위가 필요!
+
+- 협상과 우선순위1
+    ```
+    GET /event
+    Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7
+    ```
+    - Quality Values(q) 값 사용
+    - 0~1, `클수록 높은 우선순위`
+    - 생략하면 1
+    - Accept-Language: ko-KR;ko;q=0.9,en-US;q=0.8,en;q=0.7
+        1. ko-KR;q=1 (q생략)
+            - 한국사람이 쓰는 한국어
+        2. ko;q=0.9
+            - 공통 한국어
+        3. en-US;q=0.8
+            - US가 쓰는 영어
+        4. en;q=0.7
+- 그래서 위의 복잡한 예시에서 다시 보냄.
+    - 클라이언트는 한국어 브라우저를 사용중. 그리고 선호 언어와 우선순위를 알려줌
+        - 요청 메시지
+        ```
+        GET /event
+        Accept-Language: ko-KR;ko;q=0.9,en-US;q=0.8,en;q=0.7
+        ```
+    - 서버는 다중 언어 지원 서버
+        1. 기본 독일어(de)
+        2. 영어도 지원(en)
+        - 응답 메시지
+        ```
+        Content-Language: de
+        
+        Hello (영어)
+        ```
+    - 서버가 지원할 수 있는 언어 중에서 클라이언트가 선호하는 순위 안에서 정해서 보내줌
+
+- 협상과 우선순위2
+    ```
+    GET /event
+    Accept: text/*, text/plain, text/plain;format=flowed, */*
+    ```
+    - Quality Values(q)
+    - 구체적인 것이 우선한다.
+    - Accept: text/*, text/plain, text/plain;format=flowed, */*
+        1. text/plain;format=flowed
+        2. text/plain
+        3. text/*
+        4. */*
+- 협상과 우선순위3
+    ```
+    Accept: text/*;q=0.3, text/html;q=0.7, text/html;level=1,
+    text/html;level=2;q=0.4, */*;q=0.5
+    ```
+    |Media Type | Quality |
+    |--|--|
+    |text/html;level=1|1|
+    |text/html|0.7|
+    |text/plain|0.3|
+    |text/jpeg|0.5|
+    |text/html;level=2|0.4|
+    |text/html;level=3|0.7|
+
+
+
+## 전송 방식
+- Transfer-Encoding
+- Range, Content-Range
+- 단순 전송
+    - Content-Length
+    - /event로 요청 메시지. 
+    ```
+    GET /event
+    ```
+    - 응답 메시지
+    ```
+    HTTP/1.1 200 OK
+    Content-Type: text/html;charset=UTF-8
+    Content-Length: 3423
+
+    <html>
+        <body>...</body>
+    </html>
+    ```
+    - 한번에 요청해서 한번에 쭈욱 받는것. 컨텐츠 길이(3423)를 적어주는 것. 
+
+- 압축 전송
+    - Content-Encoding
+    - /event로 요청 메시지. 
+    ```
+    GET /event
+    ```
+    - 응답 메시지
+    ```
+    HTTP/1.1 200 OK
+    Content-Type: text/html;charset=UTF-8
+    Content-Encoding: gzip
+    Content-Length: 521
+    
+    saldkjfal;skdjfqwkhsdjkhfsdlkf
+    ```
+    - 무엇으로 압축했는지 넣어줘야 한다. (Content-Encoding)
+    - 용량이 굉장히 많이 줄어든다.
+- 분할 전송
+    - Transfer-Encoding
+    - chukced 는 덩어리(쪼개서) 로 보낸다는 것.
+    - /event로 요청 메시지. 
+    ```
+    GET /event
+    ```
+    - 응답 메시지
+    ```
+    HTTP/1.1 200 OK
+    Content-Type: text/plain
+    Transfer-Encoding: chunked
+
+    5
+    Hello
+    5
+    World
+    0
+    \r\n
+    ```
+    - 먼저 Hello(5바이트)를 먼저 보내고, 다음 World(5바이트)를 보낸 후 끝나면 엔터(\r\n)
+    - 그러면 클라이언트 입장에서는 먼저 World가 오기 전에 먼저 Hello를 받아 볼 수 있다.
+    - 용량이 큰 것을 한번에 보내지 않고(기다려야 함) 이런식으로 분할해서 보내면 바로바로 확인할 수 있다.
+    - 주의) 분할전송할 때는 Content-Lenght를 넣으면 안된다. 왜냐하면 예상이 안되고 각각의 용량(5바이트)을 
+- 범위 전송
+    - Range, Content-Range
+    - /event로 요청 메시지. 
+    ```
+    GET /event
+    Range: bytes=1001-2000
+    ```
+    - 응답 메시지
+    ```
+    HTTP/1.1 200 OK
+    Content-Type: text/plain
+    Content-Range: bytes 1001-2000 / 2000
+
+    alsdfh;asodhfkasjdhfklasjhdfkl
+    ```
+    - 사진 데이터를 중간정도 받다가 끊겼다면? 처음부터 다시 요청하면 용량이 아까우니까 덜 받은 부분의 범위를 지정해서 요청할 수 있다.
+
+## 일반 정보
+- From
+    - 유저 에이전트의 이메일 정보
+    - 일반적으로 잘 사용되지 않음
+    - 검색 엔진 같은 곳에서, 주로 사용
+        - 검색 엔진 담당자에게 내 사이트 방문하지 말아달라고 연락해야 할 때.
+    - 요청에서 사용
+
+- Referer
+    - 이전 웹 페이지 주소
+    - 엄청 자주 사용함
+    - 현재 요청된 페이지의 이전 웹 페이지 주소
+    - A -> B로 이동하는 경우 B를 요청할 때 Referer: A를 포함해서 요청
+    - Referer를 사용해서 유입 경로 분석 가능
+    - 요청에서 사용
+    - 참고: referer는 단어 referrer의 오타
+
+- User-Agent
+    - user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36
+    - 클라이언트의 애플리케이션 정보(웹 브라우저 정보, 등등)
+        - 클라이언트 애플리케이션을 유저 에이전트라고 한다.
+    - 통계 정보
+    - 어떤 종류의 브라우저에서 장애가 발생하는지 파악 가능
+        - 서버 입장에서 도움이 됨.
+        - 특정 종류의 브라우저에서 계속 버그가 생기면 로그를 파싱해보면 알 수 있다.
+    - 요청에서 사용
+
+- Server
+    - 요청을 처리하는 ORIGIN 서버의 소프트웨어 정보
+        - ORIGIN 서버란?
+            - 사실 HTTP 요청을 하면 중간에 수많은 프록시 서버(캐시 서버 등) 를 거친다. 그런 서버들을 다 거치고 제일 끝에 있는 실제로 HTTP 처리를 해주는 서버.
+    - Server: Apache/2.2.22 (Debian)
+    - sever: nginx
+    - 응답에서 사용
+
+- Date
+    - 메시지가 발생한 날짜와 시간
+    - Date: Tue, 15 Nov 1994 08:12:31 GMT
+    - 응답에서 사용
+
+
+## 특별한 정보
+- Host
+    ```
+    GET /search?q=hello&hl=ko HTTP/1.1
+    Host: www.google.com
+    ```
+    - 요청한 호스트 정보(도메인)
+    - 요청에서 사용
+    - `필수` 헤더임
+    - 하나의 서버가 여러 도메인을 처리해야 할 때
+    - 하나의 IP 주소에 여러 도메인이 적용되어 있을 때 구분해줌
+    - 예시 상황(pdf 269)
+        - 클라이언트(IP:100.100.100.1) 의 요청 메시지(만약 Host 헤더 필더가 없다면)
+        ```
+        GET /hello HTTP/1.1
+        ```
+        - 하나의 서버 안(IP: 200.200.200.2)에 여러 개의 애플리케이션이 다른 도메인(aaa.com, bbb.com, ccc.com)으로 구동이 되어 있는 경우
+        - 클라이언트는 /hello가 서버 안의 3가지 도메인 중 어느 애플리케이션과 관련이 있는지 알지 못한다(aaa.com과 관련이 있는 애플리케이션일 수도 있고 bbb.com, ccc.com 도 마찬가지). 구분할 방법이 없다.
+        - 구분할 방법이 없다. 왜냐하면 IP로만 통신을 하기 때문에. IP(200.200.200.2)로만 TCP/IP 연결해서 요청 메시지를 보내는 것이므로. 
+        - 그래서 Host 헤더를 무조건 넣어야 하는 스펙 개정이 이루어졌다.
+        ```
+        GET /hello HTTP/1.1
+        Host: aaa.com
+        ```
+        - TCP/IP는 아이피로만 통신을 하는데 다행히 서버는 메시지를 받자마자 Host를 확인해서 aaa.com 으로 가상호스팅을 해준다. 서버 안에서 다 설정을 해둘 수 있다. 
+
+- Location
+    - 페이지 리다이렉션
+    - 웹 브라우저는 3xx 응답의 결과에 Location 헤더가 있으면, Location 위치로 자동 이동(리다이렉트)
+    - 응답코드 3xx 에서 설명
+    - 201 (Created): Location 값은 요청에 의해 생성된 리소스 URI을 의미
+        - 201의 값에도 사용할 수 있음.
+    - 3xx (Redirection): Location 값은 요청을 자동으로 리디렉션하기 위한 대상 리소스를 가리킴.
+
+- Allow
+    - 허용 가능한 HTTP 메서드
+    - 405 (Method Not Allowed)에서 응답에 포함해야 함
+    - Allow: GET, HEAD, PUT
+        - 그러면 클라이언트는 POST는 지원안하는 메서드구나 ~ 라고 알 수 있음.
+    - 서버에 많이 구현되어 있진 않아서 많이 안 쓴다.
+
+- Retry-After
+    - 유저 에이전트가 다음 요청을 하기까지 기다려야 하는 시간
+    - 503 (Service Unavilable): 서비스가 언제까지 불능인지 알려줄 수 있음
+    - Retry-After: Fri, 31 Dec 1999 23:59:59 GMT (날짜 표기)
+        - 다시 서비스가 시작할 수 있는 시간
+    - Retyr-After: 120 (초단위 표기)
+        - 몇 초 뒤에 가능
+    - 날짜로도 표기할 수 있고, 초단위로도 가능 
+
+## 인증
+- Authorization: 클라이언트 인증 정보를 서버에 전달
+    - 인증하는 여러 메커니즘이 엄청 많다. 그런 것들마다 value에 들어가는 값은 다 다르다. ex) AUTH인증, ~인증 등
+    - HTTP 에서는 어떤 인증 종류가 들어오든 간에 일단 인증 헤더를 제공하는 것임.
+    ```
+    Authorization: Basic xxxxxxxxxxxx
+    ```
+- WWW-Authenticate: 리소스 접근시 필요한 인증 방법 정의
+    - 401 Unauthorized 응답과 함께 사용
+    ```
+    WWW-Authenticate: Newauth realm="apps", type=1,  
+    title="Login to \"apps\"", Basic realm="simple"
+    ```
+    - 위의 값에 해당하는 부분을 참고해서 제대로 된 인증정보를 만들어라~ 하는 뜻
+    - 서버에서 클라이언트로 반환
+
+
+## 쿠키
+- 쿠키 미사용시
+    - 처음 welcome 페이지 접근
+        - 웹 브라우저에서 요청
+        ```
+        GET /welcome HTTP/1.1
+        ```
+        - 서버에서 응답 메시지
+        ```
+        HTTP/1.1 200 OK
+
+        안녕하세요. 손님 
+        ```
+    - 로그인
+        - 웹 브라우저에서 요청
+        ```
+        POST /login HTTP/1.1
+        user=홍길동
+        ```
+        - 서버에서 응답 메시지
+        ```
+        HTTP/1.1 200 OK
+
+        홍길동님이 로그인했습니다. 
+        ```
+    - 로그인 후
+        - 웹 브라우저에서 요청
+        ```
+        GET /welcome HTTP/1.1
+        ```
+        - 서버에서 응답 메시지
+        ```
+        HTTP/1.1 200 OK
+
+        안녕하세요. 손님 
+        ```
+        - 로그인 후 내가 기대한 것은 '안녕하세요, 홍길동님' 인데 '안녕하세요, 손님' 이라고 뜬다.
+    - 왜 그럴까?
+        - 서버입장에서는 /welcome 요청만 받았기에, 로그인한 사용자인지 아닌지 서버입장에서는 구분할 수가 없다. (HTTP통신은 전송만 되고 나면 연결을 다 끊어버리므로)
+        - 서버가 Stateless이므로
+            - HTTP는 무상태(Stateless) 프로토콜이다.
+            - 클라이언트와 서버가 요청과 응답을 주고 받으면 연결이 끊어진다.
+            - 클라이언트가 다시 요청하면 서버는 이전 요청을 기억하지 못한다.
+            - 클라이언트와 서버는 서로 상태를 유지하지 않는다.
+    - 대안은 모든 요청에 사용자 정보를 포함시키는 것이다.
+        - 웹 브라우저에서 요청
+        ```
+        GET /welcome?user=홍길동 HTTP/1.1
+        ```
+        - 서버에서 응답 메시지
+        ```
+        HTTP/1.1 200 OK
+
+        안녕하세요. 홍길동님
+        ```
+        - 그런데 이 대안은 또 문제가 있다. 과연 모든 요청과 링크에 사용자 정보를 포함시킬 것인가? 보안문제도 있고..
+        ```
+        GET /welcome?user=홍길동 HTTP/1.1
+        ```
+        ```
+        GET /board?user=홍길동 HTTP/1.1
+        ```
+        ```
+        GET /order?user=홍길동 HTTP/1.1
+        ```
+        ```
+        GET /xxx...?user=홍길동 HTTP/1.1
+        ```
+    - 이렇게 모든 요청에 정보를 넘기는 문제가 생긴다.
+        - 모든 요청에 사용자 정보가 포함되도록 개발해야한다.
+        - 그리고 또 문제는.. 만약 브라우저를 완전히 종료하고 다시 연다면?
+            - 물론 이것은 요즘에 웹 스토리지라는 곳에 저장을 하면 되긴 한다.
+- 쿠키 도입!! (pdf 285)
+        
+
+
+    - 웹 브라우저 내부에는 쿠키 저장소가 있다.
+
+
+- Set-Cookie: 서버에서 클라이언트로 쿠키 전달(응답)
+- Cookie: 클라이언트가 서버에서 받은 쿠키를 저장하고, HTTP 요청시 서버로 전달
