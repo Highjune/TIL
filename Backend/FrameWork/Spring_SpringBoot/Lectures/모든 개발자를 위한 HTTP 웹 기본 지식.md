@@ -2209,7 +2209,7 @@ Content-Length: 3423
     GET /star.jpg
     ```
     - 응답 메시지
-        - `Last-Modified:2020년 11월 10일 10:00:00 추가`
+        - `Last-Modified:2020년 11월 10일 10:00:00 추가`. `검증헤더` 추가.
         ```
         HTTP/1.1 200 OK
         Content-Type: image/jpeg
@@ -2225,4 +2225,245 @@ Content-Length: 3423
         - star.jpg
         - 유효시간
         - 데이터 최종 수정일
-    - 
+    - 두 번째 요청
+        - 캐시 시간 초과
+        - 요청시 브라우저 캐시를 먼저 찾았는데 시간이 초과된 상태.
+        - 그런데, 캐시에 Last-Modified 값이 존재한다면, 데이터 최종 수정일을 요청메시지에 넣어서 보냄(`조건부 요청임`)
+        ```
+        GET /star.jpg
+        if-modified-since: 2020년 11월 10일 10:00:00 // 캐시가 가지고 있는, 데이터 최종 수정일. 
+        ```
+    - 서버에서 확인 함
+        - 서버가 가지고 있는 데이터 최종 수정일과 요청메시지에 있는 최종 수정일을 비교
+    - 서버에서 응답 메시지
+        - `HTTP Body가 없음.`
+        - 304 Not Modified 메시지(보낸 요청에 대해서 변한 내용이 없다는 것)
+        ```
+        HTTP/1.1 304 Not Modified
+        Content-Type: image/jpeg
+        cache-control: max-age=60
+        Last-Modified: 2020년 11월 10일 10:00:00  
+        Content-Length: 34012
+
+        ```
+        - 0.1M용량만 보냄 : 총 1.1M의 용량중에서 HTTP Body에 해당하는 1.0M 용량을 안 보내도 되니까 HTTP 헤더부분인 0.1M 만 보낸다. -> `네트워크 부하 줄어듬`
+    - 브라우저 캐시에서 캐시 재세팅(정보들 다시 최신화)
+        - 60초 유효시간 다시 초기화
+        - 데이터 최종 수정일 최신화
+        - 응답 결과를 재사용, 헤더 데이터 갱신
+    - 브라우저 캐시에서 데이터 불러와서 사용
+
+- 검증 헤더와 조건부 요청 정리
+    - 캐시 유효 시간이 초과해도, 서버의 데이터가 갱신되지 않으면
+    - 304 Not Modified + 헤더 메타 정보만 응답(바디X)
+    - 클라이언트는 서버가 보낸 응답 헤더 정보로 캐시의 메타 정보를 갱신
+    - 클라이언트는 캐시에 저장되어 있는 데이터 재활용
+    - 결과적으로 네트워크 다운로드가 발생하지만 용량이 적은 헤더 정보만 다운로드
+    - 매우 실용적인 해결책
+    - 웹 브라우저는 이 메커니즘을 대부분 실행하고 있다.
+
+
+## 검증 헤더와 조건부 요청2
+- 검증 헤더
+    - 캐시 데이터와 서버 데이터가 같은지 검증하는 데이터
+    - Last-Modified, ETag
+- 조건부 요청 헤더
+    - 클라이언트가 서버에 요청할 때 Last-Modified, ETag를 활용해서 조건부 요청 헤더를 만드는 것
+    - 검증 헤더로 조건에 따른 분기
+    - If-Modified-Since: Last-Modified 와 같이 사용
+    - If-None-Match: ETag 와 같이 사용
+    - 조건이 만족하면 200 OK
+    - 조건이 만족하지 않으면 304 Not Modified
+
+- If-Modified-Sicne: 이후에 데이터가 수정되었으면?
+    - 데이터 미변경 예시
+        - 캐시: 2020년 11월 10일 10:00:00 vs 서버:2020년 11월 10일 10:00:00
+        - `304 Not Modified`, 헤더 데이터만 전송(BODY 미포함)
+            - 304 Redirection - 너의 캐시로 Redirection 해서 그 데이터를 그대로 뿌려라~ 라는 말
+        - 전송 용량 0.1M (헤더 0.1M, 바디 1.0)
+    - 데이터 변경 예시
+        - 캐시: 2020년 11월 10일 10:00:00 vs 서버: 2020년 11월 10일 `11`:00:00 (수정됨)
+        - `200 OK`, 모든 데이터 전송(BODY 포함)
+        - 전송 용량 1.1M (헤더 0.1M, 바디 1.0M)
+    
+
+- Last-Modified, If-Modified-Since 단점
+    - 1초 미만(0.x초) 단위로 캐시 조정이 불가능. 최소가 초단위
+    - 날짜 기반의 로직 사용 
+    - 데이터를 수정해서 날짜가 다르지만, 같은 데이터를 수정해서 데이터 결과가 똑같은 경우
+        - 데이터 : A -> B -> A 로 다시 수정. => 이런 경우에도 데이터를 다 다운 받을 것임(날짜가 다르니깐)
+    - 서버에서 별도의 캐시 로직을 관리하고 싶은 경우 => ETag
+        - 예) 스페이스나 주석처럼 크게 영향이 없는 변경에서 캐시를 유지하고 싶은 경우
+
+- ETag, If-None-Match
+    - ETag(Entity Tag)
+    - 캐시용 데이터에 임의의 고유한 버전 이름을 달아둠(날짜가 아니라)
+        - 예) ETag: "v1.0", ETag: "a2jiodwjekjl3"
+        - 해시는 파일(컨텐츠)이 동일하면 동일한 해시결과 나옴. 
+    - 데이터가 변경되면 이 이름을 바꾸어서 변경함(Hash를 다시 생성)
+        - 예) ETag: "aaaaa" -> ETag: "bbbbb"
+    - 진짜 단순하게 ETag만 보내서 같으면 유지, 다르면 다시 받기!
+
+    - 첫 번째 요청
+    ```
+    GET /star.jpg
+    ```
+    - 응답 메시지
+        - 1.1M 전체 전송
+    ```
+    HTTP/1.1 200 OK
+    Content-Type: image/jpeg
+    cache-control: max-age=60
+    ETag: "aaaaaaaaaa"
+    Content-Length: 3402
+
+    jfkk;asjfkdkda;kljasdfkljsdakfhsadkjhfasdk
+    ;ishdv;klashdv;klhsdkjvhjskdavhklajsdhvklj
+    ```
+    - 웹 브라우저는 브라우저 캐시에 ETag저장
+        - 60초 유효값
+        - Etag "aaaaaaaaaa" 저장
+    - 두번째 요청
+        ```
+        GET /star.jpg
+        If-None-Match: "aaaaaaaaaa" // 캐시가 가지고 있는 ETag
+        ```
+        - 시간 초과된 상태
+        - 브라우저 캐시에 들려보니 시간이 초과된 것을 알게 됨
+        - ETag "aaaaaaaaaa" 를 요청메시지에 넣어서 보냄
+    - 서버는 갖고 있는 ETag의 값과 방금 보내온 ETag의 값을 비교. 
+    - 응답 메시지
+        - 두 값이 같으면 데이터가 아직 수정되지 않았다는 말 -> 304 
+        - HTTP 바디 없음. 그래서 0.1M만 전송
+        ```
+        HTTP/1.1 304 Not Modified
+        Content-Type: image/jpeg
+        cache-control: max-age=60
+        ETag: "aaaaaaaaaa"
+        Content-Length: 34012
+
+        ```
+    - HTTP 응답을 받고 난 후, 브라우저 캐시 재세팅(응답결과를 재사용)
+        - 60초 유효 
+        - ETag "aaaaaaaaaa" 갱신
+        
+    - 브라우저가 브라우저 캐시를 찾아서 (60초 유효하니 가능-다시 갱신됐으니) 캐시에서 조회(star.jpg).
+
+- ETag, If-None-Match 정리
+    - 진짜 단순하게 ETag만 서버에 보내서 같으면 유지, 다르면 다시 받기!
+    - `캐시 제어 로직을 서버에서 완전히 관리`
+    - 클라이언트는 단순히 이 값을 서버에 제공(클라이언트는 캐시 메커니즘을 모름)
+    - 예)
+        - 서버는 배타 오픈 기간인 3일 동안 파일이 변경되어도 ETag를 동일하게 유지(실제로 직접 이렇게는 안한다)
+        - 애플리케이션 배포 주기에 맞추어 ETag 모두 갱신
+
+## 캐시와 조건부 요청 헤더
+1. 캐시 제어 헤더
+    - Cache-Control: 캐시 제어
+    - Pragma: 캐시 제어(하위 호환)
+    - Expires: 캐시 유효 기간(하위 호환)
+
+
+- Cache-Control - 캐시 지시어(directives)
+    - Cache-Control: max-age
+        - 캐시 유효 시간, 초 단위
+    - Cachce-Control: no-cache
+        - 데이터는 캐시해도 되지만, 항상 원(origin) 서버에 검증하고 사용
+            - 중간 캐시 서버말고 원 서버
+    - Cache-Control: no-store
+        - 데이터에 민감한 정보가 있으므로 저장하면 안됨 (메모리에서 사용하고 최대한 빨리 삭제)
+- Pragme - 캐시 제어(하위 호환)
+    - Pragma: no-cache
+    - HTTP 1.0 하위 호환
+- Expires - 캐시 만료일 지정(하위 호환)
+    - expires: Mon, 01 jan 1990 00:00:00 GMT
+    - 캐시 만료일을 정확한 날짜로 지정
+    - HTTP 1.0부터 사용
+    - 지금은 더 유연한 Cache-Control: max-age 권장(더 유연)
+    - Cache-Control: max-age와 함께 사용하면 Expires는 무시됨
+
+2. 검증 헤더와 조건부 요청 헤더
+- 검증 헤더 (Validator)
+    - ETag: "v1.0", ETag: "asdlkjsdaf"
+    - Last-Modified: Thu, 04 Jun 2020 07:19:24 GMT
+- 조건부 요청 헤더
+    - If-Match, If-None-Match: ETag 값 사용
+    - If-Modified-Since, If-Unmodified-Since: Last-Modified 값 사용
+
+
+## 프록시 캐시
+- 원 서버 직접 접근(pdf 344)
+    - origin 서버 (원 소스가 있는 곳 = 원 서버)
+
+- 한국에서의 클라이언트들(웹 브라우저1, 2, 3)이 미국에 있는 원 서버에 접근 하려면 각각 다`500ms (0.5초)`.
+- 그런데 중간에 한국어딘가에 프록시 캐시 서버를 두면 한국의 클라이언트들은 이 서버에 접속하는 것은 `100ms(0.1초)`밖에 걸리지 않는다. 
+
+- 한국의 클라이언트 서버들의 캐시를 `private 캐시(로컬)`, 프록시 서버에 있는 캐시를 `public 캐시(공용)`라고 한다.
+
+- CDN서비스라고 해서 요새 많이 하고 있다. 특히 글로벌 서비스들.
+    - AWS 등
+    - 사람들    잘 안 보는 외국 Youtube 보면 다운로드가 좀 느리다. 그런데 사람들이 많이 보는 것들 보면 로딩 속도가 엄청 빠르다. 그것들은 모두 다 한국 어딘가에 있는 서버에서 다운 받는 것이다.
+
+- 최초에 요청하는 첫번째 유저한테는 없어서 느리다. 그런데 한 번 다운을 받아두면 두번째 유저부터는 빨리 조회할 수 있다. 아니면 프록시 캐시에다가 데이터를 애초부터 밀어넣는 경우도 있다.
+
+
+
+- Cache-Control (캐시 지시어(directives) - 기타)
+    - Cache-Control: public
+        - 응답이 public 캐시에 저장되어도 된다
+    - Cache-Control: private
+        - 응답이 해당 사용자만을 위한 것임, private 캐시에 저장해야 함(기본값)
+        - 프록시 서버에 저장되면 안됨(사용자 정보 등)
+    - Cache-Control: s-maxage
+        - 프록시 캐시에만 적용되는 max-age
+    - Age: 60 (HTTP 헤더)
+        - 오리진 서버에서 응답 후 프록시 캐시 내에 머문 시간(초)
+
+## 캐시 무효화
+- Cache-Control(확실한 캐시 무효화 응답)
+    - 캐시를 적용안하면 캐시가 적용안하는 것이 아니다. 적용 안해도 웹 브라우저들이 GET요청인 경우에는 임의로 해버리기도 한다. 
+    - 그런데 확실하게 캐시가 적용 안되어야 하는 순간이 있다.
+        - ex) 통장 잔고 등
+
+- 확실하게 캐시를 무효화하게 하려면?
+    - Cache-Control: no-cache, no-store, must-revalidate 다 넣기
+    - Pragma: no-cache 넣기
+        - HTTP 1.0 하위 호환
+    - 이렇게 4가지를 넣으면 무효화 가능
+
+- 캐시 지시어(directives) 하나씩 설명 - 확실한 캐시 무효화
+    - Cache-Control: no-cache
+        - 데이터는 캐시해도 되지만, 항상 `원 서버에 검증`하고 사용(이름에 주의!)
+    - Cache-Control: no-store
+        - 데이터에 민감한 정보가 있으므로 저장하면 안됨 (메모리에서 사용하고 최대한 빨리 삭제)
+    - Cache-Control: must-revalidate
+        - 캐시 만료후 최초 조회시 `원 서버에 검증`해야함
+        - 원 서버 접근 실패시 반드시 오류가 발생해야함 - 504(Gateway Timeout)
+        - must-revalidate는 캐시 유효 시간이라면 캐시를 사용함
+    - Pragma: no-cache
+        -  HTTP 1.0 하위 호환
+    
+
+- no-cache vs must-revalidate (pdf 351 꼭 참조)
+    - 프록시 캐시 서버 - 원 서버가 연결되어 있을 경우
+        - no-cache
+            1. 캐시 서버 요청 (no-cache + ETag)
+            2. 원 서버 요청(no-cache + ETag)
+            3. 원 서버 검증
+            4. 응답(304 Not Modified), 원서버 -> 프록시 캐시서버 
+            5. 응답(304 Not Modified), 프록시 캐시서버 -> 웹 브라우저
+            6. 웹 브라우저는 브라우저 캐시 검색 후(no-cache, ETag: "aaa") 캐시 데이터 사용해서 활용
+
+    - 프록시 캐시 서버 - 원 서버가 연결X - 순간 네트워크 단절, 원 서버 접근 불가
+        - no-cache
+            1. 캐시 서버 요청 (no-cache + ETag)
+            2. 원 서버에 접근할 수 없는 경우,  캐시 서버 설정에 따라서 캐시 데이터를 반환할 수 있음(Error or 200 OK - 오류보다는 오래된 데이터라도 보여주자)
+            3. 응답(200 OK), 응답(304 Not Modified), 프록시 캐시서버 -> 웹 브라우저.
+            - 즉 프록시 캐시가 응답해줌
+        - must-validate
+            1. 캐시 서버 요청 (no-cache + ETag)
+            2. 원 서버에 접근할 수 없는 경우, `항상 오류`가 발생해야함. (`504 Gateway Timeout`, 매우 중요한 돈과 관련된 결과로 생각해보자)
+            3. 응답(504 Gateway Timeout)
+
+    
+
