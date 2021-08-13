@@ -43,7 +43,8 @@
 
 - HTTP를 TCP가 감싸고 있고 그 위를 다시 IP가 감싸고 있고 마지막으로 Ethernet frame이 감싸고 있다고 생각하면 된다. (pdf 참조)
     ![프로토콜 계층 사진](https://user-images.githubusercontent.com/57219160/129349501-d684ddea-4f3a-4f9e-8849-c60c63f456c5.PNG)
-
+    ![IP패킷](https://user-images.githubusercontent.com/57219160/129349868-141ee885-7dde-4386-8dc8-38f3fe5a0f8b.PNG)
+    ![TCP IP 패킷 정보](https://user-images.githubusercontent.com/57219160/129349877-098c2b38-03fb-4c1f-aed4-dcfc193d9aff.PNG)
     - HTTP
         - 출발지IP, 목적지 IP, 기타...
     - TCP 세그먼트
