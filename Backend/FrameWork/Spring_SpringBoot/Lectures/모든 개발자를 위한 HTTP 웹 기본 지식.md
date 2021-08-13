@@ -108,6 +108,7 @@
 - 보통 TCP/IP를 같이 묶어서 얘기한다.
 
 ## PORT
+![port](https://user-images.githubusercontent.com/57219160/129350848-25eec158-3daa-4ad6-9ac4-257fa2fad89e.PNG)
 - 배가 도착하는 항구
 - IP는 목적지의 서버를 찾는 것이고, 그 서버 안에서 돌아가는 application 을 구분하는 것이 PORT
 - IP는 아파트, PORT는 동호수
