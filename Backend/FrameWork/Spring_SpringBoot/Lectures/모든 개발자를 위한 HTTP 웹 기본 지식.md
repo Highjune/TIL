@@ -142,12 +142,12 @@
 
 
 
-
 # URI와 웹 브라우저 요청 흐름
 ## URI(Uniform Resource Identifier)
-- rfc 표준 찾아보기
+- [rfc 표준 찾아보기](https://www.ietf.org/rfc/rfc3986.txt)
 - URI, URL, URN
     - URI는 로케이터(`l`ocator), 이름(`n`ame) 또는 둘 다 추가로 분류될 수 있다.
+
 
 - URI는 식별자이고 URL, URN을 포괄하는 개념이라고 생각하면 된다.
     - URL(Uniform Resource Locator)
@@ -159,7 +159,7 @@
     - URN(Uniform Resource Name)  
         - 리소스에 이름을 부여
         - 식별이름
-        - ex) 그냥 `Jun`을 찾으면 됨
+        - ex) 그냥 `June`을 찾으면 됨
         - 잘 안 씀. 이름을 부여하면 거의 찾을 수 없다. 이름에 다 하나하나 다 매칭을 해야하므로. URN 이름만으로 실제 리소스를 찾을 수 있는 방법이 보편화 되지 않음
         - urn:isbn:8960777331 (어떤 책의 isbn URN)
     - 위치는 변할 수 있지만, 이름은 변하지 않는다.
@@ -181,17 +181,16 @@
 - URN
     - ex) urn:example:animal:ferret:nose
         - scheme
-            - `foo`
-        - authority
-            - `example.com:8042`
-        - /over/there
-            - `path`
+            - `urn`
+        - `path`
+            - `example:animal:ferret:nose`
 
 
 - URI(Uniform Resource Identifier) 
     - `U`niform : 리소스 식별하는 통일된 방식
     - `R`esource : 자원, URI로 식별할 수 있는 모든 것(제한 없음)
     - `I`dentifier : 다른 항목과 구분하는데 필요한 정보
+    
 
 - 앞으로 URI와 URL과 같은 의미로 이야기하겠음
 
@@ -205,6 +204,7 @@
     - 패스(/search)
     - 쿼리 파라미터(q=hello&hl=ko)
 
+- 아래에서 하나씩 설명
 - URL scheme
     - `scheme`://[userinfo@]host[:port][/path][?query][#fragment]
     - `https`://www.google.com:443/search?q=hello&hl=ko
@@ -219,6 +219,7 @@
     - https://www.google.com:443/search?q=hello&hl=ko
     - URL에 사용자정보를 포함해서 인증
     - 거의 사용하지 않음
+    
 
 - URL host
     - scheme://[userinfo@]`host`[:port][/path][?query][#fragment]
@@ -226,12 +227,14 @@
     - 호스트명
     - 도메인명 또는 IP주소를 직접 사용가능
 
+
 - URL port
     - scheme://[userinfo@]host[`:port`][/path][?query][#fragment]
-    - https://www.google.com:`443`/search?q=hello&hl=ko
+    - https://www.google.com`:443`/search?q=hello&hl=ko
     - 포트(PORT)
     - 접속 포트
-    - 일반적으로 생략. 생략시 http는 80, https는 443
+    - 일반적으로 생략. 웹의 대부분은 http, https 를 사용하는데 http는 80을, https는 443을 생략해도 된다.
+
 
 - URL path
     - scheme://[userinfo@]host[:port][`/path`][?query][#fragment]
@@ -241,6 +244,7 @@
         - /home/file1.jpg
         - /members
         - /members/100, /items/iphone12
+
 
 - URL query
     - scheme://[userinfo@]host[:port][/path][`?query`][#fragment]
@@ -270,7 +274,7 @@
     - JSON, XML(API)
     - 거의 모든 형태의 데이터 전송 가능
     - 서버간에 데이터를 주고 받을 때도 대부분 HTTP 사용
-    - 지금은 HTTP 시대!
+    - 지금은 HTTP 시대!      
 
 - HTTP 역사
     - HTTP/0.9 1991년: GET 메서드만 지원, HTTP 헤더X
@@ -288,7 +292,7 @@
 
 - HTTP 특징
    - 클라이언트 서버 구조
-   - 무상태 프로토콜(스테이스리스), 비연결성
+   - 무상태 프로토콜(stateless), 비연결성
    - HTTP 메시지
    - 단순함, 확장 가능
 
@@ -299,7 +303,6 @@
 
 - 이렇게 클라이언트-서버 2가지로 분리하는 것이 엄청 중요하다.
     - 양쪽이 독립적으로 개발을 진행할 수 있음.
-
 
 ## Stateful, Stateless
 - pdf참고하기
