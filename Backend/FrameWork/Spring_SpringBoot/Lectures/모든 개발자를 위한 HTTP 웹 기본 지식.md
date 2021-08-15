@@ -365,7 +365,7 @@
         - TCP/IP 연결을 새로 맺어야 함 - 3 way handshake 시간 추가(검색해서 무엇을 보다가 다른 것을 클릭해서 들어갈 때 TCP/IP를 새로 맺어야 함)
         - 웹 브라우저로 사이트를 요청하면 HTML 뿐만 아니라 자바스크립트, css, 추가 이미지 등 수 많은 자원이 함께 다운로드
         - 지금은 HTTP 지속 연결(Persistent Connections)로 문제 해결
-            - 기본적으로 HTTP는 지속 연결을 쓴다. 예전의 keep-alive
+            - 기본적으로 HTTP는 지속 연결을 쓴다. 예전에는 keep-alive 
         - HTTP/2, HTTP/3에서 더 많은 최적화
 
 
