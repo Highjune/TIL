@@ -264,6 +264,38 @@
 
 ## 웹 브라우저 요청 흐름
 - pdf 꼭 보기(강의 4분짜리)
+- 클라이언트(IP: 100.100.100.1) 웹브라우저가 구글 서버(IP: 200.200.200.2)에 요청
+    - `www.google.com:443` -> DNS 조회 (IP:200.200.200.2), HTTPS PORT 생략(443)
+    ```
+    https://www.google.com:443/search?q=hello&hl=ko
+    ```
+- HTTP 요청 메시지 생성(브라우저가)
+```
+GET /search?q=hello&hl=ko HTTP/1.1
+Host: www.google.com
+
+```
+- HTTP 메시지 전송
+![HTTP 전송 메시지](https://user-images.githubusercontent.com/57219160/129666698-503f1973-3cf5-43f1-9519-bec4e16b0664.PNG)
+- 패킷 생성
+![패킷 생성](https://user-images.githubusercontent.com/57219160/129666773-e97b81bb-0fed-4a95-b101-2721babb4677.PNG)
+- 요청 패킷 전달 (클라이언트 -> 서버)
+![전달](https://user-images.githubusercontent.com/57219160/129666859-6eca22df-f804-493f-a92c-0ac7af45aa4f.PNG)
+- HTTP 응답 메시지 생성(브라우저가)
+```
+HTTP/1.1 200 OK
+Content-Type: text/html;charset=UTF-8
+Content-Length: 3423
+
+<html>
+    <body>...</body>
+</html>
+```
+- 요청 패킷 전달 (서버 -> 클라이언트)
+![요청 패킷 전달서버에게](https://user-images.githubusercontent.com/57219160/129667003-42001d51-316f-4507-89e3-90f590fb0552.PNG)
+- 웹 브라우저가 HTML 렌더링
+![렌더링](https://user-images.githubusercontent.com/57219160/129667201-aa896db5-0701-4c8e-929b-ebe2a142b34c.PNG)
+
 
 # HTTP 기본
 ## 모든 것이 HTTP
