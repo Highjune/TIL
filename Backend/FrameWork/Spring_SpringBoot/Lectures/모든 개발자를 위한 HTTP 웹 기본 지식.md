@@ -1590,7 +1590,7 @@ Content-Length: 3423
     - 참고: 표현 헤더는 표현 메타데이터와, 페이로드 메시지를 구분해야 하지만, 여기서는 생략
 
 ## 표현
-- 만약 회원 리소스가 있다고 가정한다면, 회원 리소스를 HTML 리소스로 전송하든지(표현), JSON 형식으로 전송하든지(표현). 그래서 표현이라고 말함. 사실 리소스 자체는 추상적이다. DB에 있을수도 있고 바이트코드로 어딘가에 저장. 
+- 만약 회원 리소스가 있다고 가정한다면, 회원 리소스를 HTML 리소스로 전송하든지(표현), JSON 형식으로 전송하든지(표현). 그래서 `표현`이라고 말함. 사실 리소스 자체는 추상적이다. DB에 있을수도 있고 바이트코드로 어딘가에 저장. 
 - 클라이언트 서버간에 주고받을 때는 서로 이해할 수 있는 무엇인가로 변환(표현)해서 데이터를 전달해야 한다. DB 안의 바이너리 데이터를 그대로 전달할 수는 없으니.
 - Content-Type: 표현 데이터의 형식
 - Content-Encoding: 표현 데이터의 압축 방식
@@ -1608,8 +1608,13 @@ Content-Length: 3423
 </html>
 ```
 
-
 - Content-Type
+    - 미디어 타입, 문자 인코딩
+    - 컨텐트 바디에 들어가는 종류가 뭐니? 를 말해준 것
+    - 예) 
+        - text/html;charset=utf-8
+        - application/json (기본이 utf-8)
+        - image/png
     ```
     HTTP/1.1 200 OK
     Content-Type: text/html;charset=UTF-8
@@ -1628,22 +1633,10 @@ Content-Length: 3423
         "data":"hello"
     }
     ```
-    - 미디어 타입, 문자 인코딩
-    - 컨텐트 바디에 들어가는 종류가 뭐니? 를 말해준 것
-    - text/html; charset=utf-8
-    - application/json (기본이 utf-8)
-    - image/png
+    
 
 - Content-Encoding
-    ```
-    HTTP/1.1 200 OK
-    Content-Type: text/html;charset=UTF-8
-    Content-Encoding: gzip
-    Content-Length: 521
-
-    lasdhfsadhfkajshdfklsajhdflksajhdf
-    asdkjfhaskldjfh
-    ```
+    - 표현 데이터 인코딩
     - 표현 데이터를 압축하기 위해 사용
     - 데이터를 전달하는 곳에서 압축 후(바디 부분을) 인코딩 헤더 추가
     - 데이터를 읽는 쪽에서 인코딩 헤더의 정보로 압축 해제
@@ -1651,8 +1644,23 @@ Content-Length: 3423
         - gzip
         - defalte
         - identity(압축 안한다는 것)
+    ```
+    HTTP/1.1 200 OK
+    Content-Type: text/html;charset=UTF-8
+    Content-Encoding: gzip
+    Content-Length: 521
+
+    lasdhfsadhfkajshdfklsajhdflksajhdf
+    asdkjfhaskldjfhdasdlfkjasl;dkfjlaskdv
+    ```
+    
 
 - Content-Language
+    - 표현 데이터의 자연 언어를 표현
+    - 예)
+        - ko
+        - en
+        - en-US
     ```
     HTTP.1.1 200 OK
     Content-Type: text/html;charset=UTF-8
@@ -1673,14 +1681,12 @@ Content-Length: 3423
     hello
     </html>
     ```
-    - 표현 데이터의 자연 언어
-    - 표현 데이터의 자연 언어를 표현
-    - 예)
-        - ko
-        - en
-        - en-US
+    
 
 - Content-Length
+    - 표현 데이터의 길이
+    - 바이트 단위
+    - Transfer-Encoding(전송 코딩)을 사용하면 Content-Length를 사용하면 안됨
     ```
     HTTP/1.1 200 OK
     Content-Type: text/html;charset=UTF-8
@@ -1688,9 +1694,8 @@ Content-Length: 3423
 
     hello
     ```
-    - 표현 데이터의 길이
-    - 바이트 단위
-    - Transfer-Encoding(전송 코딩)을 사용하면 Content-Length를 사용하면 안됨
+    
+
 
 ## 협상(컨텐츠 네고시에이션)
 - Accept: 클라이언트가 선호하는 미디어(컨텐트) 타입 전달
@@ -1698,11 +1703,11 @@ Content-Length: 3423
 - Accept-Encoding: 클라이언트가 선호하는 압축 인코딩
 - Accept-Language: 클라이언트가 선호하는 자연 언어
 - 클라이언트가 선호하는 표현 요청을 서버에게 부탁하는 것(꼭 서버가 다 맞춰줄 순 없지만 클라이언트가 원하는 양식으로 최대한 맞춰줌)
-- 협상 헤더는 요청시에만 사용
-- 서버가 만약에 제공할 수 있는 컨텐트 타입이 JSON, xml 둘 다 가능한 상태. 만약 클라이언트A는 json을 선호, 클라이언트B는 xml을 선호. 클라이언트A, B는 각각 Accpet 속성에 원하는 데이터 타입 넣어서 보내면 된다. 물론 사전에 서버가 둘을 다 제공하는지는 미리 알고 있어야 한다. 
+- 협상 헤더는 `요청시에만 사용`
+- 서버가 만약에 제공할 수 있는 컨텐트 타입이 JSON, xml 둘 다 가능한 상태. 만약 클라이언트A는 json을 선호, 클라이언트B는 xml을 선호. 클라이언트A, B는 각각 Accpet 속성에 원하는 데이터 타입 넣어서 보내면 된다. 물론 클라이언트A, B는 모두 사전에 서버가 둘을 다 제공하는지는 미리 알고 있어야 한다. 
 
 
-- Accpet-Languge 적용 전
+- Accept-Languge 적용 전
     - 클라이언트는 한국어 브라우저를 사용중. 
         - 요청 메시지
         ```
@@ -1743,7 +1748,7 @@ Content-Length: 3423
         GET /event
         Accept-Language: ko
         ```
-    - 서버는 다중 언어 지원 서버
+    - 서버는 다중 언어 지원 서버(클라이언트가 원하는 언어인 ko는 없음)
         1. 기본 독일어(de)
         2. 영어도 지원(en)
         - 응답 메시지
@@ -1752,7 +1757,7 @@ Content-Length: 3423
         
         Hallo (독일어)
         ```
-    - 문제) 클라이언트 입장에서는 한국어(ko)를 원하지만 만약 없다면 영어(en)로 왔으면 좋겠다라는 입장. 독일어는 어려움 ㅠㅠ
+    - 문제) 클라이언트 입장에서는 한국어(ko)를 원하지만 만약 없다면 영어(en)로 왔으면 좋겠다라는 입장. 독일어는 어려우니까... ㅠㅠ
         - 그래서 협상과 우선순위가 필요!
 
 - 협상과 우선순위1
@@ -1761,10 +1766,10 @@ Content-Length: 3423
     Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7
     ```
     - Quality Values(q) 값 사용
-    - 0~1, `클수록 높은 우선순위`
+    - 0 ~ 1, `클수록 높은 우선순위`
     - 생략하면 1
     - Accept-Language: ko-KR;ko;q=0.9,en-US;q=0.8,en;q=0.7
-        1. ko-KR;q=1 (q생략)
+        1. ko-KR;q=1 (q=1생략)
             - 한국사람이 쓰는 한국어
         2. ko;q=0.9
             - 공통 한국어
@@ -1783,11 +1788,12 @@ Content-Length: 3423
         2. 영어도 지원(en)
         - 응답 메시지
         ```
-        Content-Language: de
+        Content-Language: en
         
         Hello (영어)
         ```
-    - 서버가 지원할 수 있는 언어 중에서 클라이언트가 선호하는 순위 안에서 정해서 보내줌
+    - 서버가 지원할 수 있는 언어 중에서 클라이언트가 선호하는 순위 안에서 정해서 내줌
+    
 
 - 협상과 우선순위2
     ```
@@ -1801,7 +1807,10 @@ Content-Length: 3423
         2. text/plain
         3. text/*
         4. */*
+        
+        
 - 협상과 우선순위3
+    - 구체적인 것을 기준으로 미디어 타입을 맞춘다.
     ```
     Accept: text/*;q=0.3, text/html;q=0.7, text/html;level=1,
     text/html;level=2;q=0.4, */*;q=0.5
@@ -1878,7 +1887,7 @@ Content-Length: 3423
     - 먼저 Hello(5바이트)를 먼저 보내고, 다음 World(5바이트)를 보낸 후 끝나면 엔터(\r\n)
     - 그러면 클라이언트 입장에서는 먼저 World가 오기 전에 먼저 Hello를 받아 볼 수 있다.
     - 용량이 큰 것을 한번에 보내지 않고(기다려야 함) 이런식으로 분할해서 보내면 바로바로 확인할 수 있다.
-    - 주의) 분할전송할 때는 Content-Lenght를 넣으면 안된다. 왜냐하면 예상이 안되고 각각의 용량(5바이트)을 
+    - 주의) 분할전송할 때는 Content-Lenght를 넣으면 안된다. 왜냐하면 예상이 안되고 각각의 용량(5바이트)을 (강의다시듣기) 필기..^^;
 - 범위 전송
     - Range, Content-Range
     - /event로 요청 메시지. 
@@ -1914,7 +1923,7 @@ Content-Length: 3423
     - 참고: referer는 단어 referrer의 오타
 
 - User-Agent
-    - user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36
+    - User-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36
     - 클라이언트의 애플리케이션 정보(웹 브라우저 정보, 등등)
         - 클라이언트 애플리케이션을 유저 에이전트라고 한다.
     - 통계 정보
