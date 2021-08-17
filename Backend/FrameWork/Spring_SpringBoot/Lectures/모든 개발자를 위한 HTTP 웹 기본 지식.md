@@ -443,6 +443,9 @@ Content-Length: 3423
 
 - HTTP 는 요청메지와 응답메시지의 구조가 다르다.
 - pdf 보기
+
+![메시지 구조](https://user-images.githubusercontent.com/57219160/129676172-3d2d7d1f-f43c-4356-9caa-7de0fa1f1cb9.PNG)
+
 - HTTP 메시지 구조
     - start-line 시작 라인
     - header 헤더
@@ -452,10 +455,10 @@ Content-Length: 3423
 - 공식 스펙에서 확인가능(https://datatracker.ietf.org/doc/html/rfc7230#section-3)
     - start-line
     - *( header-field CRLF ) - 여러 개의 header 필드들
-    - CRLF
+    - CRLF 
     - [ message-body ] - 없어도 됨
 
-- 시작 라인(요청 메시지)
+- 시작 라인(요청 메시지), request
     ```
     GET /search?q=hello&hl=ko HTTP.1.1
     Host: www.google.com
@@ -479,7 +482,7 @@ Content-Length: 3423
         - 참고: *, http://...?x=y 와 같이 다른 유형의 경로지정 방법도 있다.
     3. HTTP 버전
         
-- 시작 라인(응답 메시지)
+- 시작 라인(응답 메시지), response
     ```
     HTTP/1.1 200 OK
     Content-Type: text/html;charset=UTF-8
@@ -500,7 +503,7 @@ Content-Length: 3423
 
 
 - HTTP 헤더
-    - header-field = field-name ":" OWS field-value OWS (OWS : 띄어쓰기 허용, 해도 되고 안해도 됨)
+    - header-field = field-name":" OWS field-value OWS (OWS : 띄어쓰기 허용, 해도 되고 안해도 됨)
         - field-name 과 :는 붙여서 써야 함
     - filed-name 은 대소문자 구문 없음(Host, host 무관), value(www.google.com)은 당연히 대소문자 구분
     - 요청 메시지에서의 헤더는 `Host: www.google.com`
@@ -508,7 +511,7 @@ Content-Length: 3423
     - 응답 메시지에서의 HTTP 헤더는
     ```
     Content-Type: text/html;charset=UTF-8
-    Content-Length:3423
+    Content-Length: 3423
     ```
     - 용도  
         - HTTP 전송에 필요한 모든 부가정보
@@ -520,7 +523,7 @@ Content-Length: 3423
 
 - HTTP 메시지 바디
     - 보통 응답 메시지에 담겨 있음 (요청 메시지도 body 본문을 가질 수 있다)
-    - 응답 메시지에서의
+    - 응답 메시지에서의 body 예시
     ```
     <html>
         <body>...</body>
@@ -529,11 +532,11 @@ Content-Length: 3423
     - 실제 전송할 데이터
     - HTML 문서, 이미지, 영상, JSON 등등 byte로 표현할 수 있는 모든 데이터 전송 가능(압축했다면 압축된 것이 담겨있음)
 
+
 - 단순함 확장 가능
     - HTTP는 단순하다. 스펙도 읽어볼만...
     - HTTP 메시지도 매우 단순
     - 크게 성공하는 표준 기술은 단순하지만 확장 가능한 기술
-
 
 
 # HTTP 메서드
@@ -572,9 +575,9 @@ Content-Length: 3423
 - API URI 설계 - URI(Uniform Resource Identifier
     - `회원` 목록 조회 /members
     - `회원` 조회 /members/{id} `-> 어떻게 구분하지?`
-    - `회원` 조회 /members/{id} `-> 어떻게 구분하지?`
-    - `회원` 조회 /members/{id} `-> 어떻게 구분하지?`
-    - `회원` 조회 /members/{id} `-> 어떻게 구분하지?`
+    - `회원` 등록 /members/{id} `-> 어떻게 구분하지?`
+    - `회원` 수정 /members/{id} `-> 어떻게 구분하지?`
+    - `회원` 삭제 /members/{id} `-> 어떻게 구분하지?`
     - 참고: 계층 구조상 상위를 컬렉션으로 보고 복수단어 사용 권장(member -> members)
 
 - `리소스와 행위를 분리!!!`, `가장 중요한 것은 리소스를 식별하는 것.`
@@ -586,7 +589,7 @@ Content-Length: 3423
     - 행위(메서드)는 어떻게 구분? `HTTP 메서드가 해준다.`
 
 ## HTTP 메서드 - GET, POST
-- HTTP 메서드는 클라이언트가 서버에 요청할 때 기대되는 행동이다.
+- HTTP 메서드는 클라이언트가 서버에 요청할 때 `기대되는 행동`이다.
 - 주요 메서드
     - GET: 리소스 조회
     - POST: 요청 데이터 처리, 주로 등록에 사용
@@ -605,6 +608,7 @@ Content-Length: 3423
     ```
     GET /search?q=hello&hl=ko HTTP/1.1
     Host: www.google.com
+    
     ```
     - 리소스 조회
     - 서버에 전달하고 싶은 데이터는 query(쿼리 파라미터, 쿼리 스트링)를 통해서 전달
@@ -615,17 +619,18 @@ Content-Length: 3423
         ```
         GET /members/100 HTTP/1.1
         Host: localhost:8080
+
         ```
     - 리소스 조회2 - 서버도착
         - 서버는 아이디가 100번인 회원을 조회(GET) 해서 DB에서 들고옴
-        - 데이터를 만듬(JSON인데 다른 형식의 데이터일 수도 있음). 만약 HTML 이라면 웹 브라우저가 HTML 태그 정보를 읽어서 보여줄 것임. 
+        - 데이터를 만듬(JSON인데 다른 형식의 데이터일 수도 있음). 만약 HTML 이라면 웹 브라우저(클라이언트)가 서버로부터 받은 HTML 태그 정보를 읽어서 보여줄 것임. 
         ```
         {
             "username" : "young",
             "age" : 20
         }
         ```
-    - 리소스 조회3 - 응답 데이터를 클라이언트에게 보낸다. 
+    - 리소스 조회3 - 응답 데이터를 클라이언트에게 보낸다.
         ```
         HTTP/1.1 200 OK
         Content-type: application/json
@@ -650,48 +655,47 @@ Content-Length: 3423
     - 요청 데이터 처리
     - `메시지 바디를 통해 서버로 요청 데이터 전달` 
     - 서버는 요청 데이터를 `처리`
-        - 메시지 바디를 통해 들어온 데이터를 처리하는 모든 기능을 수행한다.(물론 약속을 해놓은 상태)
+        - 메시지 바디를 통해 들어온 데이터를 처리하는 모든 기능을 수행한다.(물론 서로 약속을 해놓은 상태)
     - 주로 전달된 데이터로 신규 리소스 등록, 프로세스 처리에 사용
-    
-
-    - 리소스 등록1 - 클라이언트가 아래의 메시지를 `/members`라는 곳에 전달
         - 미리 약속된 상태 : 서버는 "클라이언트야, 너가 데이터를 /members에 POST로 보내면 그 데이터를 난 저장할거야, 또는 그 데이터를 내부적인 프로세스에 쓰는데 사용할거야" 라고 미리 서로 약속. 여기서는 신규로 등록으로 약속.
+    - 리소스 등록
+        1. 클라이언트가 아래의 메시지를 `/members`라는 곳에 전달
         ```
         POST /members HTTP/1.1
-        Content-typ0e: application/json
+        Content-type: application/json
 
         {
             "username": "hello",
             "age": 20
         }
         ```
-    - 리소스 등록2 - 신규 리소스 생성
+        2. 신규 리소스 생성
         - /members 에 데이터를 받아서 DB에 등록해서 새로운 id값 생성(신규 리소스 식별자 생성)
-        - /members/100 
+        - /members/100
         ```
          {
             "username": "hello",
             "age": 20
         }
         ```
-    - 리소스 등록3 - 응답 데이터를 클라이언트에게 전송
+        3. 응답 데이터를 클라이언트에게 전송
         - 200메시지로 보내도 된다. 그리고 보통 201로 보내면 Location필드를 통해서 자원이 생성된 신규 URI 주소를 보내준다.
-    ```
-    HTTP/1.1 201 Created
-    Content-Type: application/json
-    Content-Length: 34
-    Location: /members/100
+        ```
+        HTTP/1.1 201 Created
+        Content-Type: application/json
+        Content-Length: 34
+        Location: /members/100
 
-    {
-        "username": "young",
-        "age": 20
-    }
-    ```
+        {
+            "username": "young",
+            "age": 20
+        }
+        ```
 
     - POST 는 요청 데이터를 어떻게 처리한다는 뜻일까? 예시
-        - 스펙: POST 메서드는 `대상 리소스가 리소스의 고유 한 의미 체계에 따라 요청에 포함 된 표현을 처리하도록 요청`합니다. (구글 번역)
+        - 스펙: POST 메서드는 `대상 리소스가 리소스의 고유한 의미 체계에 따라 요청에 포함된 표현을 처리하도록 요청`합니다. (구글 번역)
         - 예를 들어 POST는 다음과 같은 기능에 사용됩니다.
-            - HTML 양식에 입력 된 필드와 같은 데이터 블록을 데이터 처리 프로세스에 제공
+            - HTML 양식에 입력된 필드와 같은 데이터 블록을 데이터 처리 프로세스에 제공
                 - ex) HTML FORM에 입력한 정보로 회원 가입, 주문 등에서 사용
             - 게시판, 뉴스 그룹, 메일링 리스트, 블로그 또는 유사한 기사 그룹에 메시지 게시
                 - ex) 게시판 글쓰기, 댓글 달기
@@ -712,13 +716,13 @@ Content-Length: 3423
         - 예) POST /orders/{orderId}/start-delivery (컨트롤 URI)
             - 주문번호(orderId)로 배달을 시작해라.(start-delivery)
             - 원래는 URI 설계를 리소스 단위로 해야하는데 어쩔 수 없이 리소스 단위로 설계가 안될 때가 있다.
-            - 동사의 의미가 닮긴 URI -> `컨트롤 URI` 라고 부른다.
+            - 동사의 의미가 담긴 URI -> `컨트롤 URI` 라고 부른다.
             - 실무에서는 리소스 단위로만 URI 를 다 설계할 수는 없다. 최대한 리소스 단위로 설계하고 난 후 어쩔 수 없는 부분들은 컨트롤 URI로 설계
     3. 다른 메서드로 처리하기 애매한 경우
         - 예) JSON으로 조회 데이터를 넘겨야 하는데, GET 메서드를 사용하기 어려운 경우(메세지 바디를 넣을 수 있긴 한데 허용 안하는 서버들이 많아서 아예 체크를 안함)
         - 이럴 경우 조회이지만 POST를 사용, 애매한 POST
         
-    - 참고) 사실 POSt는 모든 것을 할 수 있다. 그런데 조회할 때는 GET을 쓰는 것이 유리하다. 서버끼리 약속을 해둔다. `GET으로 오면 캐싱을 하겠다.`. POST로 오면 캐싱을 하는 것이 어렵다. 그래서 조회의 경우는 최대한 GET을 쓰고, 위와 같은 경우들은 POST 사용하기
+    - 참고) 사실 POST는 모든 것을 할 수 있다. 그런데 조회할 때는 GET을 쓰는 것이 유리하다. 서버끼리 약속을 해둔다. `GET으로 오면 캐싱을 하겠다.`. POST로 오면 캐싱을 하는 것이 어렵다. 그래서 조회의 경우는 최대한 GET을 쓰고, 위와 같은 경우들은 POST 사용하기
 
 ## HTTP 메서드 - PUT, PATCH, DELETE
 - PUT
@@ -732,9 +736,9 @@ Content-Length: 3423
     }
     ```
     1. 리소스를 대체
+        - 쉽게 이야기해서 덮어버림(폴더에 파일을 넣는 것과 동일. 기존 것이 있으면 덮고, 없으면 생성)
         - 리소스가 있으면 대체(완전히). 수정이 아니고 아예 갈아치움. 수정은 PATCH 메서드.
         - 리소스가 없으면 생성
-        - 쉽게 이야기해서 덮어버림(폴더에 파일을 넣는 것과 동일. 기존 것이 있으면 덮고, 없으면 생성)
         - 위 코드에서 /members/100 이 있다면 완전히 대체함(덮어버림), 없으면 생성
     2. 중요! 클라이언트가 리소스를 식별
         - 클라이언트가 리소스 위치를 알고 URI 지정
@@ -770,7 +774,7 @@ Content-Length: 3423
     - 리소스 부분 변경
         - 클라이언트가 아래처럼 요청메시지를 보낸다. (username 필드가 없다.)
         ```
-        PUT /members/100 HTTP/1.1
+        PATCH /members/100 HTTP/1.1
         Content-type: application/json
 
         {
@@ -810,8 +814,9 @@ Content-Length: 3423
         - 결과는? 서버의 /members/100 리소스가 제거된다.
     
 
-## HTTP 메서드의 속성
+## HTTP 메서드의 속성(안전, 멱등, 캐시가능)
 - [표로 정리](https://ko.wikipedia.org/wiki/HTTP)
+
 - 안전(Safe Methods)
     - 호출해도 리소스를 변경하지 않는다.
     - GET은 안전
@@ -894,6 +899,7 @@ Content-Length: 3423
         ```
         GET /search?q=hello&hl=ko HTTP/1.1
         Host: www.google.com
+        
         ```
     - 서버 응답 메시지
         - 쿼리 파라미터를 기반으로 정렬 필터해서 결과를 동적으로 생성
@@ -910,26 +916,30 @@ Content-Length: 3423
             - username : `kim`, age : `20` / 전송
         - HTML 코드
         ```
-        <form action="/save" method="post">
+        <form action="/save" method="post">   // post
             <input type = "text" name = "username" />
             <input type = "text" name = "age" />
             <button type = "submit">전송</button>
         </form>
         ```
-        - 전송버튼을 누르면 웹 브라우저가 FORM의 데이터를 읽어서 HTTP 메시지를 생성해준다.
+        - 전송버튼을 누르면 `웹 브라우저가 Form의 데이터를 읽어서 HTTP 메시지를 생성해준다.`
         - 웹 브라우저가 생성한 요청 HTTP 메시지
             - 쿼리 파라미터 같은 Content-Type을 application/x-www-form-urlencoded 라고 한다.(서버간에 다 약속이 되어있다. 웬만한 웹서버들은 이런것들을 다 파싱해서 사용할 수 있도록 구현이 되어있다)
+        - 폼으로 보내면 아래와 같이 데이터 부분에 쿼리파라미터 형태로 데이터가 넘어간다.
         ```
         POST /save HTTP/1.1
         Host: localhost:8080
-        Content-Type: application/x-www-form-urlencoded
+        Content-Type: application/x-www-form-urlencoded // 폼으로 보냈음
 
-        usernmae=kim&age=20
+        usernmae=kim&age=20  // 쿼리파라미터 형태, POST이므로 바디에 사용
         ```
-    - GET 전송 - 저장(사용하지 말기)
+    - GET 전송 - 저장
+        - 사용하지 말기!
+        - 화면
+            - username : `kim`, age : `20` / 전송
         - HTML Form으로 데이터를 전송할 때 메서드를 GET으로 바꿀 수 있음
         ```
-        <form action="/save" method="get">
+        <form action="/save" method="get">   // get 
             <input type = "text" name = "username" />
             <input type = "text" name = "age" />
             <button type = "submit">전송</button>
@@ -939,10 +949,11 @@ Content-Length: 3423
             ```
             GET /save?usernmae=kim&age=20 HTTP/1.1
             Host: localhost:8080
+            
             ```
             - GET이므로 메시지 바디를 안 쓰고 데이터를 쿼리 파라미터에 넣어서 서버에 전달
-            - 그래서 URL에 직접 쳐서 넣어도 되지만, form 태그에 데이터를 입력하고 전송을 하면 GET이라고 지정되어 있더라도 url 경로에 데이터를 넣게 됨
-            - 주의!) GET은 조회에만 사용!, 리소스 변경이 발생하는 곳에 사용하면 안됨. 이렇게 사용하지 말기
+            - 그래서 URL에 직접 쳐서 넣어도 되지만, form 태그에 데이터를 입력하고 전송버튼을 누르면 GET이라고 지정되어 있더라도 url 경로에 데이터를 넣게 됨 (강의다시듣기)
+            - 주의!) GET은 조회에만 사용!, 리소스 변경(/save)이 발생하는 곳에 사용하면 안됨. 이렇게 사용하지 말기
     - GET 전송 - 조회
         - 화면
             - username : `kim`, age : `20` / 전송
@@ -958,16 +969,17 @@ Content-Length: 3423
         ```
         GET /members?username=kim&age=20 HTTP/1.1
         Host: localhost:8080
+        
         ```
     - muiltipart/form-data (pdf181 참조), 파일 전송시 사용(binary 데이터 전송시 사용)
         - 화면
             - username : `kim`
             - age : `20`
             - file : 파일 선택 (intro.jpg)
-            - 전송
+            - 전송(버튼)
         - HTML 코드
         ```
-        <form action="/members" method="post" enctype="multipart/form-data">
+        <form action="/members" method="post" enctype="multipart/form-data">   //   enctype="multipart/form-data" 
             <input type = "text" name = "username" />
             <input type = "text" name = "age" />
             <input type = "file" name = "file1" />
@@ -980,17 +992,21 @@ Content-Length: 3423
         Host: localhost:8080
         Content-Type: multipart/form-data; boundary=-----XXX 
         Content-Length: 10457
+        
         ------XXX
         Content-Disposition: form-data; name="username"
+        
         kim
         ------XXX
         Content-Disposition: form-data; name="age"
+        
         20
         ------XXX
         Content-Disposition: form-data; name="file1"; filename="intro.png"
         Content-Type: image/png
-        109238a9o0p3eqwokjasd09ou3oirjwoe9u34ouief...
-        ------XXX--
+        
+        109238a9o0p3eqwokjasd09ou3oirjwoe9u34ouief...  // 파일
+        ------XXX--  // 끝에는 -- 추가
         ```
 
     - 정리
@@ -1052,22 +1068,23 @@ Content-Length: 3423
     - 회원 등록 /members -> `POST`
     - 회원 조회 /members/{id} -> `GET`
     - 회원 수정 /members/{id} -> `PATCH, PUT, POST`
-        - 개념적으로는 PATCH를 사용하는 것이 맞다. PUT은 다 덮어버리기 때문에 잘 사용은 안한다. 왜냐하면 클라이언트에서 모든 데이터를 빠짐없이 다 보내야 하기 때문이다. 물론 게시글 수정같은 경우(다 덮어도 되는) 유용. 게시글 같은 경우는 부분 수정이 아니라 수정한 전체 글을 다시 클라이언트에서 서버로 보내서 수정하므로. 
+        - 개념적으로는 PATCH를 사용하는 것이 맞다. PUT은 다 덮어버리기 때문에 잘 사용은 안한다. 왜냐하면 클라이언트에서 모든 데이터를 빠짐없이 다 보내야 하기 때문이다. 물론 게시글 수정같은 경우(다 덮어도 되는) 유용하긴 함. 게시글 같은 경우는 부분 수정이 아니라 수정한 전체 글을 다시 클라이언트에서 서버로 보내서 수정하므로. 
     - 회원 삭제 /members/{id} -> `DELETE`
-    - 참고) /members -> 이런것들을 컬렉션이라고 한다.
+    - 참고) /members -> 이런것들을 `컬렉션`이라고 한다.
+        - 컬렉션(Collection) 이란
+            - 서버가 관리하는 리소스 디렉토리
+            - 서버가 리소스의 URI를 생성하고 관리
+            - 여기서 컬렉션은 /members
     - POST - 신규 자원 등록 특징
         - 클라이언트는 등록될 리소스의 URI를 모른다. (100번인지 등). -> PUT이랑 다름
-            - 회원 등록/members -> POST
+            - 회원 등록 /members -> POST
             - POST /members -> 클라이언트는 정확한 URI를 모른다.
         - 서버가 새로 등록된 리소스 URI를 생성해준다. 
             ```
             HTTP/1.1 201 Created
             Location: /members/100
             ```
-        - 컬렉션(Collection)
-            - 서버가 관리하는 리소스 디렉토리
-            - 서버가 리소스의 URI를 생성하고 관리
-            - 여기서 컬렉션은 /members
+        
     
 - 파일 관리 시스템 - API 설계(PUT 기반 등록)
     - 파일 목록 /files -> `GET`
@@ -1075,14 +1092,14 @@ Content-Length: 3423
     - 파일 등록 /files/{filename} -> `PUT`
     - 파일 삭제 /files/{filename} -> `DELETE`
     - 파일 대량 등록 /files -> `POST`
-        - 이미 PUT으로 파일 등록으로 정했기 때문에, /files POST의 의미를 내가 임의로 정할 수 있다 .여기서는 대량 등록이라고 정의함.
+        - 이미 PUT을 파일 등록으로 정했기 때문에, /files POST의 의미를 내가 임의로 정할 수 있다. 여기서는 대량 등록이라고 정의함.
     - PUT - 신규 자원 등록 특징
         - 클라이언트가 리소스 URI를 알고 있어야 한다.
             - 파일 등록 /files/{filename} -> PUT
             - PUT /files/star.jpg -> 클라이언트가 알고 있음.
             - 물론 실제로 내부에는 star.jpg 라는 별 사진이 들어있어야 함. -> 서버에 전송
         - 클라이언트가 직접 리소스의 URI를 지정한다.
-        - 스토어(Store)
+        - 스토어(Store) 란
             - 클라이언트가 관리하는 리소스 저장소
             - 클라이언트가 리소스의 URI를 알고 관리
             - 여기서 스토어는 /files
@@ -1091,7 +1108,7 @@ Content-Length: 3423
 
 
 - HTML FORM 사용
-    - HTML FORM은 기본적으로 GET, POST만 지원
+    - HTML FORM은 기본적으로 GET, POST만 지원 => 그래서 리소스(/members)와 메서드만으로는 구분하기 힘드므로 컨트롤 URI 사용)
     - AJAX, JS 같은 기술을 사용해서 해결 가능 -> 회원 API 참조
     - 여기서는 순수 HTML, HTML FORM 이야기
     - GET, POST만 지원하므로 제약이 있음
@@ -1099,10 +1116,11 @@ Content-Length: 3423
         - 회원 목록 /members -> `GET`
         - 회원 등록 폼 /members/new -> `GET`
         - 회원 등록 /members/new, /members -> `POST`
-            - 둘 중 선택 가능. 김영한 선생님은 등록 폼 불러올 때(/members/new -> GET)와 등록을 할 때(/members/new -> POST)의 URI를 통일
+            - 둘 중 선택 가능. 김영한 선생님은 회원 등록하는 폼을 불러올 때의 (/members/new -> GET)와 등록을 할 때(/members/new -> POST)의 URI(/members/new)를 통일 (그러면 나중에 작업할 때 수월)
         - 회원 조회 /members/{id} -> `GET`
         - 회원 수정 폼 /members/{id}/edit -> `GET`
-        - 회원 수정 /members/{id}/edit, /members/{id} -> `POST`
+        - 회원 수정 /members/{id}/edit, /members/{id} -> `POST` 
+            - 역시 둘 다 사용가능. 그런데 회원 수정 폼을 들고 오는 것과 동일한 URI가 더 나을 듯
         - 회원 삭제 /members/{id}/delete -> `POST`
             - DELETE 메서드를 못 사용하므로 컨트롤 URI 사용
     - 컨트롤 URI
@@ -1110,7 +1128,7 @@ Content-Length: 3423
         - 이런 제약을 해결하기 위해 `동사`로 된 리소스 경로 사용
         - POST의 /new, /edit, /delete가 컨트롤 URI 
         - HTTP 메서드로 해결하기 애매한 경우 사용(HTTP API포함)
-        - 실무에서 정말 많이 씀. 이상적으로는 HTTP메서드로 해결하면 되지만 실제로는 컨트롤 URI를 사용함. 하지만 중구난방으로 사용하면 안된다.
+        - `실무에서 정말 많이 씀!!!!!!`. 이상적으로는 HTTP메서드로 해결하면 되지만 실제로는 컨트롤 URI를 사용함. 하지만 중구난방으로 사용하면 안된다.
 
 
 - 정리 
