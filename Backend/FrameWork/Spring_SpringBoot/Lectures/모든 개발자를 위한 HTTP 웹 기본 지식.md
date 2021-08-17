@@ -276,10 +276,13 @@ Host: www.google.com
 
 ```
 - HTTP 메시지 전송
+
 ![HTTP 전송 메시지](https://user-images.githubusercontent.com/57219160/129666698-503f1973-3cf5-43f1-9519-bec4e16b0664.PNG)
 - 패킷 생성
+
 ![패킷 생성](https://user-images.githubusercontent.com/57219160/129666773-e97b81bb-0fed-4a95-b101-2721babb4677.PNG)
 - 요청 패킷 전달 (클라이언트 -> 서버)
+
 ![전달](https://user-images.githubusercontent.com/57219160/129666859-6eca22df-f804-493f-a92c-0ac7af45aa4f.PNG)
 - HTTP 응답 메시지 생성(브라우저가)
 ```
@@ -292,8 +295,10 @@ Content-Length: 3423
 </html>
 ```
 - 요청 패킷 전달 (서버 -> 클라이언트)
+
 ![요청 패킷 전달서버에게](https://user-images.githubusercontent.com/57219160/129667003-42001d51-316f-4507-89e3-90f590fb0552.PNG)
 - 웹 브라우저가 HTML 렌더링
+
 ![렌더링](https://user-images.githubusercontent.com/57219160/129667201-aa896db5-0701-4c8e-929b-ebe2a142b34c.PNG)
 
 
