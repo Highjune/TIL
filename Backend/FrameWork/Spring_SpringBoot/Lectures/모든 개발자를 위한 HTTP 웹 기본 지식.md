@@ -1182,7 +1182,7 @@ Content-Length: 3423
         - 599 ??? -> 5xx (Server Error)
 
 
-- 1xx(Informational)
+## 1xx(Informational)
     - 요청이 수신되어 처리중
     - 거의 사용하지 않아서 생략
 
@@ -1202,6 +1202,7 @@ Content-Length: 3423
     ```
     GET /members/100 HTTP/1.1
     Host: localhost:8080
+    
     ```
     - 응답 메시지
     ```
@@ -1234,7 +1235,7 @@ Content-Length: 3423
         HTTP/1.1 201 Created
         Content-Type: application/json
         Content-Length: 34
-        Location: /members/100
+        Location: /members/100    //   여기서 식별 가능하다
 
         {
             "username": "young",
@@ -1249,7 +1250,7 @@ Content-Length: 3423
 
 - 204 No Content
     - 서버가 요청을 성공적으로 수행했지만, 응답 페이로드 본문에 보낼 데이터가 없음
-    - 예) 웹 문서 편집기에서 save 버튼
+    - 예) 웹 문서 편집기(ex. VSCode) 에서 save 버튼
     - save 버튼의 결과로 아무 내용이 없어도 된다.
     - save 버튼을 눌러도 같은 화면을 유지해야 한다.
     - 결과 내용이 없어도 204 메시지(2xx)만으로 성공을 인식할 수 있다.
@@ -1260,6 +1261,7 @@ Content-Length: 3423
 - 리다이렉션 이해
     - 웹 브라우저는 3xx 응답의 결과에 Location 헤더가 있으면, Location 위치로 자동 이동(리다이렉트)
 - 자동 리다이렉트 흐름(pdf 208)
+    - 이벤트 페이지 들어갔는데, 행사 종료된 이벤트 페이지에서 현재 진행중인 이벤트 페이지로 안내하는 것.
     1. URL: /event 로 요청
     ```
     GET /event HTTP/1.1
@@ -1270,12 +1272,12 @@ Content-Length: 3423
     HTTP/1.1 301 Moved Permanently
     Location: /new-event
     ```
-    3. 자동 리다이렉트
+    3. 자동 리다이렉트 (브라우저에서)
     URL : /event -> URL : /new-event
     4. 요청
     ```
     GET /new-event HTTP/1.1
-    HOst: localhost:8080
+    Host: localhost:8080
     ```
     5. 응답
     ```
@@ -1288,14 +1290,14 @@ Content-Length: 3423
         - 예) /event -> /new-event
     2. 일시 리다이렉션 - 일시적인 변경
         - 주문 완료 후 주문 내역 화면으로 이동
-        - PRG : Post/Redirect/Get
+        - PRG : `P`ost/`R`edirect/`G`et
     3. 특수 리다이렉션
         - 결과 대신 캐시를 사용
-        
+                
 - 영구 리다이렉션
     - 301, 308 
     - 리소스의 URI가 영구적으로 이동
-    - 원래의 URL을 사용X, 검색 엔진 등에서도 변경 인지
+    - 원래의 URL을 사용X, 검색 엔진(ex. 구글) 등에서도 변경 인지
     - 301 Moved Permanently
         - 리다이렉트시 요청 메서드가 GET으로 변하고, 본문이 제거될 수 있음(MAY. 100%는 아님) -> 대부분의 브라우저가 이렇게 구현이 되어있다.
         - 301 리다이렉션 과정(pdf 211)
@@ -1311,7 +1313,7 @@ Content-Length: 3423
             HTTP/1.1 301 Moved Permanently
             location: /new-event
             ```
-            3. 자동 리다이렉트(GET으로 변경, 메시지 제거)
+            3. 자동 리다이렉트 후 요청(GET으로 변경, 메시지 제거되었음)
             ```
             GET /new-event HTTP/1.1
             Host: localhost:8080
@@ -1325,8 +1327,8 @@ Content-Length: 3423
 
     - 308 Permanent Redirect
         - 301과 기능은 같음
-        - 리다이렉트시 요청 메서드와 본문 유지(처음 POST를 보내면 리다이렉트도 POST 유지)
-        - 302 리다이렉션 과정(pdf 212)
+        - 리다이렉트시 요청 메서드와 본문 유지(처음 POST를 보내면 리다이렉트도 POST 유지됨. 301처럼 GET으로 변경 되고 메시지가 제거되지 않는다)
+        - 308 리다이렉션 과정(pdf 212)
             1. 요청
             ```
             POST /event HTTP/1.1
@@ -1336,23 +1338,23 @@ Content-Length: 3423
             ```
             2. 응답
             ```
-            HTTP/1.1 308 Moved Permanently
+            HTTP/1.1 308 Permanent Redirect
             location: /new-event
             ```
-            3. 자동 리다이렉트(POST 유지, 메시지 유지)
+            3. 자동 리다이렉트 후 요청(POST 유지, 메시지 유지)
             ```
             POST /new-event HTTP/1.1
             Host: localhost:8080
 
             name=hello&age=20
             ```
-            4. 클라이언트는 등록을 위해서 다시 POST로 메시지(name=hello&age=20) 새작성 해서 보내야 한다. -> 308 로 해결가능
+            4. POST 메서드가 유지되었고, 메시지 역시 삭제되지 않았으므로 위의 요청메시지 그대로 사용해도 된다.
             5. 응답
             ```
             HTTP/1.1 200 OK
             ...(중략)
             ```
-        - 그런데 실무에서는 사실 이렇게 308을 쓰지 않는다. /event 에서 /new-event로 바뀌면 내부적으로 전달해야 하는 데이터 자체가 다 바뀐다. 그래서 이런 경우에는 POST로 와도 웬만해서는 다시 GET으로 돌리는 것이 맞다. 
+        - 그런데 실무에서는 사실 이렇게 308을 쓰지 않는다. /event 에서 /new-event로 바뀌면 내부적으로 전달해야 하는 데이터 자체가 다 바뀐다. 그래서 이런 경우에는 POST로 와도(그대로 유지가 되어도) 웬만해서는 다시 GET으로 돌리는 것이 맞다. 
 
 ## 일시적인 리다이렉션
 - 302, 307, 303
@@ -1371,10 +1373,11 @@ Content-Length: 3423
 
 - 그럼 일시적인 리다이렉션은 언제 사용할까? 아래에서 설명.
 
-- PRG: Post/Redirect/Get, 일시적인 리다이렉션 - 예시        
-    - POST로 주문 후에 웹 브라우저를 새로고침하면?
-    - 새로고침은 다시 요청
-    - 중복 주문이 될 수 있다. (물론 서버쪽에서도 따로 막아야 한다)
+- PRG: Post/Redirect/Get
+    - 일시적인 리다이렉션 - 예시        
+        - POST로 주문 후에 웹 브라우저를 새로고침하면?
+        - 새로고침은 다시 요청(주문)을 의미
+        - 중복 주문이 될 수 있다. (물론 서버쪽에서도 따로 막아야 한다)
 
 - PRG 사용전 과정
     1. URL: /order에 요청
@@ -1399,7 +1402,7 @@ Content-Length: 3423
 
     itemId=mouose&count=1
     ```
-    6. DB에 주문데이터 저장(mouse 1개). -> 중복 저장
+    6. DB에 주문데이터 저장(mouse 1개). -> 중복 저장이 됨
     7. 응답
     ```
     HTTP/1.1 200 OK
@@ -1428,8 +1431,10 @@ Content-Length: 3423
     Location: /order-result/19
 
     ```
-    4. URL:/ order-result/19로 자동 리다이렉트(3번에서 3xx계열이랑 Location 필드 있으므로)
+    4. 웹브라우저에서 자동 Redirect(URL:/order -> URL:/order-result/19), 3번에서 3xx계열이랑 Location 필드 있으므로.
+        - URL:/order-result/19는 주문완료 페이지다
     5. 요청
+        - GET임
     ```
     GET /order-result/19 HTTP/1.1
     Host: localhost:8080
@@ -1461,13 +1466,13 @@ Content-Length: 3423
         - 307, 303을 권장하지만 현실적으로 이미 많은 애플리케이션 라이브러리들이 302를 기본값으로 사용
         - 자동 리다이렉션시에 GET으로 변해도 되면 그냥 302를 사용해도 큰 문제 없음. 
 
-- 기타 리다이렉션, 300, 304
+- 기타 리다이렉션 : 300, 304
     - 300 Multiple Choices : 안쓴다
     - 304 Not Modified
         - 많이 사용함
         - 캐시를 목적으로 사용
         - 클라이언트에게 리소스가 수정되지 않았음을 알려준다. 따라서 클라이언트는 로컬PC에 저장된 캐시를 재사용한다. (캐시로 리다이렉트 한다), 네트워크 다운로드 자원 아낄 수 있음
-        - 304 응답은 응답에 메시지 바디를 포함하면 안된다.(로컬 캐시를 사용해야 하므로)
+        - 304 응답은 서버가 request 응답에 메시지 바디를 포함하면 안된다.(클라이언트가 로컬 캐시를 사용해야 하므로)
         - 조건부 GET, HEAD 요청시 사용
         
 
@@ -1480,7 +1485,7 @@ Content-Length: 3423
     - 클라이언트가 잘못된 요청을 해서 서버가 요청을 처리할 수 없음
     - 요청 구문, 메시지 등등 오류
     - 클라이언트는 요청 내용을 다시 검토하고, 보내야함
-    - 예) 요청 파라미터가 잘못되거나, API 스펙이 맞지 않을 때(숫자 -> 문자로 잘못보낼 경우)
+    - 예) 요청 파라미터가 잘못되거나, API 스펙이 맞지 않을 때(ex. 숫자 -> 문자로 잘못보낼 경우)
     - 이런 경우들은 사실 백엔드에서 다 커버해야 한다. API 스펙이 안 맞으면 400오류로 다 튕기도록. 이런 것들을 500 오류로 처리하면 안된다. 그러면 클라이언트 쪽에서는 자신이 잘못한 줄 모르고 서버 오류로 착각한다.
 
 - 401 Unauthorized
@@ -1489,8 +1494,8 @@ Content-Length: 3423
     - 401 오류 발생시 응답에 WWW-Authenticate 헤더와 함께 인증 방법을 설명해 줘야 한다.
     - 참고
         - 인증(Authentication) : 본인이 누구인지 확인(로그인)
-        - 인가(authorization) : 권한부여 (ADMIN 권한처럼 특정 리소스에 접근할 수 있는 권한, 인증이 있어야 인가가 있음)
-        - 오류 메시지가 Unauthorized 이지만 인증 되지 않음(이름이 아쉬움, 마치 인가에 대한 내용같음)
+        - 인가(Authorization) : 권한부여 (ADMIN 권한처럼 특정 리소스에 접근할 수 있는 권한, 인증이 있어야 인가가 있음)
+        - 오류 메시지가 Unauthorized 이지만 인증 되지 않음(이름이 좀 헷갈리게 명명되어 있어서 아쉬움, 마치 인가에 대한 내용같음)
 
 - 403 Forbidden
     - 서버가 요청을 이해했지만 승인을 거부함
@@ -1522,12 +1527,12 @@ Content-Length: 3423
 ## HTTP 헤더 개요
 - header-field = field-name ":" OWS field-value OWS (OWS:띄어쓰기 허용)
 - field-name은 대소문자 구분 없음
-    - 아래에서 Host: www.google.com
+    - 아래에서 Host: `www.google.com`
     ```
     GET /search?q=hello&hl=ko HTTP/1.1
     Host: www.google.com
     ```
-    - 아래에서 두줄. Content-Type: text/html;charset=UTF-8, Content-Length: 3423 
+    - 아래에서 두줄. `Content-Type: text/html;charset=UTF-8`, `Content-Length: 3423`
     ```
     HTTP/1.1 200 OK
     Content-Type: text/html;charset=UTF-8
@@ -1539,33 +1544,30 @@ Content-Length: 3423
     ```
 - 용도
     - HTTP 전송에 필요한 모든 부가정보
-    - 예) 메시지 바디의 내용, 메시지 바디의 크기, 압축, 인증, 요청 클라이언트, 서버 정보, 캐
-시 관리 정보...
+    - 예) 메시지 바디의 내용, 메시지 바디의 크기, 압축, 인증, 요청 클라이언트, 서버 정보, 캐시 관리 정보...
     - 표준 헤더가 너무 많음
         - https://en.wikipedia.org/wiki/List_of_HTTP_header_fields
     - 필요시 임의의 헤더 추가 가능
         - helloworld: hihi
 
 - 분류 - RFC2616(과거) 
-    ```
-    HTTP/1.1 200 OK
-    Content-Type: text/html;charset=UTF-8 // 엔티티 헤더
-    Content-Length: 3423                  // 엔티티 헤더
-
-    <html>                  //메시지 본문
-        <body>...</body>    //메시지 본문
-    </html>                 //메시지 본문
-    ```
+    - HTTP 헤더
+    <img width="681" alt="스크린샷 2021-08-18 오전 12 33 19" src="https://user-images.githubusercontent.com/57219160/129756430-aa7b940f-e3f3-4119-8048-cb30096b6030.png">
+    
     - 헤더 분류(pdf 234)
         - General 헤더 : 메시시 전체에 적용되는 정보. ex) Connection: close
         - Request 헤더 : 요청 정보, 예) User-Agent: Mozila/5.0 (Machintosh; ...)
         - Response 헤더 : 응답 정보, 예) Server: Apache
         - Entity 헤더 : 엔티티 바디 정보, 예) Content-Type: text/html, Content-Length:3423
+        
+    - HTTP 바디
     
-    - 메시지 본문(message body)은 엔티티 본문(entity body)을 전달하는데 사용
-    - 엔티티 본문은 요청이나 응답에서 전달할 실제 데이터
-    - `엔티티 헤더`는 `엔티티 본문`의 데이터를 해석할 수 있는 정보 제공
-        - 데이터 유형(html, json), 데이터 길이, 압축 정보 등등
+        <img width="672" alt="스크린샷 2021-08-18 오전 12 38 13" src="https://user-images.githubusercontent.com/57219160/129756916-d9054aa6-e666-4154-9c25-f4c41462d3c3.png">
+    
+        - 메시지 본문(message body)은 엔티티 본문(entity body)을 전달하는데 사용
+        - 엔티티 본문은 요청이나 응답에서 전달할 실제 데이터
+        - `엔티티 헤더`는 `엔티티 본문`의 데이터를 해석할 수 있는 정보 제공
+            - 데이터 유형(html, json), 데이터 길이, 압축 정보 등등
     
 - 그런데 스펙이 바뀐다.
     - HTTP표준이 1999년 RCF2616이 폐지가 됨
@@ -1577,15 +1579,9 @@ Content-Length: 3423
     - 표현 = 표현 메타데이터 + 표현 데이터
 
 - message body - RFC7230(최신)
-    ```
-    HTTP/1.1 200 OK
-    Content-Type: text/html;charset=UTF-8 // 표현 헤더
-    Content-Length: 3423                  // 표현 헤더
 
-    <html>                  // 메시지 본문 부분, 표현 데이터
-        <body>...</body>    // 메시지 본문 부분, 표현 데이터
-    </html>                 // 메시지 본문 부분, 표현 데이터
-    ```
+    <img width="672" alt="스크린샷 2021-08-18 오전 12 38 13" src="https://user-images.githubusercontent.com/57219160/129756916-d9054aa6-e666-4154-9c25-f4c41462d3c3.png">
+    
     - 메시지 본문(message body)을 통해 표현 데이터 전달
     - 메시지 본문 = 페이로드(payload)
     - `표현`은 요청이나 응답에서 전달할 실제 데이터 (표현 헤더 + 표현 데이터)
