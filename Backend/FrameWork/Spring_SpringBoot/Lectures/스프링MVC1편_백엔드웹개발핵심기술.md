@@ -109,7 +109,7 @@
 - 서블릿
     - 특징
         ![서블릿코드](https://user-images.githubusercontent.com/57219160/130054105-5ae0d3c5-b729-4a8e-a108-2abf09b529d4.PNG)
-        - urlPatterns(/hello)의 URL 이 호출되면 서블릿 코드(아래 코드에서 serivce 메서드)가 실행
+        - urlPatterns(/hello)의 URL 이 호출되면 서블릿 코드(위 코드에서 serivce 메서드)가 실행
         - HTTP 요청 정보를 편리하게 사용할 수 있는 HttpServletRequest
             - 요청 정보를 하나하나 다 파싱해서 사용하면 힘드니까!
             - 그래서 그냥 이 request 객체를 사용하면 된다.
@@ -119,7 +119,7 @@
         - 개발자는 HTTP 스펙을 매우 편리하게 사용
 
 
-- 서블릿, HTTP 요청, 응답 흐름
+- 서블릿, HTTP 요청, 응답 흐름 (강의다시듣기)
 
     ![서블릿구조](https://user-images.githubusercontent.com/57219160/130054404-77953ef6-415f-4204-a02d-cca04a47dac4.PNG)
     - HTTP 요청시
@@ -216,7 +216,7 @@
         - 생성 가능한 쓰레드의 최대치가 있으므로 너무 많은 요청이 들어와도 기존 요청은 안전하게 처리할 수 있다.(당연히 서버를 늘리긴 해야 함)
     - 실무 팁
         - WAS의 주요 튜닝 포인트는 최대 쓰레드(max thread) 수이다. 
-            - 이걸 통해서 극적인 효과를 보는 경우가 많다.
+            - 문제 해결시 이걸 통해서 극적인 효과를 보는 경우가 많다.
         - 이 값을 너무 낮게 설정하면?
             - 동시 요청이 많으면, 서버 리소스는 여유롭지만, 클라이언트는 금방 응답 지연
         - 이 값을 너무 높게 설정하면?
@@ -241,7 +241,7 @@
         - 최대한 실제 서비스와 유사하게 성능 테스트 시도
         - 툴: 아파치 ab, 제이미터, nGrinder(네이버껀데 되게 좋다)
 
-- WAS의 멀티 쓰레드 지원의 핵심
+- WAS의 멀티 쓰레드 지원이 핵심
     - `멀티 쓰레드에 대한 부분은 WAS가 처리` -> 이게 제일 핵심이다.
         - 만약 개발자가 직접 멀티 쓰레드를 구현하려고 하면 자바 concurrency 공부해야 하고...매우 힘듦
     - 개발자가 멀티 쓰레드 관련 코드를 신경쓰지 않아도 됨
@@ -295,7 +295,7 @@
     - SSR (서버 사이드 렌더링)
         <img width="1039" alt="스크린샷 2021-08-20 오전 12 34 28" src="https://user-images.githubusercontent.com/57219160/130098020-6cb410a4-edaf-4378-bd80-692d4cf6b1ae.png">
         - HTML 최종 결과를 서버에서 만들어서 웹 브라우저에 전달
-        - 주로 정적인 화면에 사용
+        - 주로 정적인 화면에 사용(구글 지도 등에 비해서 페이지 자체로만 본다면 정적인 페이지를 보여주는 것이므로 상대적으로 정적임)
         - 관련기술 : JSP, 타임리프 -> `백엔드 개발자`
     - CSR (클라이언트 사이드 렌더링)
         <img width="1061" alt="스크린샷 2021-08-20 오전 12 35 19" src="https://user-images.githubusercontent.com/57219160/130098152-ca6046f2-0a1d-41ee-b5af-7406b66a6d7a.png">
@@ -462,7 +462,7 @@
         providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat
         ```
 - 롬복 적용
-    - Preferences plugin lombok 검색 실행 (intelliJ 재시작0ㅐ
+    - Preferences plugin lombok 검색 실행 (intelliJ 재시작)
     - Preferences Annotation Processors 검색 Enable annotation processing 체크 (재시작)
     - 임의의 테스트 클래스를 만들고 @Getter, @Setter 확인
     - 윈도우 사용자는 (File -> Setting)
@@ -517,9 +517,10 @@
 protected void service(HttpServletRequest request, HttpServletResponse response)
 ```
 - 웹 브라우저 실행
-    - localhost:8080/helloServlet
+    - localhost:8080/hello
     - 콘솔에 찍힌다.
-    - http요청이 오면 WAS(서블릿 컨테이너)가 request, response 객체를 만들어서 서블릿에 준다. 
+    - `http요청이 오면 WAS(서블릿 컨테이너)가 request, response 객체를 만들어서 서블릿에 준다.`
+        - 톰캣 라이브러리 객체들
     - 웹 브라우저에 요청 -> 브라우저가 HTTP요청 메시지 만듬 -> 그걸 서버에 전송
     
 - request, response 객체 확인. 
@@ -644,11 +645,11 @@ protected void service(HttpServletRequest request, HttpServletResponse response)
         - 운영서버에 이렇게 모든 요청 정보를 다 남기면 성능저하가 발생할 수 있다. 개발 단계에서만 적용하자
 
 - 서블릿 컨테이너 동작 방식 설명
-    - 스프링 부트가 실행되면서 내장된 톰캣 서버가 실행. 톰캣 서버는 내부에 서블릿 컨테이너 기능을 갖고 있어서 서블릿을 생성해준다.
+    - `스프링 부트가 실행되면서 내장된 톰캣 서버가 실행. 톰캣 서버는 내부에 서블릿 컨테이너 기능을 갖고 있어서 서블릿을 생성해준다.`
     ![톰캣서버](https://user-images.githubusercontent.com/57219160/130194799-edf0c72d-4720-4d87-9aab-99dbc749ffae.PNG)
     ![2](https://user-images.githubusercontent.com/57219160/130194850-3febcb13-56f5-4422-bb2a-7859e350fd30.PNG)
 
-    - 참고) HTTP 응답에서 Content-Length 등 부가정보들은 웹 애플리케이션 서버가 자동으로 생성해준다.
+    - 참고) HTTP 응답에서 Content-Length 등 부가정보들은 WAS(웹 애플리케이션 서버)가 자동으로 생성해준다.
 
 - welcome 페이지 추가
     - 지금부터 개발할 내용을 편리하게 참고할 수 있도록 welcome 페이지를 만들어두자
@@ -688,7 +689,7 @@ protected void service(HttpServletRequest request, HttpServletResponse response)
     - 임시 저장소 기능
         - 해당 HTTP 요청이 시작부터 끝날 때 까지(생존기간) 유지되는 임시 저장소 기능
             - 저장 : request.setAttribute(name, value)
-            - request.getAttribute(name)
+            - 조회 : request.getAttribute(name)
     - 세션 관리 기능
         - request.getSession(create: true)
     - 중요
@@ -842,13 +843,15 @@ private void printHeaderUtils(HttpServletRequest request) {
 }
 ```
 - Header 편리한 조회 결과
+    - https://localhost:8080/request-header 브라우저에서 조회
+        - 브라우저에서 조회하면 기본이 Get 메서드이다.
     - 쿠키 정보는 지금 없어서 안 나오는 것
-    - request.getContentType() = null 인 이유는, get방식이므로 body에 무엇인가 담겨있어야 그에 대한 타입이 있는데 없으니까.
-        - 포스트맨으로 확인할 수 있다.
+    - request.getContentType() = null 인 이유는, get방식이므로 body에 무엇인가 담겨있어야 그에 대한 타입이 있는데 애초에 데이터가 없으니까.
+        - 포스트맨으로 확인할 수 있다(내용이 있으면 ContentType이 뜨는지)
             - POST방식, https://localhost:8080/request-header
             - Body에 raw의 text로 해서 "hello" 찍으면.
             - Headers에 Content-Type에 text/plain이 자동으로 설정된다.
-            - send하면 로컬에 request.getContentType() = text/plain 찍힌다
+            - send 버튼 누르면 콘솔에 request.getContentType() = text/plain 찍힌다
             
 ```
 --- Header 편의 조회 start ---
@@ -874,7 +877,7 @@ request.getCharacterEncoding() = UTF-8
 
 - 기타 정보
     - 기타 정보는 HTTP 메시지의 정보는 아니다.(내부에서 네트워크 커넥션 맺어진 정보)
-    - Remote정보는 요청이 온 것에 대한 정보.
+    - Remote 정보는 요청이 온 것에 대한 정보.
     - Local 정보는 내 서버에 대한 정보.
 ```
 // 기타 정보
@@ -936,8 +939,11 @@ request.getLocalPort() = 8080
         - 예) 회원 가입, 상품 주문, HTML Form 사용
     - `HTTP message body`에 데이터를 직접 담아서 요청
         - HTTP API에서 주로 사용, JSON, XML, TEXT
-    - 데이터 형식은 주로 JSON 사용
+        - 데이터 형식은 주로 JSON 사용
         - POST, PUT, PATCH
+        - 참고
+            - HTML 의 Form 데이터를 보낼 때는 POST만 가능(HTML의 스펙상 Form데이터를 바디로 전송할 때는 POST만 가능). 물론 스프링은 input에 히든 필드를 하나 넣어둔다. 그래서 put이면 서버에서 마치 put인 것처럼 처리를 해주기도 한다. 실제로는 POST로 전송이 되는 것이고, 스프링이 히든 필드에 put이면 컨트롤러에서 put과 관련된 컨트롤러가 호출됨. 
+
 - 하나씩 알아보기!
 
 ## HTTP 요청 데이터 - GET 쿼리 파라미터
@@ -1225,7 +1231,7 @@ public class RequestBodyJsonServlet extends HttpServlet {
     ```
 - 결국 JSON도 그냥 문자임. 
 - RequestBodyJsonServlet 클래스에 코드 추가
-    - 스프링 부트는 기본적으로 Json 라이브러리 중에서 JackSon 라이브러리를 사용한다.(스프링 부트가 기본적으로 제공해줌)
+    - JSON 결과를 파싱해서 사용할 수 있는 자바 객체로 변환하려면 Jackson, Gson 같은 JSON 변환 라이브러리를 추가해서 사용해야 한다. 스프링 부트로 Spring MVC를 선택하면 기본으로 Jackson 라이브러리( ObjectMapper )를 함께 제공한다.
     - 인텔리 J의 왼쪽에 External Libraries 에 검색하면 다 뜬다.
     ```
     @WebServlet(name = "requestBodyJsonServlet", urlPatterns = "/request-body-json")
@@ -1240,7 +1246,7 @@ public class RequestBodyJsonServlet extends HttpServlet {
 
             // System.out.println("messageBody = " + messageBody);
 
-            HelloData helloData = objectMapper.readValue(messageBody, HelloData.class); // 이렇게 변환
+            HelloData helloData = objectMapper.readValue(messageBody, HelloData.class); // 이렇게 변환, JSON 형식으로 들어와야 한다. 만약에 다른 형식(HTML의 Form, 일반 TEXT)을 넣게 되면 JSON이 아니라 파싱이 안되서 에러남
 
             System.out.println("helloData.username() = " + helloData.getUsername());
             System.out.println("helloData.age() = " + helloData.getAge());
@@ -1257,3 +1263,500 @@ public class RequestBodyJsonServlet extends HttpServlet {
     ```
     - 이렇게 JSON을 객체로 변환 가능.
 
+- 사실 나중에 스프링MVC 패턴으로 하게 되면 애초에 파라미터를 `protected void service(HelloData helloData) throws ServletException, IOException {..중략..}` 으로 아주 편하게 받을 수 있다.(중간의 변환과정 코드를 다 생략할 수 있다) 그런데 지금은 그 전의 과정을 공부하는 중!
+
+- 참고)
+    - HTML form 데이터도 메시지 바디를 통해 전송되므로 직접 읽을 수 있다.(위의 InputStream으로) 하지만 편리한 파리미터 조회 기능( request.getParameter(...) )을 이미 제공하기 때문에 파라미터 조회 기능을 사용하면 된다.
+
+- 이렇게 요청 메시지 3가지를 알아봤는데 모든 것은 여기에서 벗어나지 않는다.
+4
+
+## HttpServletResponse - 기본 사용법
+- HttpServletResponse 역할
+    - `HTTP 응답 메시지 생성` (개발자들이 직접 다 만들면 번거로우니까 쉽게 넣을 수 있도록 메서드들 제공하고, 그 값들을 서블릿이 자동으로 응답 메시지 만들 때 사용하게 된다)
+        - HTTP 응답코드 지정
+        - 헤더 생성
+        - 바디 생성
+    - `편의 기능 제공`
+        - Content-Type
+        - 쿠키
+        - Redirect
+
+- ResponseHeaderServlet 클래스
+    - start-line, response-headers 메서드 부분들
+    ```
+    @WebServlet(name = "responseHeaderServlet", urlPatterns = "/response-header")
+    public class ResponseHeaderServlet extends HttpServlet {
+
+        @Override
+        protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+            // [status-line]
+            response.setStatus(HttpServletResponse.SC_OK); // response.setStatus(200); 보다 더 명확
+    //        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+
+            // [response-headers]
+            response.setHeader("Content-Type", "text/plain;charset=utf-8");
+            response.setHeader("Cache-Cotnrol", "no-cache, no-store, must-revalidate"); // 캐시 완전 무효화
+            response.setHeader("Pragma", "no-cache"); // 예전 버전의 캐시 무효화
+            response.setHeader("my-header", "hello"); // 내가 만드는 임의의 헤더를 만들 수 있다.
+
+
+            // [Header 편의 메서드]
+            content(response);
+            cookie(response);
+            redirect(response); // 이 메서드 안에서 302 코드를 반환하는데, 위에서 SC_OK(200) 으로 설정했으나 여기서 덮어버림
+
+            // [meesage Body]
+            PrintWriter writer = response.getWriter();
+            writer.println("ok");
+        }
+    }
+    ```
+- 포스트맨으로 실행
+    - POST / http://localhost:8080/response-header
+    - 실행 후 response 부분의 Headers 에서 우리가 지정한 값들을 다 확인할 수 있다.
+    - charset을 지정하지 않으면 WAS 에서 자동으로 지정. 그래서 딱 정해주는 것이 좋다.
+    - 웹 브라우저에서 실행하고 개발자 도구에서 확인해도 똑같이 확인가능하다
+        - 참고로 웹 브라우저에서 조회하면 기본적으로 GET 방식으로 호출
+    
+- Content편의 메서드
+    - 위에서처럼 `response.setHeader("Content-Type", "text/plain;charset=utf-8");` 이렇게 지정해줘도 되고 아래처럼 `response.setContentType("text/plain"); response.setCharacterEncoding("utf-8");` 으로 지정해줘도 된다.
+    ``` 
+    private void content(HttpServletResponse response) {
+        //Content-Type: text/plain;charset=utf-8
+        //Content-Length: 2
+        //response.setHeader("Content-Type", "text/plain;charset=utf-8");
+        response.setContentType("text/plain");
+        response.setCharacterEncoding("utf-8");
+        // response.setContentLength(2); //(생략시 자동 생성)
+    }
+    ```
+
+
+- 쿠키 편의 메서드
+    ```
+    private void cookie(HttpServletResponse response) {
+        // Set-Cookie: myCookie=good; Max-Age=600; 
+        // response.setHeader("Set-Cookie", "myCookie=good; Max-Age=600"); 
+        Cookie cookie = new Cookie("myCookie", "good"); 
+        cookie.setMaxAge(600); //600초
+        response.addCookie(cookie);
+    }
+    ```
+    - 브라우저에서 전송(개발자 도구로 확인), response 에 우리의 쿠키가 들고있는 것을 확인할 수 있다.
+    - 다시 한번 더 하면!?
+        - 브라우저가 request에 금방 받았던 쿠키를 다시 전송하는 것을 확인가능
+        - 그럼 이것을 서버에서 쿠키 값 읽어서 사용할 수 있다.
+    
+- redirect 편의 메서드
+    ```
+    private void redirect(HttpServletResponse response) throws IOException {
+      //Status Code 302                     // 이 코드를 만들고 
+      //Location: /basic/hello-form.html    // 이쪽으로 보낼 것임
+
+
+      //response.setStatus(HttpServletResponse.SC_FOUND); // 302
+      //response.setHeader("Location", "/basic/hello-form.html");
+
+      response.sendRedirect("/basic/hello-form.html"); // 위의 개 보다 훨씬 더 간단함
+    }
+    ```
+    - 브라우저에서 전송하면!? (localhost:8080/response-header로 접속)
+        - localhost:8080/basic/hello-form.html 으로 리다이렉션
+        <img width="877" alt="스크린샷 2021-08-21 오후 2 43 11" src="https://user-images.githubusercontent.com/57219160/130311925-f8bc8cdd-99ab-426f-8d2b-45f87283802f.png">
+        - 위 사진처럼, 먼저 response-header 로 302 코드로 갔고, 그 뒤에 다시 리다이렉션되어서 hello.form.html 로 잘 도착(200 OK) 한 것을 확인할 수 있다.
+        - 각각을 클릭해서 General(코드 값, 메서드 확인가능), 헤더의 값들을 볼 수 있다.
+
+
+## HTTP 응답 데이터 - 단순 텍스트, HTML
+- HTTP 응답 메시지는 주로 다음 내용을 담아서 전달한다.
+- 크게 3가지
+    1. 단순 텍스트 응답
+        - 앞에서 살펴봄 `writer.println("ok");`
+    2. HTML 응답
+    3. HTTP API - MessageBody JSON 응답
+- 단순 텍스트 응답은 앞에서 살펴봤으니 패스
+- HttpServletResponse - HTLM 응답
+    - 자바 코드로 하려면 정말 힘든 작업
+    - 여기에 자바의 if문 등을 넣게 된다면 동적으로 바꿀 수도 있음.
+    ```
+    @WebServlet(name = "responseHtmlServlet", urlPatterns = "/response-html")
+    public class ResponseHtmlServlet extends HttpServlet {
+
+        @Override
+        protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+            //Content-Type: text/html;charset=utf-8
+            response.setContentType("text/html");
+            response.setCharacterEncoding("utf-8");
+
+            PrintWriter writer = response.getWriter();
+            writer.println("<html>");
+            writer.println("<body>");
+            writer.println(" <div>안녕?</div>");
+            writer.println("</body>");
+            writer.println("</html>");
+
+        }
+    }
+
+    ```
+    - HTTP 응답으로 HTML을 반환할 때는 content-type을 text/html 로 지정해야 한다.
+        - 그래야만 웹 브라우저가 정상적인 html이구나 ~ 하고 렌더링 한다
+    - charset=utf-8 로 잡아줘야만 한글이 깨지지 않는다.
+    - 실행
+        - http://localhost:8080/response-html
+        - 화면에는 `안녕?` 만 있다.
+        - 페이지 소스보기를 사용하면 결과 HTML 을 확인할 수 있다.
+
+## HTTP 응답 데이터 - API JSON
+- 우리가 주로 사용하는 HTTP API(용어에 따라 Rest API라고도 한다) 에 이용되는 방식
+- 응답 데이터를 JSON으로 보내는 방법(HTTP메세지 바디에)
+- ResponseJsonServlet 클래스
+```
+@WebServlet(name = "responseJsonServlet", urlPatterns = "/response-json")
+public class ResponseJsonServlet extends HttpServlet {
+
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        //Content-Type: application/json
+        response.setHeader("content-type", "application/json");
+        response.setCharacterEncoding("utf-8");
+
+        HelloData data = new HelloData();
+        data.setUsername("kim");
+        data.setAge(20);
+
+        // {"username":"kim","age":20}
+        String result = objectMapper.writeValueAsString(data); // (객체->문자로 변환) JSON도 문자임
+        response.getWriter().write(result);
+    }
+}
+```
+- HTTP 응답으로 JSON을 반환할 때는 content-type을 application/json 로 지정해야 한다. Jackson 라이브러리가 제공하는 objectMapper.writeValueAsString() 를 사용하면 객체를 JSON 문자로 변경할 수 있다.
+- 웹 브라우저에 http://localhost:8080/response-json 접속해서 실행결과 확인 
+    - JSON으로 확인가능(페이지 소스보기로도 확인할 수 있다.)
+    - 개발자도구로 Content-Type 등 다 확인가능
+- 그런데 나중에 스프링MVC를 사용하게 되면 중간의 저런 코드들도 다 사라진다.
+    - 중간코드 다 사라지고 그냥 HelloData 객체만 리턴해버리면 된다.(뒤의 수업에서 확인가능)
+    ```
+    @Override
+    protected HelloData service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        HelloData data = new HelloData();
+        data.setUsername("kim");
+        data.setAge(20);
+
+        return data;
+    }
+    ```
+
+- 참고)
+    - application/json 은 스펙상 utf-8 형식을 사용하도록 정의되어 있다. 그래서 스펙에서 charset=utf-8과 같은 추가 파라미터를 지원하지 않는다. 따라서 application/json 이라고만 사용해야지 application/json;charset=utf-8 이라고 전달하는 것은 의미 없는 파라미터를 추가한 것이 된다. > response.getWriter()를 사용하면 추가 파라미터를 자동으로 추가해버린다. 이때는 response.getOutputStream()으로 출력하면 그런 문제가 없다.
+
+
+# 서블릿, JSP, MVC 패턴
+## 회원 관리 웹 애플리케이션 요구사항
+- 회원 정보
+    - 이름 : `username`
+    - 나이 : `age`
+- 기능 요구사항 (2가지만)
+    - 회원 저장
+    - 회원 목록 조회
+- Member 클래스
+```
+@Getter
+@Setter
+public class Member {
+
+    private Long id;
+    private String username;
+    private int age;
+
+    public Member() {
+    }
+
+    public Member(String username, int age) {
+        this.username = username;
+        this.age = age;
+    }
+}
+
+```
+- MemberRepository 클래스
+    ```
+    /**
+    * 동시성 문제가 고려되어 있지 않음, 실무에서는 ConcurrentHashMap, AtomicLong 사용 고려
+    */
+    public class MemberRepository {
+
+        private static Map<Long, Member> store = new HashMap<>();
+        private static long sequence = 0L;
+
+        private static final MemberRepository instatnce = new MemberRepository(); // 싱글톤
+
+        public static MemberRepository getInstance() { // 무조건 이것으로만 조회될 수 있도록
+            return instatnce;
+        }
+        private MemberRepository() { // 이렇게 싱글톤으로 만들 떄는 생성자를 private 으로 막아야 된다.
+        }
+
+        public Member save(Member member) {
+            member.setId(++sequence);
+            store.put(member.getId(), member);
+            return member;
+        }
+
+        public Member findById(Long id) {
+            return store.get(id);
+        }
+
+        public List<Member> findAll() {
+            return new ArrayList<>(store.values()); // store에 있는 모든 값들을 꺼내서 새로운 ArrayList에 담아서 넘겨준다.
+        }
+
+        public void clearStore() {
+            store.clear();
+        }
+
+    }
+    ```
+    - 메모리저장소로 만듬.
+    - store, sequence 를 static 으로 만든 이유는 MemberRepository 를 여러번 new해서 생성하더라도 오직 하나만 유지하기 위해서. (사실 MemberRepository을 싱글톤으로 했기 때문에 static 빼도 되긴 한다.)
+    - 회원 저장소는 싱글톤 패턴을 적용했다. 스프링을 사용하면 스프링 빈으로 등록하면 되지만, 지금은 최대한 스프링 없이 순수 서블릿 만으로 구현하는 것이 목적이다. 싱글톤 패턴은 객체를 단 하나만 생생해서 공유해야 하므로 생성자를 private 접근자로 막아둔다.
+    - 싱글톤(MemberRepository을 싱글톤 객체로 만들기 위해서)
+        - 우리는 지금 스프링 컨테이너를 띄워서 하는 것이 아니므로. 만약 스프링 쓰면 자동으로 싱글톤 객체이므로 신경 쓸 필요 없다.
+        ```
+        private static final MemberRepository instatnce = new MemberRepository(); // final 
+
+        public static MemberRepository getInstance() { // 무조건 이것으로만 조회될 수 있도록
+            return instatnce;
+        }
+        private MemberRepository() { // 이렇게 싱글톤으로 만들 떄는 생성자를 private 으로 막아야 된다.
+
+        }
+        ```
+    - store안의 값들을 건드리고 싶지 않아서 아래처럼 리턴
+        - new ArrayList의 값을 조작해도 밖의 store 의 value를 건드리고 싶지 않아서다. 물론 이렇게 해도 store 안의 값을 가지고 나와서 수정하면 수정이 되어버리긴 한다. 이것은 store 그 자체를 보호하기 위해서 이렇게 한 것이다.
+    ```
+    public List<Member> findAll() {
+            return new ArrayList<>(store.values()); // store에 있는 모든 값들을 꺼내서 새로운 ArrayList에 담아서 넘겨준다.
+        }
+    ```
+    - clearStore()
+        - 테스트 때 사용하기 위해서(깔끔하게 초기화하려고)
+
+- MemberRepository 클래스
+    - 클래스 앞에 public 없애도 된다(Junit 5부터)
+    ```
+    public class MemberRepositoryTest {
+
+        MemberRepository memberRepository = MemberRepository.getInstance();
+
+        @AfterEach // 매 Test 가 끝나면 실행되는 것. 
+        void afterEach() {
+            memberRepository.clearStore();
+        }
+
+        @Test
+        void save() {
+            //give
+            Member member = new Member("hello", 20);
+
+            //when
+            Member savedMember = memberRepository.save(member);
+
+            //then
+            Member findMember = memberRepository.findById(savedMember.getId());
+            Assertions.assertThat(findMember).isEqualTo(savedMember);
+        }
+
+        @Test
+        void findAll() {
+            //given
+            Member member1 = new Member("member1", 20);
+            Member member2 = new Member("member2", 30);
+
+            memberRepository.save(member1);
+            memberRepository.save(member2);
+            //when
+            List<Member> result = memberRepository.findAll();
+
+            //then
+            Assertions.assertThat(result.size()).isEqualTo(2);
+            Assertions.assertThat(result).contains(member1, member2);
+        }
+    
+    ```
+    - 회원을 저장하고, 목록을 조회하는 테스트를 작성했다. 각 테스트가 끝날 때, 다음 테스트에 영향을 주지 않도록 각 테스트의 저장소를 clearStore() 를 호출해서 초기화했다.
+## 서블릿으로 회원 관리 웹 애플리케이션 만들기
+- 이제 본격적으로 서블릿으로 회원 관리 웹 애플리케이션을 만들어보자.
+- 가장 먼저 서블릿으로 회원 등록 HTML 폼을 제공해보자.
+- MemberFormServlet (회원 등록 폼)
+    - 회원이름 등록하는 폼을 서블릿으로 만드는 것임!!
+    - HTTP 메서드 응답으로 HTML이 나가야 하므로 컨텐츠 바디를 잡아줘야 한다.
+    -  MemberFormServlet 은 단순하게 회원 정보를 입력할 수 있는 HTML Form을 만들어서 응답한다. 자바 코드로 HTML을 제공해야 하므로 쉽지 않은 작업이다.(그냥 pdf 복붙하기)
+    ```
+    @WebServlet(name = "memberFormServlet", urlPatterns = "/servlet/member/new-form")
+    public class MemberFormServlet extends HttpServlet {
+
+        private MemberRepository memberRepository = MemberRepository.getInstance();
+
+        @Override
+        protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+            response.setContentType("text/html");
+            response.setCharacterEncoding("utf-8");
+
+            PrintWriter w = response.getWriter();
+            w.write("<!DOCTYPE html>\n" +
+                    "<html>\n" +
+                    "<head>\n" +
+                    "    <meta charset=\"UTF-8\">\n" +
+                    "    <title>Title</title>\n" +
+                    "</head>\n" +
+                    "<body>\n" +
+                    "<form action=\"/servlet/members/save\" method=\"post\">\n" +
+                    "    username: <input type=\"text\" name=\"username\" />\n" +
+                    "    age:      <input type=\"text\" name=\"age\" />\n" +
+                    " <button type=\"submit\">전송</button>\n" + "</form>\n" +
+                    "</body>\n" +
+                    "</html>\n");
+        }
+
+    }
+    ```
+- 실행 (ServletApplication 클래스 실행해서 스프링 컨테이너 띄우기)
+    - http://localhost:8080/servlet/member/new-form 접속
+    - HTML Form 데이터를 POST로 전송해도, 전달 받는 서블릿을 아직 만들지 않았다. 그래서 오류가 발생하는 것이 정상이다.
+
+- MemberSaveServlet 클래스
+    - MemberFormServlet 클래스에서 만든 폼에서 보내는 데이터를 받는 곳. 즉 form의 action인 부분이다.
+    - 이번에는 들어오는(request) 값을 가져와서 읽어야 한다.
+    - `request.getParameter();` 로 꺼내는 것은 Get의 쿼리스트링에서 꺼내던 Form의 Post 방식으로 보내든 간에 그 값들을 가져올 수 있다. 둘 다 쿼리 스트링 형식이므로(username=kim&age=20).
+        - request.getParameter() 의 리턴값을 항상 문자다. 그래서 request.getParameter("age"); 라고 값을 들고 오더라도 String 으로 받게 되는 것을 주의.
+    ```
+    @WebServlet(name = "memberSaveServlet", urlPatterns = "/servlet/members/save")
+    public class MemberSaveServlet extends HttpServlet {
+
+        private MemberRepository memberRepository = MemberRepository.getInstance();
+
+        @Override
+        protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+            System.out.println("MemberSaveServlet.service");
+            String username = request.getParameter("username");         // 조회
+            int age = Integer.parseInt(request.getParameter("age"));    // 조회, // 폼에서 숫자 말고 다른 걸로 넣으면 에러난다.
+
+            Member member = new Member(username, age);  // 객체 생성
+            System.out.println("member = " + member);   
+            memberRepository.save(member);              // 객체 저장
+
+            // 위에서 잘 저장했으니까 응답을 Html 코드로 내려보내기.
+            response.setContentType("text/html");
+            response.setCharacterEncoding("utf-8");
+            PrintWriter w = response.getWriter();
+
+            w.write("<html>\n" +
+                    "<head>\n" +
+                    " <meta charset=\"UTF-8\">\n" + "</head>\n" +
+                    "<body>\n" +
+                    "성공\n" +
+                    "<ul>\n" +
+                    "    <li>id="+member.getId()+"</li>\n" +                // 여기에 동적 코드
+                    "    <li>username="+member.getUsername()+"</li>\n" +    // 여기에 동적 코드
+                    " <li>age="+member.getAge()+"</li>\n" + "</ul>\n" +     // 여기에 동적 코드
+                    "<a href=\"/index.html\">메인</a>\n" + "</body>\n" +
+                    "</html>");
+        }
+    }
+    ``` 
+    - 실행
+        - 스프링 컨테이너 다시 띄우고
+        - http://localhost:8080/servlet/member/new-form 접속해서 데이터 전송
+        - http://localhost:8080/servlet/members/save 페이지에서 그 데이터들을 받아서 보여줌
+    - MemberSaveServlet 은 다음 순서로 동작한다.
+        - 파라미터를 조회해서 Member 객체를 만든다.
+        - Member 객체를 MemberRepository를 통해서 저장한다.
+        - Member 객체를 사용해서 결과 화면용 HTML을 동적으로 만들어서 응답한다.
+    - 스프링 띄운 상태에서 http://localhost:8080/servlet/members/new-form 로 접속해서 여러 명 정보 입력하면 메모리 유지되고 있으니까 다 저장하고 있다.
+
+- MemberListServlet
+    - 이번에는 저장된 모든 회원 목록을 조회하는 기능을 만들어보자.
+    ```
+    @WebServlet(name = "memberListServlet", urlPatterns = "/servlet/members")
+    public class MemberListServlet extends HttpServlet {
+
+        private MemberRepository memberRepository = MemberRepository.getInstance();
+
+        @Override
+        protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+            List<Member> members = memberRepository.findAll();
+
+            response.setContentType("text/html");
+            response.setCharacterEncoding("utf-8");
+
+            PrintWriter w = response.getWriter();
+            w.write("<html>");
+            w.write("<head>");
+            w.write("    <meta charset=\"UTF-8\">");
+            w.write("    <title>Title</title>");
+            w.write("</head>");
+            w.write("<body>");
+            w.write("<a href=\"/index.html\">메인</a>");
+            w.write("<table>");
+            w.write("    <thead>");
+            w.write("    <th>id</th>");
+            w.write("    <th>username</th>");
+            w.write("    <th>age</th>");
+            w.write("    </thead>");
+            w.write("    <tbody>");
+
+            /* 아래코드는 정적임
+            w.write("    <tr>");
+            w.write("        <td>1</td>");
+            w.write("        <td>userA</td>");
+            w.write("        <td>10</td>");
+            w.write("    </tr>");
+            */
+
+            // 동적으로
+            for (Member member : members) {
+                w.write("    <tr>");
+                w.write("        <td>" + member.getId() + "</td>");
+                w.write("        <td>" + member.getUsername() + "</td>");
+                w.write("        <td>" + member.getAge() + "</td>");
+                w.write("    </tr>");
+            }
+
+            w.write("    </tbody>");
+            w.write("</table>");
+            w.write("</body>");
+            w.write("</html>");
+        }
+    }
+    ```
+    - 실행
+        - http://localhost:8080/servlet/members
+        - 저장된 회원 목록을 확인할 수 있다. 
+    - MemberListServlet 은 다음 순서로 동작한다.
+        - http://localhost:8080/servlet/members/new-form 에서 회원 몇명 저장하기
+        - memberRepository.findAll() 을 통해 모든 회원을 조회한다.
+        - 회원 목록 HTML을 for 루프를 통해서 회원 수 만큼 동적으로 생성하고 응답한다.
+        - http://localhost:8080/servlet/members 에서 html 화면 확인가능
+        - 페이지 소스 보기 하면 html 태그들을 다 볼 수 있다.
+
+- 너무 힘든 작업들이다...그래서!! 
+- 템플릿 엔진으로 바꿔야 한다.
+    - 템플릿 엔진은 html 안에 자바 코드를 넣는 것임.(서블릿보다 훨씬 편하다). cf) 서블릿은 자바 안에 html 코드를 넣는 것
+    - 지금까지 서블릿과 자바 코드만으로 HTML을 만들어보았다. 서블릿 덕분에 동적으로 원하는 HTML을 마음껏 만들 수 있다. 정적인 HTML 문서라면 화면이 계속 달라지는 회원의 저장 결과라던가, 회원 목록 같은 동적인 HTML을 만드는 일은 불가능 할 것이다. 그런데, 코드에서 보듯이 이것은 매우 복잡하고 비효율 적이다. 자바 코드로 HTML을 만들어 내는 것 보다 차라리 HTML 문서에 동적으로 변경해야 하는 부분만 자바 코드를 넣을 수 있다면 더 편리할 것이다. 이것이 바로 템플릿 엔진이 나온 이유이다. 템플릿 엔진을 사용하면 HTML 문서에서 필요한 곳만 코드를 적용해서 동적으로 변경할 수 있다.
+    - `대표적인 템플릿 엔진에는 JSP, Thymeleaf, Freemarker, Velocity`등이 있다. 다음 시간에는 JSP로 동일한 작업을 진행해보자. JSP는 가장 고전적인 템플릿 엔진
+
+- 참고
+    - JSP는 성능과 기능면에서 다른 템플릿 엔진과의 경쟁에서 밀리면서, 점점 사장되어 가는 추세이다. 템플릿 엔진들은 각각 장단점이 있는데, 강의에서는 JSP는 앞부분에서 잠깐 다루고, 스프링과 잘 통합되는 Thymeleaf를 사용한다.
+
+- welcome 페이지 변경
+    - 서블릿에서 JSP, MVC 패턴, 직접 만드는 MVC 프레임워크, 그리고 스프링까지 긴 여정을 함께할 것이다. 편리하게 참고할 수 있도록 welcome 페이지를 변경하자. 
+
+## JSP로 회원 관리 웹 애플리케이션 만들기
+- 
