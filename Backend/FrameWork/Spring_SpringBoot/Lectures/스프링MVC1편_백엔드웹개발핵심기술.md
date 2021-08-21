@@ -1121,7 +1121,8 @@ username=kim
         - Headers에서 content-type: application/x-www-form-urlencoded 로 지정된 부분 꼭 확인
     
     - send
-    - 콘솔 확인
+    - 콘솔 확인(HTML Form에서 보내는 것과 같은 결과)
+- 이렇게 HTML Form 에서 웹 브라우저가 하는 일과 포스트맨에서 하는 일이랑 보내는 HTTP 메시지가 동일하다.
 
 
 ## HTTP 요청 데이터 - API 메시지 바디 - 단순 텍스트
@@ -1154,8 +1155,9 @@ public class RequestBodyStringServlet extends HttpServlet {
 
 
 - 참고
-    - inputStream은 byte 코드를 반환한다. byte 코드를 우리가 읽을 수 있는 문자(String)로 보려면 문자표(Charset)를 지정해주어야 한다. 여기서는 UTF_8 Charset을 지정해주었다.
+    - inputStream은 byte 코드를 반환한다. byte 코드를 우리가 읽을 수 있는 문자(String)로 보려면 문자표(Charset)를 지정해주어야 한다.(반대도 마찬가지) 여기서는 UTF_8 Charset을 지정해주었다.
     - 항상 이렇게 바이트 -> 문자열 변환할 때는 인코딩 정보(UTF-8)를 알려줘야 한다.
+    - InputStream으로 텍스트를 읽어들일 수 있다는 것만 알아두자.
 - Postman을 사용해서 테스트 해보자
     - 문자 전송
         - POST, http://localhost:8080/request-body-string
@@ -1166,3 +1168,92 @@ public class RequestBodyStringServlet extends HttpServlet {
 - 원래는 이렇게 문자(TEXT)로 주고 받지 않는다. 보통은 JSON으로 주고 받기 때문에 다음 강의!
 
 ## HTTP 요청 데이터 - API 메시지 바디 - JSON
+- 이번에는 HTTP API에서 주로 사용하는 JSON 형식으로 데이터를 전달해보자.
+- JSON 형식 전송
+    - POST http://localhost:8080/request-body-json
+    - content-type: application/json
+    - message body: {"username": "hello", "age": 20}
+    - 결과: messageBody = {"username": "hello", "age": 20}
+
+
+- JSON 형식 파싱 추가
+    - JSON 형식으로 파싱할 수 있게 객체를 하나 생성하자
+        - JSON 형식의 데이터를 객체로 바꿀 수 있도록 객체 클래스 생성(원래 JSON 그대로 쓰지 않고 객체로 바꿔서 쓴다)
+    - hello.servlet.basic.HelloData
+    - Lombok의 @Geter, Setter 덕분에 눈에 보이지는 않지만 메서드가 생성되어 있다.
+    - 참고: 만약 잘 동작하지 않는다면 프로젝트 생성에 롬복 부분을 다시 확인하자.
+    ```
+    package hello.servlet.basic;
+
+    import lombok.Getter;
+    import lombok.Setter;
+
+    @Getter @Setter
+    public class HelloData {
+        private String username;
+        private int age;
+    }
+    ``` 
+- RequestBodyJsonServlet 클래스
+```
+
+@WebServlet(name = "requestBodyJsonServlet", urlPatterns = "/request-body-json")
+public class RequestBodyJsonServlet extends HttpServlet {
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        ServletInputStream inputStream = request.getInputStream();
+        String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+
+        System.out.println("messageBody = " + messageBody);
+
+    }
+}
+
+```
+- 서버 실행 후 Postman 으로 실행
+    - POST / http://localhost:8080/request-body-json
+    - content-type: application/json (Body raw, 가장 오른쪽에서 JSON 선택)
+        - 그럼 Headers 부분에 자동으로 Content-Type 이 들어가 있다. 그런데 수동으로 Content-Type: application/json으로 넣게 되면 충돌이 발생할 수도 있어서 하나를 삭제하거나 해줘야 한다.
+    - 출력결과
+    ```
+    messageBody = 
+            {
+                "username" : "june",
+                "age" : 20
+            }
+    ```
+- 결국 JSON도 그냥 문자임. 
+- RequestBodyJsonServlet 클래스에 코드 추가
+    - 스프링 부트는 기본적으로 Json 라이브러리 중에서 JackSon 라이브러리를 사용한다.(스프링 부트가 기본적으로 제공해줌)
+    - 인텔리 J의 왼쪽에 External Libraries 에 검색하면 다 뜬다.
+    ```
+    @WebServlet(name = "requestBodyJsonServlet", urlPatterns = "/request-body-json")
+    public class RequestBodyJsonServlet extends HttpServlet {
+
+        private ObjectMapper objectMapper = new ObjectMapper(); // jackson 라이브러리
+
+        @Override
+        protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+            ServletInputStream inputStream = request.getInputStream();
+            String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+
+            // System.out.println("messageBody = " + messageBody);
+
+            HelloData helloData = objectMapper.readValue(messageBody, HelloData.class); // 이렇게 변환
+
+            System.out.println("helloData.username() = " + helloData.getUsername());
+            System.out.println("helloData.age() = " + helloData.getAge());
+
+            response.getWriter().write("ok");
+        }
+    }
+    ```
+    - 포스트맨으로 똑같이 전송
+    - 출력결과
+    ```
+    helloData.username() = june
+    helloData.age() = 20
+    ```
+    - 이렇게 JSON을 객체로 변환 가능.
+
