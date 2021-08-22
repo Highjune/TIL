@@ -2512,6 +2512,7 @@ private MemberRepository memberRepository = MemberRepository.getInstance();
 
 
 ## Model 추가 - v3
+- 구조적으로 제일 많이 변화하는 버전. 제일 중요함
 - v2버에서는 Controller2 인터페이스를 구현하는 컨트롤러들이 실제 사용하지도 않는 HttpServlet 객체들을 받아야 한다.
 ```
 public class MemberFormControllerV2 implements ControllerV2 {
@@ -2529,15 +2530,356 @@ public class MemberFormControllerV2 implements ControllerV2 {
 
 - 뷰 이름 중복 제거
     - 컨트롤러에서 지정하는 뷰 이름에 중복이 있는 것을 확인할 수 있다.
-    - 컨트롤러는 뷰의 논리 이름을 반환하고, 실제 물리 위치의 이름은 프론트 컨트롤러에서 처리하도록 단순화 하자.
+    - 컨트롤러는 뷰의 `논리 이름`을 반환하고, 실제 물리 위치의 이름은 프론트 컨트롤러에서 처리하도록 단순화 하자.
         - /WEB-INF/views/new-form.jsp -> `new-form`
         - /WEB-INF/views/save-result.jsp -> `save-result`
         - /WEB-INF/views/members.jsp -> `members`
-    - 이렇게 해두면 향후 뷰의 폴더 위치가 함께 이동해도 프론트 컨트롤러만 고치면 된다.
+    - 이렇게 해두면 향후 뷰의 폴더 위치가 함께 이동해도 프론트 컨트롤러만 고치면 된다. (각 컨트롤러는 손댈 필요 없다) -> 변경의 지점을 하나로 만드는 것
     - 즉, 1개뿐인 프론트 컨트롤러에서 지저분한 것들을 다 처리하고, 수십~수백개의 컨트롤러를 단순하게 만들자는 것!!
 - v3 구조
-
+    - v2 에서는 Controller에서 View만 반환했는데 이제는 Model도 같이 반환
 <img width="724" alt="스크린샷 2021-08-22 오후 9 53 13" src="https://user-images.githubusercontent.com/57219160/130355976-cf726cc5-accb-4f21-a83c-d5b06015f141.png">
 
 - ModelView
+    - 지금까지 컨트롤러에서 서블릿에 종속적인 HttpServletRequest를 사용했다. 그리고 Model도 request.setAttribute() 를 통해 데이터를 저장하고 뷰에 전달했다.
+    - 서블릿의 종속성을 제거하기 위해 Model을 직접 만들고(request자체가 없기도 하고), 추가로 View 이름까지 전달하는 객체를 만들어보자.
+    - (이번 버전에서는 컨트롤러에서 HttpServletRequest를 사용할 수 없다. 따라서 직접 request.setAttribute() 를 호출할 수 도 없다. 따라서 Model이 별도로 필요하다.)
+    - 참고로 ModelView 객체는 다른 버전에서도 사용하므로 패키지를 frontcontroller 에 둔다.
+    ```
+        public class ModelView {
+        private String viewName;
+        private Map<String, Object> model = new HashMap<>();
+
+        public ModelView(String viewName) {
+            this.viewName = viewName;
+        }
+
+        public String getViewName() {
+            return viewName;
+        }
+
+        public void setViewName(String viewName) {
+            this.viewName = viewName;
+        }
+
+        public Map<String, Object> getModel() {
+            return model;
+        }
+
+        public void setModel(Map<String, Object> model) {
+            this.model = model;
+        }
+    }   
+
+    ```
+    - 뷰의 이름과 뷰를 렌더링할 때 필요한 model 객체를 가지고 있다. model은 단순히 map으로 되어 있으므로 컨트롤러에서 뷰에 필요한 데이터를 key, value로 넣어주면 된다.
+
+- ControllerV3 인터페이스
+    - 서블릿 코드들이 없다.
+    - 이 컨트롤러는 서블릿 기술을 전혀 사용하지 않는다. 따라서 구현이 매우 단순해지고, 테스트 코드 작성시 테스트 하기 쉽다.
+    - HttpServletRequest가 제공하는 파라미터는 프론트 컨트롤러가 paramMap에 담아서 호출해주면 된다. `응답 결과로 뷰 이름과 뷰에 전달할 Model 데이터를 포함하는 ModelView 객체를 반환하면 된다.`
+    ```
+    public interface ControllerV3 {
+
+        ModelView process(Map<String, String> paramMap); // 서블릿 기술들이 없어졌다!
+    }
+
+    ```
+
+- MemberFormControllerV3 - 회원 등록 폼
+    - ModelView 를 생성할 때 new-form 이라는 view의 논리적인 이름을 지정한다. 실제 물리적인 이름은 프론트 컨트롤러에서 처리한다. 
+    - 매우 단순해짐
+```
+public class MemberFormControllerV3 implements ControllerV3 {
+
+    @Override
+    public ModelView process(Map<String, String> paramMap) {
+        return new ModelView("new-form"); // 논리이름만 반환
+    }
+}
+```
+
+- MemberSaveControllerV3 - 회원 저장
+    - paramMap.get("username");
+        - 파라미터 정보는 map에 담겨있다. map에서 필요한 요청 파라미터를 조회하면 된다.
+    - mv.getModel().put("member", member);
+        - 모델은 단순한 map이므로 모델에 뷰에서 필요한 member 객체를 담고 반환한다.
+```
+public class MemberSaveControllerV3 implements ControllerV3 {
+
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @Override
+    public ModelView process(Map<String, String> paramMap) {
+        String username = paramMap.get("username");
+        int age = Integer.parseInt(paramMap.get("age"));
+
+        Member member = new Member(username, age);
+        memberRepository.save(member);      // 저장
+
+        ModelView mv = new ModelView("save-result");  // 논리이름 
+        mv.getModel().put("member", member); // ModelView 에 논리이름 + 데이터도 저장이 됨
+        return mv;
+    }
+}
+```
+
+- MemberListControllerV3 - 회원 목록
+```
+public class MemberListControllerV3 implements ControllerV3 {
+      private MemberRepository memberRepository = MemberRepository.getInstance();
+      @Override
+      public ModelView process(Map<String, String> paramMap) {
+          List<Member> members = memberRepository.findAll();
+          ModelView mv = new ModelView("members");
+          mv.getModel().put("members", members);
+          return mv;
+} }
+```
+
+- FrontControllerServletV3
+    - view.render(mv.getModel(), request, response) 
+        - 코드에서 컴파일 오류가 발생할 것이다. 다음 코드 MyView 를 참고해서 MyView 객체에 필요한 메서드를 추가하자.
+    - createParamMap()
+        - HttpServletRequest에서 파라미터 정보를 꺼내서 Map으로 변환한다. 그리고 해당 Map( paramMap )을 컨트롤러에 전달하면서 호출한다.
+    -  뷰 리졸버, MyView view = viewResolver(viewName)
+        - 컨트롤러가 반환한 논리 뷰 이름을 실제 물리 뷰 경로로 변경한다. 그리고 실제 물리 경로가 있는 MyView 객체를 반환한다.
+        - 논리 뷰 이름: members
+        - 물리 뷰 경로: /WEB-INF/views/members.jsp
+        - 왜 뷰 리졸버를 따로 만들었는가?
+            - 만약 나중에 "/WEB-INF/views/" 의 경로가 "/WEB-INF/jsp/"로 변경되면 이 메서드의 코드만 변경하면 된다. 즉, 컨트롤러를 건드릴 필요가 없다. (변경사항의 지점이 1군데)
+    - view.render(mv.getModel(), request, response)
+        - 뷰 객체를 통해서 HTML 화면을 렌더링 한다.
+        - 뷰 객체의 render() 는 모델 정보도 함께 받는다.
+        - JSP는 request.getAttribute() 로 데이터를 조회하기 때문에, 모델의 데이터를 꺼내서 request.setAttribute() 로 담아둔다.
+        - JSP로 포워드 해서 JSP를 렌더링 한다.
+```
+@WebServlet(name = "frontControllerServletV3", urlPatterns = "/front-controller/v3/*")
+public class FrontControllerServletV3 extends HttpServlet {
+
+    private Map<String, ControllerV3> controllerMap = new HashMap<>();
+
+    public FrontControllerServletV3() {
+        controllerMap.put("/front-controller/v3/members/new-form", new MemberFormControllerV3());
+        controllerMap.put("/front-controller/v3/members/save", new MemberSaveControllerV3());
+        controllerMap.put("/front-controller/v3/members", new MemberListControllerV3());
+    }
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        System.out.println("FrontControllerServletV3.service");
+        String requestURI = request.getRequestURI();
+        ControllerV3 controller = controllerMap.get(requestURI);
+        if (controller == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        Map<String, String> paramMap = createParamMap(request);
+        ModelView mv = controller.process(paramMap);
+
+        String viewName = mv.getViewName();// 논리이름 new-form
+        // /WEB-INF/views/new-form.jsp
+        MyView view = viewResolver(viewName);
+
+        view.render(mv.getModel(), request, response);
+    }
+
+    private MyView viewResolver(String viewName) {
+        return new MyView("/WEB-INF/views/" + viewName + ".jsp");
+    }
+
+    private Map<String, String> createParamMap(HttpServletRequest request) {
+        Map<String, String> paramMap = new HashMap<>();
+        request.getParameterNames().asIterator()
+                .forEachRemaining(paramName -> paramMap.put(paramName, request.getParameter(paramName)));
+        return paramMap;
+    }
+}
+```
+
+- MyView
+```
+public class MyView {
+
+    private String viewPath;
+
+    public MyView(String viewPath) {
+        this.viewPath = viewPath;
+    }
+
+    public void render(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+        dispatcher.forward(request, response);
+    }
+
+    public void render(Map<String, Object> model, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        modelToRequestAttribute(model, request);
+        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+        dispatcher.forward(request, response);
+    }
+
+    private void modelToRequestAttribute(Map<String, Object> model, HttpServletRequest request) {
+        model.forEach((key, value) -> request.setAttribute(key, value));
+    }
+}
+
+```
+
+- 실행
+    - 등록 : http://localhost:8080/front-controller/v3/members/new-form
+    - 목록 : http://localhost:8080/front-controller/v3/members
+
+- 이렇게 보면 프런트 컨트롤러가 하는 일이 굉장히 많아졌다. 하지만 실제의 컨트롤러 3개 클래스는 엄청 간편해졌다.
+
+
+
+## 단순하고 실용적인 컨트롤러 - v4
+- 앞서 만든 v3 컨트롤러는 서블릿 종속성을 제거하고 뷰 경로의 중복을 제거하는 등, 잘 설계된 컨트롤러이다. 그런데 실제 컨트톨러 인터페이스를 구현하는 개발자 입장에서 보면, 항상 ModelView 객체를 생성하고 반환해야 하는 부분이 조금은 번거롭다.
+- 좋은 프레임워크는 아키텍처도 중요하지만, 그와 더불어 실제 개발하는 개발자가 단순하고 편리하게 사용할 수 있어야 한다. 소위 실용성이 있어야 한다.
+- 이번에는 v3를 조금 변경해서 실제 구현하는 개발자들이 매우 편리하게 개발할 수 있는 v4 버전을 개발해보자.
+- V4 구조
+    - 기본적인 구조는 V3와 같다(구조적으로는 V3에서 완성). 대신에 컨트롤러가 ModelView 를 반환하지 않고, ViewName 만 반환한다.
+
+<img width="749" alt="스크린샷 2021-08-23 오전 12 31 50" src="https://user-images.githubusercontent.com/57219160/130361013-5cc5e933-e1d4-4c34-82af-ea88193396c8.png">
+
+- ControllerV4 인터페이스
+    - 이제는 프론트 컨트롤러가 Model도 만들어서 넘겨준다. 물론 텅텅 빈 model이라서 받아서 다 넣으면 된다. 그리고 viewName인 String을 반환한다.
+    - 이번 버전은 인터페이스에 ModelView가 없다. model 객체는 파라미터로 전달되기 때문에 그냥 사용하면 되고, 결과로 뷰의 이름만 반환해주면 된다.
+    ```
+        public interface ControllerV4 {
+
+        /**
+        *
+        * @param paramMap
+        * @param model
+        * @return
+        */
+        String process(Map<String, String> paramMap, Map<String, Object> model);
+    }
+    ```
+    - 이번 버전은 인터페이스에 ModelView가 없다. model 객체는 파라미터로 전달되기 때문에 그냥 사용하면 되고, 결과로 뷰의 이름만 반환해주면 된다.
+
+- MemberFormControllerV4
+    - 정말 단순하게 new-form 이라는 뷰의 논리 이름만 반환하면 된다.
+```
+public class MemberFormControllerV4 implements ControllerV4 {
+
+    @Override
+    public String process(Map<String, String> paramMap, Map<String, Object> model) {
+        return "new-form";
+    }
+}
+```
+
+- MemberSaveControllerV4
+    - model.put("member", member)
+        - 모델이 파라미터로 전달되기 때문에, 모델을 직접 생성하지 않아도 된다.
+```
+public class MemberSaveControllerV4 implements ControllerV4 {
+
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @Override
+    public String process(Map<String, String> paramMap, Map<String, Object> model) {
+        String username = paramMap.get("username");
+        int age = Integer.parseInt(paramMap.get("age"));
+
+        Member member = new Member(username, age);
+        memberRepository.save(member);
+
+        model.put("member", member);
+        return "save-result";
+    }
+}
+```
+
+- MemberListControllerV4
     - 
+```
+public class MemberListControllerV4 implements ControllerV4 {
+
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @Override
+    public String process(Map<String, String> paramMap, Map<String, Object> model) {
+        List<Member> members = memberRepository.findAll();
+
+        model.put("members", members);
+        return "members";
+    }
+}
+
+```
+
+- FrontControllerServletV4
+    - FrontControllerServletV4 는 사실 이전 버전과 거의 동일하다.
+    - 모델 객체 전달
+        - `Map<String, Object> model = new HashMap<>();` //추가
+            - 모델 객체를 프론트 컨트롤러에서 생성해서 넘겨준다. 컨트롤러에서 모델 객체에 값을 담으면 여기에 그대로 담겨있게 된다.
+    - 뷰의 논리 이름을 직접 반환
+        - 컨트롤로가 직접 뷰의 논리 이름을 반환하므로 이 값을 사용해서 실제 물리 뷰를 찾을 수 있다.
+    ```
+    String viewName = controller.process(paramMap, model);
+    MyView view = viewResolver(viewName);
+    ```
+
+```
+@WebServlet(name = "frontControllerServletV4", urlPatterns = "/front-controller/v4/*")
+public class FrontControllerServletV4 extends HttpServlet {
+
+    private Map<String, ControllerV4> controllerMap = new HashMap<>();
+
+    public FrontControllerServletV4() {
+        controllerMap.put("/front-controller/v4/members/new-form", new MemberFormControllerV4());
+        controllerMap.put("/front-controller/v4/members/save", new MemberSaveControllerV4());
+        controllerMap.put("/front-controller/v4/members", new MemberListControllerV4());
+    }
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String requestURI = request.getRequestURI();
+
+        ControllerV4 controller = controllerMap.get(requestURI);
+        if (controller == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        Map<String, String> paramMap = createParamMap(request);
+        Map<String, Object> model = new HashMap<>(); // 추가
+
+        String viewName = controller.process(paramMap, model);
+
+        MyView view = viewResolver(viewName);
+        view.render(model, request, response);
+    }
+
+    private Map<String, String> createParamMap(HttpServletRequest request) {
+        Map<String, String> paramMap = new HashMap<>();
+        request.getParameterNames().asIterator()
+                .forEachRemaining(paramName -> paramMap.put(paramName,
+                        request.getParameter(paramName)));
+        return paramMap;
+    }
+
+    private MyView viewResolver(String viewName) {
+        return new MyView("/WEB-INF/views/" + viewName + ".jsp");
+    }
+}
+```
+
+- 실행
+    - 등록: http://localhost:8080/front-controller/v4/members/new-form
+    - 목록: http://localhost:8080/front-controller/v4/members
+
+- 정리
+    - 이번 버전의 컨트롤러는 매우 단순하고 실용적이다. 기존 구조에서 모델을 파라미터로 넘기고, 뷰의 논리 이름을 반환한다는 작은 아이디어를 적용했을 뿐인데, 컨트롤러를 구현하는 개발자 입장에서 보면 이제 군더더기 없는 코드를 작성할 수 있다. 또한 중요한 사실은 여기까지 한번에 온 것이 아니라는 점이다. 프레임워크가 점진적으로 발전하는 과정 속에서 이런 방법도 찾을 수 있었다.
+
+## 유연한 컨트롤러1 - v5
+- 어뎁터의 출현
+- 어떠한 컨트롤러도 호출할 수 있는 프런트 컨트롤러가 필요하다.
+    - 이전의 프런트 컨트롤러에서는 특정한 버전의 컨트롤러(v1, v2, v3, v4 중 1개)를 꼭 지정을 해줬어야 했다. 즉 특정한 컨트롤러 버전을 쓰면서 다른 버전도 같이 쓰거나 할 수 있는 방법이 없었다. 여기서는 그것을 해결
+
+- 만약 어떤 개발자는 ControllerV3 방식으로 개발하고 싶고, 어떤 개발자는 ControllerV4 방식으로
+개발하고 싶다면 어떻게 해야할까?

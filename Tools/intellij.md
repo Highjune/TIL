@@ -110,6 +110,11 @@ command + option + m
 command + shift + a
 ```
 
+- 빨간색으로 줄 쳐진 곳. 에러난 곳으로 바로 이동하기
+```
+f2
+```
+
 - build.gradle안에서 compile메소드의 자동완성
 ```
 ctrl + space
