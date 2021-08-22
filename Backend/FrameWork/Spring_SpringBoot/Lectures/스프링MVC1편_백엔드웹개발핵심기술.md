@@ -1756,7 +1756,788 @@ public class Member {
     - JSP는 성능과 기능면에서 다른 템플릿 엔진과의 경쟁에서 밀리면서, 점점 사장되어 가는 추세이다. 템플릿 엔진들은 각각 장단점이 있는데, 강의에서는 JSP는 앞부분에서 잠깐 다루고, 스프링과 잘 통합되는 Thymeleaf를 사용한다.
 
 - welcome 페이지 변경
-    - 서블릿에서 JSP, MVC 패턴, 직접 만드는 MVC 프레임워크, 그리고 스프링까지 긴 여정을 함께할 것이다. 편리하게 참고할 수 있도록 welcome 페이지를 변경하자. 
+    - 서블릿에서 JSP, MVC 패턴, 직접 만드는 MVC 프레임워크, 그리고 스프링까지 긴 여정을 함께할 것이다. 편리하게 참고할 수 있도록 welcome 페이지를 변경하자.
+    - main/webapp/index.html
+    ```
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+    </head>
+    <body>
+    <ul>
+        <li><a href="basic.html">서블릿 basic</a></li>
+        <li>서블릿
+            <ul>
+                <li><a href="/servlet/members/new-form">회원가입</a></li>
+                <li><a href="/servlet/members">회원목록</a></li>
+            </ul>
+        </li>
+
+        <li>JSP
+            <ul>
+                <li><a href="/jsp/members.jsp">회원목록</a></li>
+            </ul>
+        </li>
+
+        <li>서블릿 MVC
+        <ul>
+            <li><a href="/servlet-mvc/members/new-form">회원가입</a></li>
+            <li><a href="/servlet-mvc/members">회원목록</a></li>
+        </ul>
+        </li>
+
+        <li>FrontController - v1
+            <ul>
+                <li><a href="/front-controller/v1/members/new-form">회원가입</a></li>
+                <li><a href="/front-controller/v1/members">회원목록</a></li> </ul>
+        </li>
+
+        <li>FrontController - v2
+            <ul>
+                <li><a href="/front-controller/v2/members/new-form">회원가입</a></li> <li><a href="/front-controller/v2/members">회원목록</a></li>
+            </ul>
+        </li>
+
+        <li>FrontController - v3
+            <ul>
+                <li><a href="/front-controller/v3/members/new-form">회원가입</a></li>
+                <li><a href="/front-controller/v3/members">회원목록</a></li>
+            </ul>
+        </li>
+
+        <li>FrontController - v4
+            <ul>
+                <li><a href="/front-controller/v4/members/new-form">회원가입</a></li>
+                <li><a href="/front-controller/v4/members">회원목록</a></li>
+            </ul>
+        </li>
+
+        <li>FrontController - v5 - v3
+            <ul>
+                <li><a href="/front-controller/v5/v3/members/new-form">회원가입</a></li>
+                <li><a href="/front-controller/v5/v3/members">회원목록</a></li>
+            </ul>
+        </li>
+
+        <li>FrontController - v5 - v4
+            <ul>
+                <li><a href="/front-controller/v5/v4/members/new-form">회원가입</a></li>
+                <li><a href="/front-controller/v5/v4/members">회원목록</a></li> </ul>
+        </li>
+
+        <li>SpringMVC - v1
+            <ul>
+                <li><a href="/springmvc/v1/members/new-form">회원가입</a></li>
+                <li><a href="/springmvc/v1/members">회원목록</a></li>
+            </ul>
+        </li>
+
+        <li>SpringMVC - v2
+            <ul>
+                <li><a href="/springmvc/v2/members/new-form">회원가입</a></li>
+                <li><a href="/springmvc/v2/members">회원목록</a></li>
+            </ul>
+        </li>
+
+        <li>SpringMVC - v3
+            <ul>
+                <li><a href="/springmvc/v3/members/new-form">회원가입</a></li>
+                <li><a href="/springmvc/v3/members">회원목록</a></li>
+            </ul>
+        </li>
+    </ul>
+    </body>
+    </html>
+    ``` 
 
 ## JSP로 회원 관리 웹 애플리케이션 만들기
-- 
+- 이전의 servelt으로 만든 것과 완전 똑같다
+- 서블릿으로 순수하게 만들때랑 JSP로 순수하게 만들때의 차이를 보려고 한다.
+- JSP 라이브러리 추가
+    - JSP를 사용하려면 먼저 다음 라이브러리를 추가해야 한다.
+    - build.gradle에 추가
+    ```
+    //JSP 추가 시작
+    implementation 'org.apache.tomcat.embed:tomcat-embed-jasper' 
+    implementation 'javax.servlet:jstl'
+    //JSP 추가 끝
+    ```
+    - build.gradle 리프레시
+
+- 회원 등록 폼 JSP
+    - main/webapp/jsp/members/new-form.jsp
+    - 새로 만들기 할 때 jsp양식이 없으면 그냥 file 로 만들어도 된다.
+    ```
+    <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+    <html>
+    <head>
+        <title>Title</title>
+    </head>
+    <body>
+        <form action="/jsp/members/save.jsp" method="post">
+            username: <input type="text" name="username" />
+            age: <input type="text" name="age" />
+        <button type="submit">전송</button>
+    </form>
+    </body>
+    </html>
+    ```
+    - 첫 줄에 있는 `<%@ page contentType="text/html;charset=UTF-8" language="java" %>` 는 JSP문서라는 뜻이다. JSP 문서는 이렇게 시작해야 한다.
+    - 회원 등록 폼 JSP를 보면 첫 줄을 제외하고는 완전히 HTML와 똑같다. JSP는 서버 내부에서 서블릿으로 변환되는데, 우리가 만들었던 MemberFormServlet과 거의 비슷한 모습으로 변환된다.
+    - 메인 메서드 실행하면, webapp 밑에 있는 것들은 기본적으로 호출이 된다. 그래서 실행 후에 브라우저에서 localhost:8080/jsp/members/new-form.jsp 로 호출하면 된다. (디렉토리 구조랑 같음, 확장자 jsp 까지 다 적어줘야 한다)
+    - 폼에 데이터 누르고 입력하면 화이트라벨 에러 뜬다. 왜냐하면 액션에 해당하는 `http://localhost:8080/jsp/members/save.jsp` 페이지가 없기 때문에.(404에러) (그래도 개발자 도구로 확인해보면 Form data 부분에 우리가 보낸 데이터들을 확인할 수 있다)
+- 회원 저장 JSP
+    - main/webapp/jsp/members/save.jsp
+    - JSP는 자바 코드를 그대로 다 사용할 수 있다.
+    - `<%@ page import="hello.servlet.domain.member.MemberRepository" %>`
+        - 자바의 import 문과 같다.
+    - `<% ~~ %>`
+        - 이 부분에는 자바 코드를 입력할 수 있다.
+    - `<%= ~~ %>`
+        - 이 부분에는 자바 코드를 출력할 수 있다.
+    - 회원 저장 JSP를 보면, 회원 저장 서블릿 코드와 같다. 다른 점이 있다면, HTML을 중심으로 하고, 자바코드를 부분부분 입력해주었다. <% ~ %> 를 사용해서 HTML 중간에 자바 코드를 출력하고 있다.
+    ```
+    <%@ page import="hello.servlet.domain.member.MemberRepository" %>
+    <%@ page import="hello.servlet.domain.member.Member" %>
+    <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+    <%
+        // request, response 사용 가능 (JSP가 내부적으로 servlet 으로 변환되기 떄문에)
+        MemberRepository memberRepository = MemberRepository.getInstance();
+
+        System.out.println("save.jsp");
+        String username = request.getParameter("username");
+        int age = Integer.parseInt(request.getParameter("age"));
+        Member member = new Member(username, age);
+
+        System.out.println("member = " + member);
+        memberRepository.save(member);
+
+
+    %>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        성공
+        <ul>
+            <li>id=<%=member.getId()%></li>
+            <li>username=<%=member.getUsername()%></li>
+            <li>age=<%=member.getAge()%></li>
+        </ul>
+        <a href="/index.html">메인</a>
+    </body>
+    </html>
+    ```
+    - 회원 데이터 입력하는 폼에서 전송 누르면 위에서 만든 곳에서 확인가능하다. 한편, 현재 같은 서버의 Repository를 사용하고 있기 때문에 서블릿의 회원 목록 페이지를 들어가도 방금 등록한 정보들이 똑같이 나온다.
+- 회원 목록 JSP
+    - main/webapp/jsp/members.jsp
+    - out 도 request, response처럼 바로 사용할 수 있는 예약어다.
+    ```
+    <%@ page import="java.util.List" %>
+    <%@ page import="hello.servlet.domain.member.MemberRepository" %>
+    <%@ page import="hello.servlet.domain.member.Member" %>
+    <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+    <%
+        MemberRepository memberRepository = MemberRepository.getInstance();
+        List<Member> members = memberRepository.findAll();
+    %>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+    </head>
+    <body>
+    <a href="/index.html">메인</a>
+    <table>
+        <thead>
+        <th>id</th>
+        <th>username</th>
+        <th>age</th>
+        </thead>
+        <tbody>
+    <%
+        for (Member member : members) {
+            out.write("    <tr>");
+            out.write("         <td>" + member.getId() + "</td>");
+            out.write("         <td>" + member.getUsername() + "</td>");
+            out.write("         <td>" + member.getAge() + "</td>");
+            out.write("    </tr>");
+        }
+    %>
+            </tbody>
+    </table>
+
+    </body>
+    </html>
+    ```
+    - 회원 리포지토리를 먼저 조회하고, 결과 List를 사용해서 중간에 `<tr><td>` HTML 태그를 반복해서 출력하고 있다.
+    - 몇명 등록 후에 main/webapp/jsp/members.jsp 들어가보면 확인할 수 있다. 페이지 소스 보기로 하면 태그들 다 보인다. 그런데 테이블 태그들이 한줄로 나오는데 제대로 엔터 형식으로 맞춰지려면 `out.write("    <tr>\n")` 처럼 `\n` 넣어주면 된다. 그런데 화면은 제대로 나오니까 굳이 그럴 필요는 없다.
+    
+- 서블릿과 JSP의 한계
+    - 서블릿으로 개발할 때는 뷰(View)화면을 위한 HTML을 만드는 작업이 자바 코드에 섞여서 지저분하고 복잡했다. JSP를 사용한 덕분에 뷰를 생성하는 HTML 작업을 깔끔하게 가져가고, 중간중간 동적으로 변경이 필요한 부분에만 자바 코드를 적용했다. 그런데 이렇게 해도 해결되지 않는 몇가지 고민이 남는다. 회원 저장 JSP를 보자. 코드의 상위 절반은 회원을 저장하기 위한 비즈니스 로직이고, 나머지 하위 절반만 결과를 HTML로 보여주기 위한 뷰 영역이다. 회원 목록의 경우에도 마찬가지다.
+    - 코드를 잘 보면, JAVA 코드, 데이터를 조회하는 리포지토리 등등 다양한 코드가 모두 JSP에 노출되어 있다. JSP가 너무 많은 역할을 한다. 이렇게 작은 프로젝트도 벌써 머리가 아파오는데, 수백 수천줄이 넘어가는 JSP를 떠올려보면 정말 지옥과 같을 것이다. (유지보수 지옥 썰)
+
+- 그래서!! MVC 패턴의 등장
+    - 위에서 봤듯이 물론, 서블릿만으로도, 그리고 JSP만으로도 비즈니스 로직 + 화면을 그리는 일 다 할 수 있었다. 하지만...각각 혼자서 모든 것을 다 하려고 하면 너무 복잡하다.
+    - 비즈니스 로직은 서블릿 처럼 다른곳에서 처리하고, JSP는 목적에 맞게 HTML로 화면(View)을 그리는 일에 집중하도록 하자. 과거 개발자들도 모두 비슷한 고민이 있었고, 그래서 MVC 패턴이 등장했다. 우리도 직접 MVC 패턴을 적용해서 프로젝트를 리팩터링 해보자. 
+
+## MVC 패턴 - 개요
+- 너무 많은 역할
+    - 하나의 서블릿이나 JSP만으로 비즈니스 로직과 뷰 렌더링까지 모두 처리하게 되면, 너무 많은 역할을 하게되고, 결과적으로 유지보수가 어려워진다. 비즈니스 로직을 호출하는 부분에 변경이 발생해도 해당 코드를 손대야 하고, UI를 변경할 일이 있어도 비즈니스 로직이 함께 있는 해당 파일을 수정해야 한다. HTML 코드 하나 수정해야 하는데, 수백줄의 자바 코드가 함께 있다고 상상해보라! 또는 비즈니스 로직을 하나 수정해야 하는데 수백 수천줄의 HTML 코드가 함께 있다고 상상해보라.
+
+- 변경의 라이프 사이클
+    - 변경 주기가 다르면 분리한다!
+    - 사실 이게 정말 중요한데, 진짜 문제는 둘 사이에 변경의 라이프 사이클이 다르다는 점이다. 예를 들어서 UI 를 일부 수정하는 일과 비즈니스 로직을 수정하는 일은 각각 다르게 발생할 가능성이 매우 높고 대부분 서로에게 영향을 주지 않는다. 이렇게 변경의 라이프 사이클이 다른 부분을 하나의 코드로 관리하는 것은 유지보수하기 좋지 않다. (물론 UI가 많이 변하면 함께 변경될 가능성도 있다.)
+
+- 기능 특화
+    - 특히 JSP 같은 뷰 템플릿은 화면을 렌더링 하는데 최적화 되어 있기 때문에 이 부분의 업무만 담당하는 것이 가장 효과적이다.
+    - 서블릿은 자바 코드를 실행하는데 최적화.
+- Model View Controller
+    - MVC 패턴은 지금까지 학습한 것처럼 하나의 서블릿이나, JSP로 처리하던 것을 컨트롤러(Controller)와 뷰(View)라는 영역으로 서로 역할을 나눈 것을 말한다. 웹 애플리케이션은 보통 이 MVC 패턴을 사용한다.
+    - `컨트롤러`: HTTP 요청을 받아서 파라미터를 검증하고, 비즈니스 로직을 실행한다. 그리고 뷰에 전달할 결과 데이터를 조회해서 모델에 담는다. (여기서는 서블릿)
+    - `모델`: 뷰에 출력할 데이터를 담아둔다. 뷰가 필요한 데이터를 모두 모델에 담아서 전달해주는 덕분에 뷰는 비즈니스 로직이나 데이터 접근을 몰라도 되고, 화면을 렌더링 하는 일에 집중할 수 있다.
+    - `뷰`: 모델에 담겨있는 데이터를 사용해서 화면을 그리는 일에 집중한다. 여기서는 HTML을 생성하는 부분을 말한다. (역시서는 JSP)
+
+- MVC 패턴 이전
+    <img width="591" alt="스크린샷 2021-08-22 오후 3 14 11" src="https://user-images.githubusercontent.com/57219160/130344612-0c0fabe4-2ff2-4cd3-8eac-d1f2e6cf06c2.png">
+
+- MVC 패턴1
+    <img width="576" alt="스크린샷 2021-08-22 오후 3 14 38" src="https://user-images.githubusercontent.com/57219160/130344613-aca49d3b-6e4a-4b97-af82-57fb1c454eab.png">
+
+- MVC 패턴2
+    <img width="609" alt="스크린샷 2021-08-22 오후 3 14 47" src="https://user-images.githubusercontent.com/57219160/130344615-80325d4a-2715-497a-bb3e-644afcd01c09.png">
+
+
+- 참고
+    - 컨트롤러에 비즈니스 로직을 둘 수도 있지만, 이렇게 되면 컨트롤러가 너무 많은 역할을 담당한다. 그래서 일반적으로 비즈니스 로직은 서비스(Service)라는 계층을 별도로 만들어서 처리한다. 그리고 컨트롤러는 비즈니스 로직이 있는 서비스를 호출하는 담당한다. 참고로 비즈니스 로직을 변경하면 비즈니스 로직을 호출하는 컨트롤러의 코드도 변경될 수 있다. 앞에서는 이해를 돕기 위해 비즈니스 로직을 호출한다는 표현 보다는, 비즈니스 로직이라 설명했다.
+
+## MVC 패턴 - 적용
+- 서블릿을 컨트롤러로 사용하고, JSP를 뷰로 사용해서 MVC 패턴을 적용해보자. Model은 HttpServletRequest 객체를 사용한다. request는 내부에 데이터 저장소를 가지고 있는데, request.setAttribute() , request.getAttribute() 를 사용하면 데이터를 보관하고, 조회할 수 있다.
+    
+- 회원 등록
+    - 회원 등록 폼 - 컨트롤러
+        - `hello.servlet.web.servletmvc.MvcMemberFormServlet`
+            - `dispatcher.forward()`: 다른 서블릿이나 JSP로 이동할 수 있는 기능이다. 서버 내부에서 다시 호출이 발생한다.(다시 웹브라우저 클라이언트에게 갔다가 다시 요청하는 것이 아니다 - redirect)
+            - `/WEB-INF` : WEB_INF 디렉토리 이름은 꼭 대문자여야 함. 이 경로안에 JSP가 있으면 외부에서 직접 JSP를 호출할 수 없다. 우리가 기대하는 것은 항상 컨트롤러를 통해서 JSP를 호출하는 것이다.
+                - WEB-INF 밑의 자원들은 외부에서 호출할 수 없다(WAS의 규칙). `http://localhost:8080/WEB-INF/views/new-form.jsp`로 들어와도 아무 응답이 없을 것. 항상 서블릿을 거쳐서 내부의 호출을 해야만 부를 수 있다.
+            - redirect vs forward
+                -  리다이렉트는 실제 클라이언트(웹 브라우저)에 응답이 나갔다가(헤더의 location 필드), 클라이언트가 redirect 경로로 다시 요청한다. 따라서 클라이언트가 인지할 수 있고, URL 경로도 실제로 변경된다(육안으로는 안 보이지만 깜빡거리면서). 즉, 호출이 2번 일어남. 반면에 포워드는 서버 내부에서 일어나는 호출이기 때문에 클라이언트가 전혀 인지하지 못한다(호출 1번)
+        ```
+        @WebServlet(name = "mvcMemberFormServlet", urlPatterns = "/servlet-mvc/members/new-form")
+        public class MvcMemberFormServlet extends HttpServlet {
+
+            @Override
+            protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+                String viewPath = "/WEB-INF/views/new-form.jsp";
+                RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);// 컨트롤러에서 뷰로 이동할 때 사용
+                dispatcher.forward(request, response); // 서블릿에서 jsp를 호출
+                // => 이렇게 하면 JSP를 찾아서 호출함(서버 내부에서 호출해서 제어권을 넘겨줌)
+            }
+
+        }
+        ```
+    - 회원 등록 폼 - 뷰
+        - `main/webapp/WEB-INF/views/new-form.jsp`
+            - 여기서 form의 action을 보면 절대 경로(/로 시작)이 아니라 상대경로(/로 시작X)하는 것을 확인할 수 있다. 이렇게 상대경로를 사용하면 폼 전송시 현재 URL이 속한 계층 경로 + save가 호출된다.
+                - 현재 등록 폼 경로 : /servlet-mvc/members/new-form
+                - 현재 계층 경로 : /servlet-mvc/members/
+                - 결과 : /servlet-mvc/members/save
+            ```
+            <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+            <html>
+            <head>
+            <meta charset="UTF-8">
+            <title>Title</title>
+            </head>
+            <body>
+            <!-- 상대경로 사용, [현재 URL이 속한 계층 경로 + /save] -->
+            <form action="save" method="post">
+                username: <input type="text" name="username" />
+                age: <input type="text" name="age" /> <button type="submit">전송</button>
+            </form>
+            </body>
+            </html>
+            ```
+
+    - 실행
+        - http://localhost:8080/servlet-mvc/members/new-form
+        - HTML Form이 잘 나오는 것을 확인할 수 있다.
+    - 주의
+        - 이후 코드에서 해당 jsp를 계속 사용하기 때문에 상대경로를 사용한 부분을 그대로 유지해야 한다.(다른 컨트롤러에서도 그대로 쓰기 위해서)
+
+- 회원 저장
+    - 회원 저장 - 컨트롤러
+        - `MvcMemberSaveServlet`
+        ```
+        @WebServlet(name = "mvcMemberSaveServlet", urlPatterns = "/servlet-mvc/members/save")
+        public class MvcMemberSaveServlet extends HttpServlet {
+
+            private MemberRepository memberRepository = MemberRepository.getInstance();
+
+            @Override
+            protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+                String username = request.getParameter("username");
+                int age = Integer.parseInt(request.getParameter("age"));
+
+                Member member = new Member(username, age);
+                memberRepository.save(member);
+
+                // Model에 데이터를 보관한다.
+                request.setAttribute("member", member);
+
+                // jsp 로 넘어감
+                String viewPath = "WEB-INF/views/save-result.jsp";
+                RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+                dispatcher.forward(request, response); // 내부에서 호출
+
+                
+            }
+        }
+        ``` 
+        - HttpServletRequest를 Model로 사용한다.
+            - request가 제공하는 setAttribute() 를 사용하면 request 객체에 데이터를 보관해서 뷰에 전달할 수 있다.
+            - 뷰는 request.getAttribute() 를 사용해서 데이터를 꺼내면 된다.
+    - 회원 저장 - 뷰
+        - `main/webapp/WEB-INF/views/save-result.jsp`
+        ```
+        <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+        </head>
+        <body> 성공
+        <ul>
+            <li>id=${member.id}</li>
+            <li>username=${member.username}</li>
+            <li>age=${member.age}</li>
+        </ul>
+        <a href="/index.html">메인</a>
+        </body>
+        </html>
+        ```
+        - 원래는 하나씩 값을 꺼낼때마다 `<li>id=<%=((Member)request.getAttribute("member")).getId()%></li>` 로 해서 하나씩 다 캐스팅해서 꺼내야 한다.(getAttribute()의 반환타입이 Object이므)
+        - 그런데, JSP는 `${}` 표현식 문법을 제공하는데, 이 문법을 사용하면 위처럼 request의 attribute에 담긴 데이터를 편리하게 조회할 수 있다. 
+            - 조회할 때는 자동으로 get의 기능으로, 값 입력을 할 때는 자동으로 set의 기능으로 동작함. `member.id`, `member.username`, `member.age`
+            - member.getUsername() 으로 해도 된다.
+        - 실행
+            - http://localhost:8080/servlet-mvc/members/new-form
+            - HTML Form에 데이터를 입력하고 전송을 누르면 저장 결과를 확인할 수 있다.
+            - MVC 덕분에 컨트롤러 로직과 뷰 로직을 확실하게 분리한 것을 확인할 수 있다. 향후 화면에 수정이 발생하면 뷰 로직만 변경하면 된다.
+- 회원 목록 조회
+    - 회원 목록 조회 - 컨트롤러
+        - `MvcMemberListServlet`
+        ```
+        @WebServlet(name = "mvcMemberListServlet", urlPatterns = "/servlet-mvc/members")
+        public class MvcMemberListServlet extends HttpServlet {
+
+            private MemberRepository memberRepository = MemberRepository.getInstance();
+
+            @Override
+            protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+                List<Member> members = memberRepository.findAll();
+                request.setAttribute("members", members);
+
+                String viewPath = "/WEB-INF/views/members.jsp";
+                RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+                dispatcher.forward(request, response);
+            }
+        }
+        ```
+        - request 객체를 사용해서 `List<Member> members` 를 모델에 보관했다.
+    - 회원 목록 조회 - 뷰
+        - `main/webapp/WEB-INF/views/members.jsp`
+        ```
+        <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+        <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>  <!-- jstl -->
+        <html>
+        <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+        </head>
+        <body>
+        <a href="/index.html">메인</a>
+        <table>
+        <thead>
+            <th>id</th>
+            <th>username</th>
+            <th>age</th>
+        </thead>
+        <tbody>
+            <!-- jstl 문법 -->
+            <c:forEach var="item" items="${members}">
+                    <tr>
+                    <td>${item.id}</td>
+                    <td>${item.username}</td>
+                    <td>${item.age}</td>
+                    </tr>
+            </c:forEach>
+
+        </tbody>
+        </table>
+        </body>
+        </html>
+        ```
+        - 모델에 담아둔 members를 JSP가 제공하는 taglib기능을 사용해서 반복하면서 출력했다. members 리스트에서 member 를 순서대로 꺼내서 item 변수에 담고, 출력하는 과정을 반복한다.
+        - `<c:forEach>` 이 기능을 사용하려면 다음과 같이 선언해야 한다.
+            - `<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>`
+        - 해당 기능을 사용하지 않고, 다음과 같이 출력해도 되지만, 매우 지저분하다.
+        ```
+        <%
+        for (Member member : members) {
+            out.write("    <tr>");
+            out.write("         <td>" + member.getId() + "</td>");
+            out.write("         <td>" + member.getUsername() + "</td>");
+            out.write("         <td>" + member.getAge() + "</td>");
+            out.write("    </tr>");
+            }
+        %>
+        ```
+        - JSP와 같은 뷰 템플릿은 이렇게 화면을 렌더링 하는데 특화된 다양한 기능을 제공한다.
+        - 실행
+            - http://localhost:8080/servlet-mvc/members
+            - 저장된 결과 목록을 확인할 수 있다.
+        - 참고
+            -  앞서 설명했듯이 JSP를 학습하는 것이 이 강의의 주 목적이 아니다. JSP가 더 궁금한 분들은 이미 수 많은 자료들이 있으므로 JSP로 검색하거나 관련된 책을 참고하길 바란다. (반나절이면 대부분의 기능을 학습할 수 있다.)
+
+
+## MVC 패턴 - 한계
+- MVC 패턴을 적용한 덕분에 컨트롤러의 역할과 뷰를 렌더링 하는 역할을 명확하게 구분할 수 있다. 특히 뷰는 화면을 그리는 역할에 충실한 덕분에, 코드가 깔끔하고 직관적이다. 단순하게 모델에서 필요한 데이터를 꺼내고, 화면을 만들면 된다. 그런데 컨트롤러는 딱 봐도 중복이 많고, 필요하지 않는 코드들도 많이 보인다.
+
+- MVC 컨트롤러의 단점
+    - 포워드 중복
+        - View로 이동하는 코드가 항상 중복 호출되어야 한다. 물론 이 부분을 메서드로 공통화해도 되지만, 해당 메서드도 항상 직접 호출해야 한다.
+        ``` 
+        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+        dispatcher.forward(request, response);
+        ```
+    - ViewPath에 중복
+        ```
+        String viewPath = "/WEB-INF/views/new-form.jsp";
+        ```
+        - prefix: /WEB-INF/views/
+        - suffix: .jsp
+        - 그리고 만약 jsp가 아닌 thymeleaf 같은 다른 뷰로 변경한다면 전체 코드를 다 변경해야 한다.
+    - 사용하지 않는 코드
+        - 다음 코드를 사용할 때도 있고, 사용하지 않을 때도 있다. 특히 response는 현재 코드에서 사용되지 않는다(jsp로 뷰를 나타내기 때문에)
+        ```
+        HttpServletRequest request, HttpServletResponse response
+        ```
+        - 그리고 이런 HttpServletRequest , HttpServletResponse 를 사용하는 코드는 테스트 케이스를 작성하기도 어렵다.
+    - 공통처리가 어렵다
+        - 기능이 복잡해질수록 컨트롤러에서 공통으로 처리해야 하는 부분이 점점 더 많이 증가할 것이다. 단순히 공통 기능을 메서드로 뽑으면 될 것 같지만, 결과적으로 해당 메서드를 항상 호출해야 하고, 실수로 호출하지 않으면 문제가 될 것이다. 그리고 호출하는 것 자체도 중복이다.
+- 단점을 정리하면?
+    - 공통 처리가 어렵다는 문제가 있다.
+        - 이 문제를 해결하려면 컨트롤러 호출 전에 먼저 공통 기능을 처리해야 한다. 소위 수문장 역할을 하는 기능이 필요하다. `프론트 컨트롤러(Front Controller) 패턴`을 도입하면 이런 문제를 깔끔하게 해결할 수 있다. (입구를 하나로!) 스프링 MVC의 핵심도 바로 이 프론트 컨트롤러에 있다. 대표 컨트롤러 하나를 앞에 두고 뒤에 다른 컨트롤러를 호출하도록. MVC 프레임웍은 다 이 프론트 컨트롤러 패턴을 구현을 한 것이다.
+
+# MVC 프레임워크 만들기
+## 프론트 컨트롤러 패턴 소개
+- 프론트 컨트롤러 도입 전/후
+
+<img width="590" alt="스크린샷 2021-08-22 오후 7 57 14" src="https://user-images.githubusercontent.com/57219160/130352583-24b69625-50ba-472c-8743-da399d22f716.png">
+
+- 프론트 컨트롤러는 서블릿이다. 
+- FrontController 패턴 특징
+    - 프론트 컨트롤러 서블릿 하나로 클라이언트의 요청을 받음
+    - 프론트 컨트롤러가 요청에 맞는 컨트롤러를 찾아서 호출
+    - 입구를 하나로!
+    - 공통 처리 가능
+    - 프론트 컨트롤러를 제외한 나머지 컨트롤러는 서블릿을 사용하지 않아도 됨
+        - 매핑해주는 프론트 컨트롤러를 이미 서블릿으로 만들었기 때문에 나머지들은 프론트 컨트롤러에 의해서 호출될 것이므로 안해도 된다. 
+            - 그래서 Https상속받고 @WebSelvet 어노테이션 사용하고 이런것들 다 하지 않아도 된다.
+        - 요청이 오면 WAS 에서 제일 처음 서블릿이 받는 것.
+
+- 스프링 웹 MVC와 프론트 컨트롤러
+    - 스프링 웹 MVC의 핵심도 바로 `FrontController`
+    - 스프링 웹 MVC의 `DispatcherServlet`이 FrontController 패턴으로 구현되어 있음
+    - 즉, 우리가 자주 사용하는 스프링 웹 MVC 도 결국에는 프론트 컨트롤러를 사용한다는 것. 그리고 서블릿이 그것을 처리한다는 것
+
+## 프런트 컨트롤러 도입 - v1
+- 프런트 컨트롤러를 단계적으로 도입해보자.
+- 이번 목표는 기존 코드를 최대한 유지하면서, 프론트 컨트롤러를 도입하는 것이다.
+- 먼저 구조를 맞추어두고 점진적으로 리펙터링 해보자.
+<img width="577" alt="스크린샷 2021-08-22 오후 8 05 07" src="https://user-images.githubusercontent.com/57219160/130352763-a7d12d4e-c1b3-4855-b324-d0ee5640f6ce.png">
+
+- ControllerV1 인터페이스
+    - 서블릿과 비슷한 모양의 컨트롤러 인터페이스를 도입한다. 각 컨트롤러들은 이 인터페이스를 구현하면 된다. 프론트 컨트롤러는 이 인터페이스를 호출해서 구현과 관계없이 로직의 일관성을 가져갈 수 있다.
+    - 이제 이 인터페이스를 구현한 컨트롤러를 만들어보자. 지금 단계에서는 기존 로직을 최대한 유지하는게 핵심이다.
+    ```
+    public interface ControllerV1 {
+
+        void process(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException;
+    }
+    ```
+- MemberFormControllerV1 - 회원 등록 컨트롤러
+```
+public class MemberFormControllerV1 implements ControllerV1 {
+
+    @Override
+      public void process(HttpServletRequest request, HttpServletResponse
+  response) throws ServletException, IOException {
+
+          String viewPath = "/WEB-INF/views/new-form.jsp";
+          RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+          dispatcher.forward(request, response);
+} }
+```
+
+- MemberSaveControllerV1 클래스 - 회원 저장 컨트롤러
+```
+public class MemberSaveControllerV1 implements ControllerV1 {
+
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @Override
+    public void process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        String username = request.getParameter("username");
+        int age = Integer.parseInt(request.getParameter("age"));
+
+        Member member = new Member(username, age);
+        memberRepository.save(member);
+
+        request.setAttribute("member", member);
+
+        String viewPath = "/WEB-INF/views/save-result.jsp";
+        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+        dispatcher.forward(request, response);
+    }
+}
+```
+
+- MemberListControllerV1 클래스 - 회원 목록 컨트롤러
+```
+public class MemberListControllerV1 implements ControllerV1 {
+
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @Override
+    public void process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        List<Member> members = memberRepository.findAll();
+        request.setAttribute("members", members);
+
+        String viewPath = "/WEB-INF/views/members.jsp";
+        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+        dispatcher.forward(request, response);
+    }
+}
+
+```
+- 인터페이스를 상속받은 위의 3개 클래스의 내부 로직은 기존 서블릿과 거의 같다. 그런데 3개 클래스에는 HttpServlet을 상속받지도 않았고 @WebSerlvet 어노테이션을 사용하지도 않았다.
+- 이제 프론트 컨트롤러를 만들어보자.(이 프론트 컨트롤러만 HttpServlet 상속받고 @WebServlet 애노테이션 붙이면 된다)
+
+- FrontControllerServletV1 - 프론트 컨트롤러
+    - `urlPatterns = "/front-controller/v1/*"` : /front-controller/v1 를 포함한 하위 모든 요청은 이 서블릿에서 받아들인다.
+        - 예) /front-controller/v1 , /front-controller/v1/a , /front-controller/v1/a/b 
+    - controllerMap
+        - key: 매핑 URL
+        - value: 호출될 컨트롤러
+    - service()
+        - 먼저 requestURI 를 조회해서 실제 호출할 컨트롤러를 controllerMap 에서 찾는다. 만약 없다면 404(SC_NOT_FOUND) 상태 코드를 반환한다.
+        - 컨트롤러를 찾고 controller.process(request, response); 을 호출해서 해당 컨트롤러를 실행한다.
+    - JSP
+        - JSP는 이전 MVC에서 사용했던 것을 그대로 사용한다.
+    ```
+    @WebServlet(name = "frontControllerServletV1", urlPatterns = "/front-controller/v1/*")
+    public class FrontControllerServletV1 extends HttpServlet {
+
+        private Map<String, ControllerV1> controllerMap = new HashMap<>();
+
+        public FrontControllerServletV1() {
+            controllerMap.put("/front-controller/v1/members/new-form", new MemberFormControllerV1());
+            controllerMap.put("/front-controller/v1/members/save", new MemberSaveControllerV1());
+            controllerMap.put("/front-controller/v1/members", new MemberListControllerV1());
+        }
+
+        @Override
+        protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+            System.out.println("FrontControllerServletV1.service");
+
+            String requestURI = request.getRequestURI();
+            ControllerV1 controller = controllerMap.get(requestURI); // 이렇게 인터페이스로 꺼내면 이 코드를 매번 일관성있게 사용할 수 있다.(다형성)
+            if (controller == null) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+
+            controller.process(request, response); // 해당하는 컨트롤로의 구현체에 따른 @Override된 process 메서드 실행(다형성)
+        }
+    }
+    ```
+    - 실행
+        - 등록 : http://localhost:8080/front-controller/v1/members/new-form
+        - 목록 : http://localhost:8080/front-controller/v1/members
+        - 실행해보면 기존 서블릿, JSP로 만든 MVC와 동일하게 실행 되는 것을 확인할 수 있다.
+        - 브라우저에서 localhost8080/front-controller/v1/* 에서 * 자리에 아무거나 넣어서 404 에러 뜨는 것도 확인가능하다.(개발자도구)
+            - 콘솔에 FrontControllerServletV1.service 가 찍힌 것을 봐서는 서블릿은 호출이 되었지만 해당하는 컨트롤러, 즉 3개 중에 속하지 않은 주소가 들어와서 그렇다.
+    - 현업에서 아키텍트를 크게 개선할 때는 말 그대로 우선 구조만 개선해야 한다. 작은 부분들은 나중에. 즉 레벨에 맞는 리팩토링을 먼저 따로 해야 한다(해당하지 않은 부분에 대한 코드들은 유지시켜줘야 한다). 그 다음에 문제가 없을 때(커밋까지 끝내고 테스트까지) 세세한 부분들을 개선해야 한다. 그렇지 않으면 섞이고 리팩토링이 힘들다. 
+    - 그리고 실제 개발할 떄는 상대경로 잘 안 쓰고 절대경로를 쓰는 편이다. (여기에서 저장하는 부분의 "save" 는 상대경로이므로 건드리면 안된다)
+
+## View 분리 - v2
+- v1버전에서는 모든 컨트롤러에서 뷰로 이동하는 부분에 중복이 있고, 깔끔하지 않다.
+```
+String viewPath = "/WEB-INF/views/new-form.jsp";
+RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+dispatcher.forward(request, response);
+```
+
+- 이 부분을 깔끔하게 분리하기 위해 별도로 뷰를 처리하는 객체를 만들자.
+- v2 구조
+    - Controller가 JSP 포워딩을 직접하는 것을 바꿔서, MyView만 호출하면 되는 식.
+
+    <img width="771" alt="스크린샷 2021-08-22 오후 9 00 05" src="https://user-images.githubusercontent.com/57219160/130354302-d4ff3000-77af-48dc-9cd4-9203ef03dca9.png">
+
+- MyView
+    - 뷰 객체는 이후 다른 버전에서도 함께 사용하므로 패키지 위치를 frontcontroller 에 두었다.
+    - 컨트롤러들이 이 MyView만 반환하면 된다. 따로 jsp 파일을 렌더링 할 필요가 없다.
+    ```
+        public class MyView {
+
+        private String viewPath;
+
+        public MyView(String viewPath) {
+            this.viewPath = viewPath;
+        }
+
+        public void render(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+            RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+            dispatcher.forward(request, response);
+        }
+    }
+
+    ```
+- ControllerV2 인터페이스
+    - MyView를 반환하는 process 메서드
+    - 그러면 개발자들은 모두 MyView를 반환해야 된다고 생각하고(강제) 컴파일 에러를 내뱉는다.
+```
+public interface ControllerV2 {
+
+    MyView process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException;
+}
+
+```
+
+- MemberFormControllerV2 - 회원 등록 폼
+    - 이제 각 컨트롤러는 복잡한 dispatcher.forward() 를 직접 생성해서 호출하지 않아도 된다. 단순히 MyView 객체를 생성하고 거기에 뷰 이름만 넣고 반환하면 된다.
+    - ControllerV1 을 구현한 클래스와 ControllerV2 를 구현한 클래스를 비교해보면, 이 부분의 중복이 확실하게 제거된 것을 확인할 수 있다.
+    ```
+    public class MemberFormControllerV2 implements ControllerV2 {
+    @Override
+        public MyView process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+            return new MyView("/WEB-INF/views/new-form.jsp"); // MyView 반환
+        }
+    }
+    ```
+- MemberSaveControllerV2 - 회원 저장
+    ```
+    public class MemberSaveControllerV2 implements ControllerV2 {
+
+      private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @Override
+    public MyView process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+            String username = request.getParameter("username");
+            int age = Integer.parseInt(request.getParameter("age"));
+            Member member = new Member(username, age);
+            memberRepository.save(member);
+            request.setAttribute("member", member);
+            return new MyView("/WEB-INF/views/save-result.jsp"); // MyView 반환
+    } 
+    }
+    ```
+
+- MemberListControllerV2 - 회원 목록
+```
+public class MemberListControllerV2 implements ControllerV2 {
+
+private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @Override
+    public MyView process(HttpServletRequest request, HttpServletResponse
+        response) throws ServletException, IOException {
+        List<Member> members = memberRepository.findAll();
+        request.setAttribute("members", members);
+        return new MyView("/WEB-INF/views/members.jsp"); // MyView 반환
+      }
+}
+```
+
+- 프론트 컨트롤러 V2
+    - ControllerV2의 반환 타입이 MyView 이므로 프론트 컨트롤러는 컨트롤러의 호출 결과로 MyView 를 반환 받는다. 그리고 view.render() 를 호출하면 forward 로직을 수행해서 JSP가 실행된다.
+    ```
+    @WebServlet(name = "frontControllerServletV2", urlPatterns = "/front-controller/v2/*")
+    public class FrontControllerServletV2 extends HttpServlet {
+
+        private Map<String, ControllerV2> controllerMap = new HashMap<>();
+
+        public FrontControllerServletV2() {
+            controllerMap.put("/front-controller/v2/members/new-form", new MemberFormControllerV2());
+            controllerMap.put("/front-controller/v2/members/save", new MemberSaveControllerV2());
+            controllerMap.put("/front-controller/v2/members", new MemberListControllerV2());
+        }
+
+        @Override
+        protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+            System.out.println("FrontControllerServletV2.service");
+            String requestURI = request.getRequestURI();
+            ControllerV2 controller = controllerMap.get(requestURI);
+            if (controller == null) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+
+            MyView view = controller.process(request, response); // 각자의 반환하는 MyView를 받는다.
+            view.render(request, response);
+        }
+    }
+    ```
+    - Myview.render()
+        - 프론트 컨트롤러의 도입으로 MyView 객체의 render() 를 호출하는 부분을 모두 일관되게 처리할 수 있다. 각각의 컨트롤러는 MyView 객체를 생성만 해서 반환하면 된다.
+    ```
+    public void render(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+        dispatcher.forward(request, response);
+    }
+    ```
+    - 실행
+        - 등록 : http://localhost:8080/front-controller/v2/members/new-form
+        - 목록 : http://localhost:8080/front-controller/v2/members
+
+
+## Model 추가 - v3
+- v2버에서는 Controller2 인터페이스를 구현하는 컨트롤러들이 실제 사용하지도 않는 HttpServlet 객체들을 받아야 한다.
+```
+public class MemberFormControllerV2 implements ControllerV2 {
+@Override
+    public MyView process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        return new MyView("/WEB-INF/views/new-form.jsp"); 
+    }
+}
+```
+- 서블릿 종속성 제거
+    - 컨트롤러 입장에서 HttpServletRequest, HttpServletResponse이 꼭 필요할까?
+    - 요청 파라미터 정보는 자바의 Map으로 대신 넘기도록 하면 지금 구조에서는 `컨트롤러가 서블릿 기술을 몰라도 동작할 수 있다. `(테스트하기도 쉽고 간결하게 만들 수 있다)
+    - 그리고 request 객체를 Model로 사용하는 대신에 별도의 Model 객체를 만들어서 반환하면 된다.
+    - 우리가 구현하는 컨트롤러가 서블릿 기술을 전혀 사용하지 않도록 변경해보자.
+
+- 뷰 이름 중복 제거
+    - 컨트롤러에서 지정하는 뷰 이름에 중복이 있는 것을 확인할 수 있다.
+    - 컨트롤러는 뷰의 논리 이름을 반환하고, 실제 물리 위치의 이름은 프론트 컨트롤러에서 처리하도록 단순화 하자.
+        - /WEB-INF/views/new-form.jsp -> `new-form`
+        - /WEB-INF/views/save-result.jsp -> `save-result`
+        - /WEB-INF/views/members.jsp -> `members`
+    - 이렇게 해두면 향후 뷰의 폴더 위치가 함께 이동해도 프론트 컨트롤러만 고치면 된다.
+    - 즉, 1개뿐인 프론트 컨트롤러에서 지저분한 것들을 다 처리하고, 수십~수백개의 컨트롤러를 단순하게 만들자는 것!!
+- v3 구조
+
+<img width="724" alt="스크린샷 2021-08-22 오후 9 53 13" src="https://user-images.githubusercontent.com/57219160/130355976-cf726cc5-accb-4f21-a83c-d5b06015f141.png">
+
+- ModelView
+    - 

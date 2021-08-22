@@ -16,6 +16,12 @@ command + fn + f12
 command + option + B
 ```
 
+- 코드상에서 클래스 이름 바로 변경하기
+  - 클래스 이름 위에 커서 두고
+  ```
+  shift + f6s
+  ```
+
 - 입력하고 있는 줄에서 바로 밑으로 한 줄 내려가기
 ```
 command + shift + 엔터
