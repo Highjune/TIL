@@ -2,14 +2,14 @@
 - [문제](https://leetcode.com/problems/valid-parentheses/)
 
 
-# 내 풀이1
-- 아래 풀이는 런타임 에러
+# 내 풀이
 ```
 class Solution {
     public boolean isValid(String s) {
         Stack<Character> stack = new Stack();
 
         for (int i = 0; i < s.length(); i++) {
+
             if (s.charAt(i) == '(' || s.charAt(i) == '{' || s.charAt(i) == '[') {
                 stack.push(s.charAt(i));
             } else {
@@ -53,8 +53,32 @@ class Solution {
 }
 ```
 
-# 내 풀이2
-- while 문으로 다시 풀어봄
-
 
 # 타인 풀이
+- https://leetcode.com/problems/valid-parentheses/discuss/9178/Short-java-solution
+- 위 링크에서 처음에 아래 조건 추가
+```
+ if(s.length() % 2 == 1)
+        return false;
+```
+```
+ public boolean isValid(String s) {
+        Stack<Character> stack = new Stack<Character>();
+
+        if(s.length() % 2 == 1)
+                return false;
+
+        for (Character c : s.toCharArray()) {
+            if (c == '(') {
+                stack.push(')');
+            } else if (c == '{'){
+                stack.push('}');
+            } else if (c == '['){
+                stack.push(']');
+            } else if (stack.isEmpty() || stack.pop() != c) {
+                return false;
+            }
+        }
+        return stack.isEmpty();
+    }
+```
