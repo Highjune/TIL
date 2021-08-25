@@ -15,7 +15,8 @@ public String reverse_string(String str) {
     }
 ```
 
-# 책 풀이
+# 책 풀이1
+- 비추천. 왜냐하면 매번 String은 새로운 객체가 생성되는 것이므로.
 ```
 public String reverse_string(String str) {
         String result = "";
@@ -24,7 +25,23 @@ public String reverse_string(String str) {
 
         for (int i = arr.length - 1 ; i >= 0 ; --i) { // 감소 i-- 해도 됨
             System.out.println(i);
-            result += str.charAt(i);
+            result += str.charAt(i);    // 매번 Strnig 객체가 생성되는 것이므로 메모리 낭비
+        }
+        return result;
+    }
+```
+
+# 책 풀이2
+- 추천
+```
+public String reverse_string(String str) {
+        String result = "";
+
+        char[] arr = str.toCharArray();
+
+        for (int i = arr.length - 1 ; i >= 0 ; --i) { // 감소 i-- 해도 됨
+            System.out.println(i);
+            result += str.charAt(i);    // 매번 Strnig 객체가 생성되는 것이므로 메모리 낭비
         }
         return result;
     }
