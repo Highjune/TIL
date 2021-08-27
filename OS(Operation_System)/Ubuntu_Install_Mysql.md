@@ -74,7 +74,7 @@ SHOW DATABASES;
     - 계정은 tucker이고 Host는 localhost, 패스워드는 1234
         - `CREATE USER 'tucker'@'localhost' IDENTIFIED BY '1234';` 라고 하면 localhost에서 tucker/1234 로만 들어갈 수 있음 
         - `CREATE USER 'tucker'@'12.34.56.78' IDENTIFIED BY '1234';` 라고 하면 12.34.56.78에서 tucker/1234 로만 들어갈 수 있음
-        - `CREATE USER 'tucker'@'%' IDENTIFIED BY '1234';` 라고 하면 모든ip에서 다 tucker/1234 로 접속할 수 있음
+        - `CREATE USER 'baronic'@'%' IDENTIFIED BY 'baronic';` 라고 하면 모든ip에서 다 baronic/baronic 로 접속할 수 있음
     ```
     CREATE USER 'tucker'@'localhost' IDENTIFIED BY '1234';
     ```
@@ -92,9 +92,9 @@ SELECT User, Host, Authentication_string FROM mysql.user;
     ```
     GARNT ALL PRIVILEGES ON practice_DB.* to tucker@localhost;
     ```
-    - 만약 위에서 해당 계정에 대해서 모든 host에 대한 권한을 부여 하려면 `'%'` (''넣기)
+    - 만약 위에서 해당 계정(baronic이라면) 에 대해서 모든 host에 대한 권한을 부여 하려면 `'%'` (''넣기)
     ```
-    GARNT ALL PRIVILEGES ON practice_DB.* to tucker@'%';
+    GARNT ALL PRIVILEGES ON practice_DB.* to baronic@'%';
     ```
 
 - DB의 권한을 변경했으니 다시 FLUSH PRIVILEGES;
@@ -105,6 +105,9 @@ FLUSH PRIVILEGES;
 - tucker 계정이 localhost에서 어떤 권한을 가지고 있는지 확인
     ```
     SHOW GRANTS FOR 'tucker'@'localhost';
+    ```
+    ```
+    SHOW GRANTS FOR 'baronic'@'%';
     ```
 - 위의 쿼리 결과로 나온 `GRANT USAGE ON *.* TO`에서 `*.*`는 아무 권한이 없다는 의미이다. 현재 tucker 계정은 practice_DB만 모든 권한을 가지고 있고 mysql의 admin이나 system을 접근할 수 있는 권한이 없다는 것을 의미
 
