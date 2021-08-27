@@ -72,6 +72,9 @@ SHOW DATABASES;
 
 - (mysql에 접속 후) mysql 의 계정 만들기. root계정보다 안전.
     - 계정은 tucker이고 Host는 localhost, 패스워드는 1234
+        - `CREATE USER 'tucker'@'localhost' IDENTIFIED BY '1234';` 라고 하면 localhost에서 tucker/1234 로만 들어갈 수 있음 
+        - `CREATE USER 'tucker'@'12.34.56.78' IDENTIFIED BY '1234';` 라고 하면 12.34.56.78에서 tucker/1234 로만 들어갈 수 있음
+        - `CREATE USER 'tucker'@'%' IDENTIFIED BY '1234';` 라고 하면 모든ip에서 다 tucker/1234 로 접속할 수 있음
     ```
     CREATE USER 'tucker'@'localhost' IDENTIFIED BY '1234';
     ```
