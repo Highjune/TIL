@@ -50,7 +50,7 @@
 - [FrameWork](https://github.com/Highjune/TIL/tree/main/Frontend/FrameWork)
 - HTML
 - [Library](https://github.com/Highjune/TIL/tree/main/Frontend/Library)
-- [TemplateEngine](https://github.com/Highjune/TIL/tree/main/Frontend/TempleteEngine)
+- [TemplateEngine](https://github.com/Highjune/TIL/tree/main/Frontend/TempleteEngine) - View 지만 서버사이드렌더링
     - Freemarker
     - Mustache
     - Thymeleaf
