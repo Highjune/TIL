@@ -32,6 +32,7 @@
 - 이런 문제들을 해결하는 것이 바로 TCP
 
 ## TCP, UDP
+- [참고자료](https://wormwlrm.github.io/2021/09/23/Overview-of-TCP-and-UDP.html)
 - IP의 문제들을 해결해주는 것이 바로 TCP
 - UDP는 다른 방면에서 도움이 됨.
 - 인터넷 프로토콜 스택의 4계층
