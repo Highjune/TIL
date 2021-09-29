@@ -1,6 +1,7 @@
 # Climbing_Stairs
 - [문제](https://leetcode.com/problems/climbing-stairs/)
-
+- 기록
+    - 2번째 2021.09.29 실패
 
 # 내 풀이
 - 실패
@@ -10,7 +11,7 @@
 # 정답1
 - https://leetcode.com/problems/climbing-stairs/solution/
 - recursive
-- 시간복잡도 O(2^n)
+- 시간복잡도 O(2^n) - 사실상 실패
 - 효율적이진 않더라도 recursion 이해하기에 간단하고 좋음
 ```
 class Solution {
@@ -62,7 +63,7 @@ public class Solution {
 
 # 정답3
 - https://leetcode.com/problems/climbing-stairs/solution/
-- 다이나믹 프로그래밍
+- 다이나믹 프로그래밍(중요★★★)
 - 시간복잡도 O(N), 공간복잡도 O(N)
 ```
 public class Solution {
