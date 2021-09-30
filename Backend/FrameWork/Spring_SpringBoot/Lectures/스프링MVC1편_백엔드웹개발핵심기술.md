@@ -5141,4 +5141,3 @@ void hello(@RequestBody HelloData data) {}
     - canWrite() 조건을 만족하면 write() 를 호출해서 HTTP 응답 메시지 바디에 데이터를 생성한다.
 
 
-- test
