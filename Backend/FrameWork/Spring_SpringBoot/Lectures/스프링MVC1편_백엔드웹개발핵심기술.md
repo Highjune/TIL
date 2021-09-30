@@ -5198,6 +5198,7 @@ public interface HandlerMethodArgumentResolver {
 - HTTP 메시지 컨버터
     - HTTP 메시지 컨버터 위치
     ![image](https://user-images.githubusercontent.com/57219160/135390653-a4840e35-2536-4781-a864-b0131207995c.png)
+        - ArgumentResolver가 처리하는 것들 중에서 해결못하는 것들은 HTTP 메시지 컨버터에게 요청한다. ReturnValueHandler도 마찬가지
     - HTTP 메시지 컨버터는 어디쯤 있을까?
         - HTTP 메시지 컨버터를 사용하는 @RequestBody 도 컨트롤러가 필요로 하는 파라미터의 값에 사용된다.
     - @ResponseBody 의 경우도 컨트롤러의 반환 값을 이용한다.
@@ -5216,7 +5217,7 @@ public interface HandlerMethodArgumentResolver {
         - HandlerMethodArgumentResolver
         - HandlerMethodReturnValueHandler
         - HttpMessageConverter
-    - 스프링이 필요한 대부분의 기능을 제공하기 때문에 실제 기능을 확장할 일이 많지는 않다. 기능 확장은 WebMvcConfigurer 를 상속 받아서 스프링 빈으로 등록하면 된다. 실제 자주 사용하지는 않으니 실제 기능 확장이 필요할 때 WebMvcConfigurer 를 검색해보자
+    - 스프링이 필요한 대부분의 기능을 제공하기 때문에 실제 기능을 확장할 일이 많지는 않다. 기능 확장은 WebMvcConfigurer 를 상속 받아서 스프링 빈으로 등록하면 된다. 실제 자주 사용하지는 않으니 실제 기능 확장이 필요할 때 WebMvcConfigurer 를 검색해보자.
         - 핸들러 매핑, 핸들러 어댑터, Argument Resolver 등 resolve 시리즈들은 WebMvcConfigurer에 메서드가 다 있으므로 확장하고 싶으면 여기에서 하면 됨.
     - WebMvcConfigurer 확장
     ```
