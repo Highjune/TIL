@@ -5240,3 +5240,506 @@ public interface HandlerMethodArgumentResolver {
     }
 
     ```
+
+
+# 스프링 MVC - 웹 페이지 만들기
+## 프로젝트 생성
+- 스프링 부트 스타터 사이트로 이동해서 스프링 프로젝트 생성
+    - https://start.spring.io
+- 프로젝트 선택 
+    - Project: Gradle Project
+    - Language: Java
+    - Spring Boot: 2.4.x
+
+- Project Metadata
+    - Group: hello
+    - Artifact: item-service
+    - Name: item-service
+    - Package name: hello.itemservice 
+        - item-service 라고 자동으로 쳐지는데(Artifact 따라서) '-' 지우기. 패키지 명에는 이런 특수기호 들어가면 안된다
+    - Packaging: Jar (주의!)
+    - Java: 11
+- Dependencies: Spring Web, Thymeleaf, Lombok
+- import 시에는 항상.
+    - generate - 압축 풀고 - build.gradle 클릭해서 오픈하기
+- 롬복 정상 동작 위해서
+    - preferences - Build, Execution, Deployment - Compiler - Annotation Processors - Enable annotation processing 체크
+- 실행 주체 바꾸기 (gradle -> intelliJ)
+    - preferences - Build, Execution, Deployment - Build Tools - Gradle 
+        - Build and run using : Gradle(default) -> IntelliJ IDEA
+        - Run tests using : Gradle(default) -> IntelliJ IDEA
+        - 이렇게 수정하지 않으면 매번 gradle 을 통해서 실행되기 때문에 느리다.
+
+- 프로젝트 오픈 후에는 항상 돌려봐야 된다.
+    - 메인 메서드 실행해서 제대로 돌아가는지 확인해보기
+    - localhost:8080 로 들어가서 화이트라벨 페이지 뜨는 것까지 확인하기
+
+- build.gradle
+```
+plugins {
+	id 'org.springframework.boot' version '2.5.5'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'java'
+}
+
+group = 'hello'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+test {
+	useJUnitPlatform()
+}
+
+```
+
+- Welcome 페이지 추가
+    - 편리하게 사용할 수 있도록 Welcome 페이지를 추가하자.
+    - /resources/static/index.html
+    ```
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    </head>
+    <body>
+    <ul>
+    <li>상품 관리
+        <ul>
+        <li><a href="/basic/items">상품 관리 - 기본</a></li>
+        </ul>
+    </li>
+    </ul>
+    </body>
+    </html>
+
+    ```
+- 동작 확인
+    - 기본 메인 클래스 실행( SpringmvcApplication.main() )
+    - http://localhost:8080 호출해서 Welcome 페이지가 나오면 성공
+
+## 요구사항 분석
+- 상품을 관리할 수 있는 서비스를 만들어보자.
+
+- 상품 도메인 모델
+    - 상품 ID
+    - 상품명
+    - 가격
+    - 수량
+
+- 상품 관리 기능
+    - 상품 목록
+    - 상품 상세
+    - 상품 등록
+    - 상품 수정
+- 서비스 화면
+![image](https://user-images.githubusercontent.com/57219160/135642644-3ea0095a-d645-46bf-b7b0-83821d123137.png)
+![image](https://user-images.githubusercontent.com/57219160/135642679-065403b3-027e-48a4-8e5f-f7e1d3c74d14.png)
+![image](https://user-images.githubusercontent.com/57219160/135642720-8a281414-789a-41bd-88d3-1c3db05e2437.png)
+![image](https://user-images.githubusercontent.com/57219160/135642771-4ff590e4-2b3a-45c2-aca9-63e31a27482f.png)
+
+- 서비스 제공 흐름
+    ![image](https://user-images.githubusercontent.com/57219160/135642889-fa57be1f-47e2-45a8-815e-6e6b13343c40.png)
+    - (제일 끝애 짤린말) ~~ 동적으로 화면을, 그리고 또 웹 화면의 흐름을 제어한다.
+    - 항상 컨트롤러를 통해서 view가 호출
+    - 사실 위의 흐름은 웹 프론트엔드 개발자 없이 백엔드에 의해서만 렌더링 할 때의 상황임.
+
+- 참고
+    - React, Vue.js 같은 웹 클라이언트 기술을 사용하고, 웹 프론트엔드 개발자가 별도로 있으면, 웹 프론트엔드 개발자가 웹 퍼블리셔 역할까지 포함해서 하는 경우도 있다. 웹 클라이언트 기술을 사용하면, 웹 프론트엔드 개발자가 HTML을 동적으로 만드는 역할과 웹 화면의 흐름을 담당한다. 이 경우 백엔드 개발자는 HTML 뷰 템플릿을 직접 만지는 대신에, HTTP API를 통해 웹 클라이언트가 필요로 하는 데이터와 기능을 제공하면 된다.
+
+## 상품 도메인 개발
+- Item - 상품 객체
+    ```
+    @Data
+    public class Item {
+
+        private Long id;
+        private String itemName;
+        private Integer price;
+        private Integer quantity;
+
+        public Item() {
+        }
+
+        public Item(String itemName, Integer price, Integer quantity) {
+            this.itemName = itemName;
+            this.price = price;
+            this.quantity = quantity;
+        }
+    }
+    ```
+    - `private Integer price;`, `private Integer quantity;`
+        -  Integer인 이유는 price가 안 들어갈 떄도 있다는 것(null)을 가정. int면 0이라도 들어가야 하는데 가격이 0이면 안되므로. 
+        - 상황에 맞게 하면 된다.
+        - @Data 롬복은 사실 위험하다. `핵심 도메인 같은 경우`에는 @Data 라고 쓰면 잘못 동작할 가능성이 있고 @Getter, @Setter 등 필요한 것들만 찍어서 사용하는 것이 좋다. 여기는 그냥 연습이니까 그대로 @Data 사용
+        - 사실 단순 DTO, 즉 데이터만 왔다갔다 하는 것은 @Data를 사용해도 괜찮다. 
+- ItemRepository - 상품 저장소
+    ```
+    @Repository
+    public class ItemRepository {
+
+        private static final Map<Long, Item> store = new HashMap<>(); // static 사용
+        private static long sequence = 0L; // static
+
+        public Item save(Item item) {
+            item.setId(++sequence);
+            store.put(item.getId(), item);
+            return item;
+        }
+
+        public Item findById(Long id) {
+            return store.get(id);
+        }
+
+        public List<Item> findAll() {
+            return new ArrayList<>(store.values());
+        }
+
+        public void update(Long itemId, Item updateParam) {
+            Item findItem = findById(itemId);
+            findItem.setItemName(updateParam.getItemName());
+            findItem.setPrice(updateParam.getPrice());
+            findItem.setQuantity(updateParam.getQuantity());
+        }
+
+        public void clearStore() {
+            store.clear();
+        }
+    }
+
+    ```
+    - 실제로는 store에서 HashMap 사용하면 안된다. 여러 쓰레드가 동시에 접근하면 HashMap 사용하면 안된다. ItemRepository 가 싱글톤으로 생성이 되므로. 실제로는 ConcurrentHashMap 을 사용해야 한다.
+    - sequence 도 마찬가지.(동시에 접근하면 값이 꼬일 수 있다) 동시에 접근하게 되면 long 말고 atomiclong 을 사용해야 한다. 
+    - static 사용
+        - 스프링 안에서는 어차피 싱글톤이므로 사실 큰 상관은 없긴 하다.
+    - findAll() 메서드에서 바로 return store.values() 라고 하지 않고 ArrayList로 감싼 이유는?
+        - 감싸서 리턴하게 되면 그 값에 수정하거나 하더라도 store 의 값에는 영향이 가지 않으므로. 또 타입도 변경하고 해야 하므로
+    - public void update(Long itemId, Item updateParam){} 
+        - 여기에는 사실 name, price, quantity 값만 가지고 있는 별도의 객체를 따로 만드는 것이 맞다. 왜냐하면 id 가 사용이 안되므로.
+        - 그래서 정석으로 하려면 ItemParamDto 같은 객체(클래스)를 추가로 만들어서 id를 제외한 다른 3개의 필드만 넣어두는 것이 맞다. 귀찮지만 설계상 명확한 것이 맞다.
+        - 이렇게 구별해두지 않으면 Item 에서 사용되지 않는 id에 Setter를 사용할수도 있고 혼란스러울 수가 있다.
+        - 여기서는 프로젝트가 작으니까 그냥 사용하기로.
+        - 중복성 vs 명확성 => 명확이 우선이다.
+- 간단한 프로젝트이므로 Service 는 만들지 않고 도메인, Repository 만 만들었음
+- ItemRepositoryTest - 상품 저장소 테스트
+    ```
+    package hello.itemservice.domain.item;
+
+    import org.assertj.core.api.Assertions;
+    import org.junit.jupiter.api.AfterEach;
+    import org.junit.jupiter.api.Test;
+
+    import java.util.List;
+
+    class ItemRepositoryTest {
+
+        ItemRepository itemRepository = new ItemRepository();
+
+        @AfterEach
+        void afterEach() {
+            itemRepository.clearStore();
+        }
+
+        @Test
+        void save() {
+            //given
+            Item item = new Item("itemA", 10000, 10);
+
+            //when
+            Item savedItem = itemRepository.save(item);
+
+            //then
+            Item findItem = itemRepository.findById(item.getId());
+            Assertions.assertThat(findItem).isEqualTo(savedItem);
+        }
+
+        @Test
+        void findAll() {
+            //given
+            Item item1 = new Item("item1", 10000, 10);
+            Item item2 = new Item("item2", 20000, 20);
+
+            itemRepository.save(item1);
+            itemRepository.save(item2);
+            //when
+            List<Item> result = itemRepository.findAll();
+
+            //then
+            Assertions.assertThat(result.size()).isEqualTo(2);
+            Assertions.assertThat(result).contains(item1, item2);
+        }
+
+        @Test
+        void updateItem() {
+            //given
+            Item item = new Item("item1", 10000, 10);
+
+            Item savedItem = itemRepository.save(item);
+            Long itemId = savedItem.getId();
+
+            //when
+            Item updateParam = new Item("item2", 20000, 30);
+            itemRepository.update(itemId, updateParam);
+
+            //then
+            Item findItem = itemRepository.findById(itemId);
+            Assertions.assertThat(findItem.getItemName()).isEqualTo(updateParam.getItemName());
+            Assertions.assertThat(findItem.getPrice()).isEqualTo(updateParam.getPrice());
+            Assertions.assertThat(findItem.getQuantity()).isEqualTo(updateParam.getQuantity());
+        }
+
+    }
+    ```
+    - 스프링 없이 테스트 하는 것
+
+## 상품 서비스 HTML
+- 핵심 비즈니스 로직을 개발하는 동안, 웹 퍼블리셔는 HTML 마크업(디자인된 것을 HTML로 동작하도록) 을 완료했다.
+- 다음 파일들을 경로에 넣고 잘 동작하는지 확인해보자.
+- 부트스트랩
+    - 참고로 HTML을 편리하게 개발하기 위해 부트스트랩 사용했다.
+    - 먼저 필요한 부트스트랩 파일을 설치하자.
+
+- 부트스트랩 공식 사이트: https://getbootstrap.com
+- 부트스트랩을 다운로드 받고 압축을 풀자.
+    - 이동: https://getbootstrap.com/docs/5.0/getting-started/download/
+    - Compiled CSS and JS 항목을 다운로드하자.
+    - 압축을 출고 bootstrap.min.css 를 복사해서 다음 폴더에 추가하자
+    - resources/static/css/bootstrap.min.css
+    - 그런데 intelli J 가 한번씩 복붙한 파일을 인식못할 때가 있다.
+        - 서버 띄워서 http://localhost:8080/css/bootstrap.min.css 들어가서 안 보이면, 프로젝트 내 out폴더(빌드된 것들이 나옴, 그런데 복붙하면 종종 없을수도) 삭제 후에 다시 서버 띄웠다가 다시 확인해보기. (out폴더 다시 생성된다)
+
+
+- 참고
+    - 부트스트랩(Bootstrap)은 웹사이트를 쉽게 만들 수 있게 도와주는 HTML, CSS, JS 프레임워크이다. 하나의 CSS로 휴대폰, 태블릿, 데스크탑까지 다양한 기기에서 작동한다. 다양한 기능을 제공하여 사용자가 쉽게 웹사이트를 제작, 유지, 보수할 수 있도록 도와준다.
+- HTML, css 파일
+    - /resources/static/css/bootstrap.min.css -> 부트스트랩 다운로드 한 것
+    - /resources/static/html/items.html -> 아래 참조
+    - /resources/static/html/item.html
+    - /resources/static/html/addForm.html
+    - /resources/static/html/editForm.html
+
+- 참고로 /resources/static 에 넣어두었기 때문에 스프링 부트가 정적 리소스를 제공한다.
+
+- http://localhost:8080/html/items.html
+    - 그런데 정적 리소스여서 해당 파일을 탐색기를 통해 직접 열어도 동작하는 것을 확인할 수 있다. 그래서 서버를 띄우지 않아도 열림. 파일 우클릭 - copy path - Absolute path 복붙 해서 열면 그냥 열린다. 버튼들도 다 동작한다.  
+    - 서버를 띄워서 localhost:8080/html/~~.html 로 열면 각각 다 열린다.
+
+- 참고
+    -이렇게 정적 리소스가 공개되는 /resources/static 폴더에 HTML을 넣어두면, 실제 서비스에서도 공개된다. 서비스를 운영한다면 지금처럼 공개할 필요없는 HTML을 두는 것은 주의하자.
+- 상품 목록 HTML
+    - resources/static/html/items.html
+    ```
+    <!DOCTYPE HTML>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+    <div class="container" style="max-width: 600px">
+        <div class="py-5 text-center">
+            <h2>상품 목록</h2> </div>
+        <div class="row">
+            <div class="col">
+                <button class="btn btn-primary float-end" onclick="location.href='addForm.html'" type="button">상품
+                    등록</button> </div>
+        </div>
+        <hr class="my-4">
+        <div>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>ID</th> <th>상품명</th> <th>가격</th> <th>수량</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><a href="item.html">1</a></td>
+                    <td><a href="item.html">테스트 상품1</a></td>
+                    <td>10000</td>
+                    <td>10</td>
+                </tr>
+                <tr>
+                    <td><a href="item.html">2</a></td>
+                    <td><a href="item.html">테스트 상품2</a></td> <td>20000</td>
+                    <td>20</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+
+- 상품 상세 HTML
+    - resources/static/html/item.html
+    ```
+    <!DOCTYPE HTML>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .container {
+                max-width: 560px;
+            }
+        </style>
+    </head>
+    <body>
+    <div class="container">
+        <div class="py-5 text-center">
+        <h2>상품 상세</h2>
+    </div>
+
+        <div>
+            <label for="itemId">상품 ID</label>
+            <input type="text" id="itemId" name="itemId" class="form-control"  value="1" readonly>
+        </div>
+        <div>
+            <input type="text" id="itemName" name="itemName" class="form-control"  value="상품A" readonly>
+        </div>
+        <div>
+            <label for="price">가격</label>
+        <input type="text" id="price" name="price" class="form-control" value="10000" readonly>
+    </div>
+        <div>
+            <label for="quantity">수량</label>
+        <input type="text" id="quantity" name="quantity" class="form-control" value="10" readonly>
+    </div>
+        <hr class="my-4">
+        <div class="row">
+            <div class="col">
+                <button class="w-100 btn btn-primary btn-lg"  onclick="location.href='editForm.html'" type="button">상품 수정</button> </div>
+            <div class="col">
+                <button class="w-100 btn btn-secondary btn-lg"
+                        onclick="location.href='items.html'" type="button">목록으로</button> </div>
+        </div>
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+
+- 상품 등록 폼 HTML
+    - resources/static/html/addForm.html
+    ```
+    <!DOCTYPE HTML>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .container {
+                max-width: 560px;
+            } </style>
+    </head>
+    <body>
+    <div class="container">
+        <div class="py-5 text-center">
+            <h2>상품 등록 폼</h2> </div>
+        <h4 class="mb-3">상품 입력</h4>
+        <form action="item.html" method="post">
+            <div>
+                <label for="itemName">상품명</label>
+                <input type="text" id="itemName" name="itemName" class="form-control" placeholder="이름을 입력하세요"> </div>
+            <div>
+                <label for="price">가격</label>
+                <input type="text" id="price" name="price" class="form-control" placeholder="가격을 입력하세요">
+            </div>
+            <div>
+                <label for="quantity">수량</label>
+                <input type="text" id="quantity" name="quantity" class="form-control" placeholder="수량을 입력하세요">
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row">
+                <div class="col">
+                    <button class="w-100 btn btn-primary btn-lg" type="submit">상품 등록</button>
+                </div>
+                <div class="col">
+                    <button class="w-100 btn btn-secondary btn-lg" onclick="location.href='items.html'" type="button">취소</button>
+                </div>
+            </div>
+
+        </form>
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+- 상품 수정 폼 HTML
+    - resources/static/html/editForm.html
+    ```
+    <!DOCTYPE HTML>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .container {
+                max-width: 560px;
+            } </style>
+    </head>
+    <body>
+    <div class="container">
+        <div class="py-5 text-center">
+            <h2>상품 수정 폼</h2> </div>
+        <form action="item.html" method="post">
+            <div>
+                <label for="id">상품 ID</label>
+                <input type="text" id="id" name="id" class="form-control" value="1"
+                    readonly>
+            </div>
+            <div>
+                <label for="itemName">상품명</label>
+                <input type="text" id="itemName" name="itemName" class="form- control" value="상품A">
+            </div> <div>
+            <label for="price">가격</label>
+            <input type="text" id="price" name="price" class="form-control"
+                value="10000">
+        </div> <div>
+            <label for="quantity">수량</label>
+            <input type="text" id="quantity" name="quantity" class="form-
+    control" value="10">
+        </div>
+            <hr class="my-4">
+            <div class="row">
+                <div class="col">
+                    <button class="w-100 btn btn-primary btn-lg" type="submit">저장
+                    </button>
+                </div>
+                <div class="col">
+                    <button class="w-100 btn btn-secondary btn-lg"
+                            onclick="location.href='item.html'" type="button">취소</button> </div>
+            </div>
+        </form>
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+
+
+## 상품 목록 - 타임리프
+- 본격적으로 컨트롤러와 뷰 템플릿을 개발해보자. 
+- BasicItemController
+```
+
+```
