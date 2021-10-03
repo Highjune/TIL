@@ -1,6 +1,7 @@
 ## 스프링 MVC 1편 - 백엔드 웹 개발 핵심 기술
 - [강의](https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-mvc-1/dashboard) 들은 것 필기
-- [코드는 여기](https://github.com/Highjune/Spring_MVC_Lecture1_Servlet-Kim_Young_Han-)
+- [프로젝트 코드1](https://github.com/Highjune/Spring_MVC_Lecture1_Servlet-Kim_Young_Han-)
+- [프로젝트 코드2](https://github.com/Highjune/Spring_MVC_Lecture1_Item-Serivce_Kim_Young_Han-)
 
 # 웹 애플리케이션 이해
 ## 웹 서버, 웹 애플리케이션 서버
