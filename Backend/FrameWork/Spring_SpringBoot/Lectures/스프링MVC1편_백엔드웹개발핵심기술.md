@@ -1,6 +1,7 @@
 ## 스프링 MVC 1편 - 백엔드 웹 개발 핵심 기술
 - [강의](https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-mvc-1/dashboard) 들은 것 필기
-- [코드는 여기](https://github.com/Highjune/Spring_MVC_Lecture1_Servlet-Kim_Young_Han-)
+- [프로젝트 코드1](https://github.com/Highjune/Spring_MVC_Lecture1_Servlet-Kim_Young_Han-)
+- [프로젝트 코드2](https://github.com/Highjune/Spring_MVC_Lecture1_Item-Serivce_Kim_Young_Han-)
 
 # 웹 애플리케이션 이해
 ## 웹 서버, 웹 애플리케이션 서버
@@ -5886,9 +5887,14 @@ test {
     - 리터럴 대체 문법을 활용해서 간단히 사용할 수도 있다.
     
     11. 참고
+<<<<<<< HEAD
     - 타임리프는 순수 HTML을 파일을(절대경로로 찾아들어가서) 웹 브라우저에서 열어도 내용을 확인할 수 있고, 서버를 통해 뷰 템플릿을 거치면 동적으로 변경된 결과를 확인할 수 있다. JSP를 생각해보면, JSP 파일은 웹 브라우저에서 그냥 열면 JSP 소스코드와 HTML이 뒤죽박죽 되어서 정상적인 확인이 불가능하다. 오직 서버를 통해서 JSP를 열어야 한다.
     - 이렇게 `순수 HTML을 그대로 유지하면서 뷰 템플릿도 사용할 수 있는 타임리프의 특징을 네츄럴 템플릿 (natural templates)`이라 한다.
     - 절대경로로 들어가서 보면(페이지 소스 보기) 순수 HTML, 타임리프 코드 모두가 보이지만 실제로는 순수 HTML 문법만 적용이 된다. 그런데 서버를 띄워서 렌더링이 된 후 코드를 보면 타임리프가 다 적용된 코드만 보인다. 
 
 ## 상품 상세
 - 상품 상세 컨트롤러와 뷰를 개발하자.
+=======
+    - 타임리프는 순수 HTML을 파일을 웹 브라우저에서 열어도 내용을 확인할 수 있고, 서버를 통해 뷰 템플릿을 거치면 동적으로 변경된 결과를 확인할 수 있다. JSP를 생각해보면, JSP 파일은 웹 브라우저에서 그냥 열면 JSP 소스코드와 HTML이 뒤죽박죽 되어서 정상적인 확인이 불가능하다. 오직 서버를 통해서 JSP를 열어야 한다.
+    - 이렇게 `순수 HTML을 그대로 유지하면서 뷰 템플릿도 사용할 수 있는 타임리프의 특징을 네츄럴 템플릿 (natural templates)`이라 한다.
+>>>>>>> ee52b945514dd1f2e932e6cf5066566e8452b352
