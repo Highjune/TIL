@@ -5887,14 +5887,449 @@ test {
     - 리터럴 대체 문법을 활용해서 간단히 사용할 수도 있다.
     
     11. 참고
-<<<<<<< HEAD
+    
     - 타임리프는 순수 HTML을 파일을(절대경로로 찾아들어가서) 웹 브라우저에서 열어도 내용을 확인할 수 있고, 서버를 통해 뷰 템플릿을 거치면 동적으로 변경된 결과를 확인할 수 있다. JSP를 생각해보면, JSP 파일은 웹 브라우저에서 그냥 열면 JSP 소스코드와 HTML이 뒤죽박죽 되어서 정상적인 확인이 불가능하다. 오직 서버를 통해서 JSP를 열어야 한다.
     - 이렇게 `순수 HTML을 그대로 유지하면서 뷰 템플릿도 사용할 수 있는 타임리프의 특징을 네츄럴 템플릿 (natural templates)`이라 한다.
     - 절대경로로 들어가서 보면(페이지 소스 보기) 순수 HTML, 타임리프 코드 모두가 보이지만 실제로는 순수 HTML 문법만 적용이 된다. 그런데 서버를 띄워서 렌더링이 된 후 코드를 보면 타임리프가 다 적용된 코드만 보인다. 
 
 ## 상품 상세
 - 상품 상세 컨트롤러와 뷰를 개발하자.
-=======
-    - 타임리프는 순수 HTML을 파일을 웹 브라우저에서 열어도 내용을 확인할 수 있고, 서버를 통해 뷰 템플릿을 거치면 동적으로 변경된 결과를 확인할 수 있다. JSP를 생각해보면, JSP 파일은 웹 브라우저에서 그냥 열면 JSP 소스코드와 HTML이 뒤죽박죽 되어서 정상적인 확인이 불가능하다. 오직 서버를 통해서 JSP를 열어야 한다.
-    - 이렇게 `순수 HTML을 그대로 유지하면서 뷰 템플릿도 사용할 수 있는 타임리프의 특징을 네츄럴 템플릿 (natural templates)`이라 한다.
->>>>>>> ee52b945514dd1f2e932e6cf5066566e8452b352
+- BasicItemController에 추가
+    ```
+    @GetMapping("/{itemId}")
+    public String item(@PathVariable Long itemId, Model model) {
+        Item item = itemRepository.findById(itemId);
+        model.addAttribute("item", item);
+        return "basic/item";
+    }
+    ```
+    - PathVariable 로 넘어온 상품ID로 상품을 조회하고, 모델에 담아둔다. 그리고 뷰 템플릿을 호출한다.
+- 상품 상세 뷰
+    - 정적 HTML을 뷰 템플릿(templates) 영역으로 복사하고 다음과 같이 수정하자.
+    - resources/static/item.html -> 복사 -> /resources/templates/basic/item.html
+    - /resources/templates/basic/item.html
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+        <link th:href="@{/css/bootstrap.min.css}"
+            href="../css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .container {
+                max-width: 560px;
+            }
+        </style>
+    </head>
+    <body>
+    <div class="container">
+        <div class="py-5 text-center">
+        <h2>상품 상세</h2>
+    </div>
+
+        <div>
+            <label for="itemId">상품 ID</label>
+            <input type="text" id="itemId" name="itemId" class="form-control" th:value="${item.id}" value="1" readonly>
+        </div>
+        <div>
+            <label for="itemName">상품명</label>
+            <input type="text" id="itemName" name="itemName" class="form-control"  value="상품A" th:value="${item.itemName}" readonly>
+        </div>
+        <div>
+            <label for="price">가격</label>
+        <input type="text" id="price" name="price" class="form-control" value="10000" th:value="${item.price}" readonly>
+    </div>
+        <div>
+            <label for="quantity">수량</label>
+        <input type="text" id="quantity" name="quantity" class="form-control" value="10" th:value="${item.quantity}" readonly>
+    </div>
+
+        <hr class="my-4">
+
+        <div class="row">
+            <div class="col">
+                <button class="w-100 btn btn-primary btn-lg"
+                        onclick="location.href='editForm.html'"
+                        th:onclick="|location.href='@{/basic/items/{itemId}/edit(itemId=${item.id})}'|"
+                        thtype="button">상품 수정</button>
+            </div>
+            <div class="col">
+                <button class="w-100 btn btn-secondary btn-lg"
+                        onclick="location.href='items.html'"
+                        th:onclick="|location.href='@{/basic/items}'|"
+                        type="button">목록으로</button>
+            </div>
+        </div>
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+    - 속성 변경 - th:value
+        - `th:value="${item.id}"`
+        - 모델에 있는 item 정보를 획득하고 프로퍼티 접근법으로 출력한다. item.getId()
+        - value 속성을 th:value 속성으로 변경한다.
+    - 상품수정 링크
+        - `th:onclick="|location.href='@{/basic/items/{itemId}/edit(itemId=${item.id})}'|"`
+    - 목록으로 링크
+        - `th:onclick="|location.href='@{/basic/items}'|"`
+
+## 상품 등록 폼
+- 상품 등록 폼
+- BasicItemController에 추가
+```
+@GetMapping("/add")
+public String addForm() {
+    return "basic/addForm";
+}
+```
+- 상품 등록 폼은 단순히 뷰 템플릿만 호출한다.
+- 상품 등록 폼 뷰
+    - 정적 HTML을 뷰 템플릿(templates) 영역으로 복사하고 다음과 같이 수정하자.
+    - /resources/static/addForm.html -> 복사 -> /resources/templates/basic/addForm.html
+- /resources/templates/basic/addForm.html
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+        <link th:href="@{/css/bootstrap.min.css}"
+            href="../css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .container {
+                max-width: 560px;
+            } </style>
+    </head>
+    <body>
+    <div class="container">
+        <div class="py-5 text-center">
+            <h2>상품 등록 폼</h2> </div>
+        <h4 class="mb-3">상품 입력</h4>
+        <!--<form action="item.html" th:action="/basic/items/add" method="post">-->
+        <form action="item.html" th:action method="post">
+            <div>
+                <label for="itemName">상품명</label>
+                <input type="text" id="itemName" name="itemName" class="form-control" placeholder="이름을 입력하세요"> </div>
+            <div>
+                <label for="price">가격</label>
+                <input type="text" id="price" name="price" class="form-control" placeholder="가격을 입력하세요">
+            </div>
+            <div>
+                <label for="quantity">수량</label>
+                <input type="text" id="quantity" name="quantity" class="form-control" placeholder="수량을 입력하세요">
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row">
+                <div class="col">
+                    <button class="w-100 btn btn-primary btn-lg" type="submit">상품 등록</button>
+                </div>
+                <div class="col">
+                    <button class="w-100 btn btn-secondary btn-lg" onclick="location.href='items.html'" type="button">취소</button>
+                </div>
+            </div>
+
+        </form>
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+    - 속성 변경 - th:action
+        - th:action
+        - HTML form에서 action 에 값이 없으면 현재 URL에 데이터를 전송한다. 페이지 소스 보기 하면 action부분에 ""로 비워져 있다.
+        ```
+        <<form action="item.html" th:action="/basic/items/add" method="post"> // 이렇게 굳이 안 쓰고
+
+        <form action="item.html" th:action method="post"> // 이렇게 생략하면 url이 같다는 것을 강조할 수도 있음
+        ```
+        - 상품 등록 폼의 URL과 실제 상품 등록을 처리하는 URL을 똑같이 맞추고 HTTP 메서드로 두 기능을 구분한다.
+            - 상품 등록 폼: GET /basic/items/add
+            - 상품 등록 처리: POST /basic/items/add
+        - 이렇게 하면 하나의 URL로 등록 폼과, 등록 처리를 깔끔하게 처리할 수 있다.
+    - 취소
+        - 취소시 상품 목록으로 이동한다
+        - th:onclick="|location.href='@{/basic/items}'|"
+
+## 상품 등록 처리 - @ModelAttribute
+- 이제 상품 등록 폼에서 전달된 데이터로 실제 상품을 등록 처리해보자.
+- 상품 등록 폼은 다음 방식으로 서버에 데이터를 전달한다.
+- POST - HTML Form
+    - content-type: application/x-www-form-urlencoded
+    - 메시지 바디에 쿼리 파리미터 형식으로 전달 itemName=itemA&price=10000&quantity=10
+    - 예) 회원 가입, 상품 주문, HTML Form 사용
+- 요청 파라미터 형식을 처리해야 하므로 @RequestParam 을 사용하자
+- 상품 등록 처리 - `@RequestParam`
+        - addItemV1 - BasicItemController에 추가
+            ```
+            @PostMapping("/add")
+            public String addItemV1(@RequestParam String itemName,
+                                @RequestParam int price,
+                                @RequestParam Integer quantity,
+                                Model model) {
+                Item item = new Item();
+                item.setItemName(itemName);
+                item.setPrice(price);
+                item.setQuantity(quantity);
+                itemRepository.save(item);
+                model.addAttribute("item", item);
+                return "basic/item";
+            }
+            ```
+            - Form 데이터에서 name속성, 즉 name='itenName' 한 부분들이 넘어오는 것임
+            - 먼저 @RequestParam String itemName : itemName 요청 파라미터 데이터를 해당 변수에 받는다.
+            - Integer, int 둘 다 무관
+            - Item 객체를 생성하고 itemRepository 를 통해서 저장한다.
+            - 저장된 item 을 모델에 담아서 뷰에 전달한다.
+            - 중요: 여기서는 상품 상세에서 사용한 item.html 뷰 템플릿을 그대로 재활용한다.
+            - 실행해서 상품이 잘 저장되는지 확인하자
+- 상품 등록 처리 - `@ModelAttribute`
+    - @RequestParam 으로 변수를 하나하나 받아서 Item 을 생성하는 과정은 불편했다.
+    - 이번에는 @ModelAttribute 를 사용해서 한번에 처리해보자.
+    ```
+    /**
+    * @ModelAttribute("item") Item item
+    * model.addAttribute("item", item); 자동 추가 
+    */
+    @PostMapping("/add")
+    public String addItemV2(@ModelAttribute("item") Item item, Model model) {
+        itemRepository.save(item); 
+        //model.addAttribute("item", item); //자동 추가, 생략 가능
+        return "basic/item";
+    }
+    ```
+    - 크기 2가지 기능(요청 파라미터 처리, Model 추가)
+    1. @ModelAttribute - 요청 파라미터 처리
+        - @ModelAttribute 는 Item 객체를 생성하고, 요청 파라미터의 값을 프로퍼티 접근법(setXxx)으로 입력해준다.
+        - 즉 아래 코드를 자동 생성
+        ```
+        Item item = new Item();
+        item.setItemName(itemName);
+        item.setPrice(price);
+        item.setQuantity(quantity);
+        ```
+    2. @ModelAttribute - Model 추가
+        - @ModelAttribute 는 중요한 한가지 기능이 더 있는데, 바로 모델(Model)에 @ModelAttribute 로 지정한 객체를 자동으로 넣어준다. 지금 코드를 보면 model.addAttribute("item", item) 가 주석처리 되어 있어도 잘 동작하는 것을 확인할 수 있다.
+        - 모델에 데이터를 담을 때는 이름이 필요하다. 이름은 @ModelAttribute 에 지정한 name(value) 속성을 사용한다. 만약 다음과 같이 @ModelAttribute 의 이름을 다르게 지정하면 다른 이름으로 모델에 포함된다.
+        ```
+        @ModelAttribute("hello") Item item 이름을 hello 로 지정 
+        model.addAttribute("hello", item); 모델에 hello 이름으로 저장
+        ```
+        - 아래처럼 이름 맞춰줘야됨. model에 담은 객체(item이든 item2이든)
+        ```
+        @ModelAttribute("item") Item item 이면 -> model.addAttribute("item", item) 로 들어감. 현재 view 쪽에서는 item.Price 등 이런식으로 꺼내서 사용중이므로 item으로 넣어야 한다.
+        @ModelAttribute("item2") Item item 이면 -> model.addAttribute("item"2, item) 로 들어감. 
+        ```
+    - 주의
+        - 실행전에 이전 버전인 addItemV1 에 @PostMapping("/add") 를 꼭 주석처리 해주어야 한다. 그렇지 않으면 중복 매핑으로 오류가 발생한다.
+        ```
+         //@PostMapping("/add") 이전 코드의 매핑 주석처리!
+        public String addItemV1(@RequestParam String itemName, (..이후 생략..)
+        ```
+- addItemV3 - 상품 등록 처리 - ModelAttribute 이륾 생략
+    ```
+    /**
+    * @ModelAttribute name 생략 가능
+    * model.addAttribute(item); 자동 추가, 생략 가능
+    * 생략시 model에 저장되는 name은 클래스명 첫글자만 소문자로 등록 Item -> item */
+    @PostMapping("/add")
+    public String addItemV3(@ModelAttribute Item item) {
+        itemRepository.save(item);
+        return "basic/item";
+    }
+    ```
+    - @ModelAttribute 의 이름을 생략할 수 있다.
+    - 주의
+        - @ModelAttribute 의 이름을 생략하면 모델에 저장될 때 클래스명을 사용한다. 이때 클래스의 첫글자만 소문자로 변경해서 등록한다.
+        - 예) @ModelAttribute 클래스명 모델에 자동 추가되는 이름
+            - Item  ->  item. 그래서 model.addAttribute("item", item); 으로 담긴다
+            - HelloWorld  ->  helloWorld. 그래서 model.addAttribute("helloworld", item); 으로 담긴다
+
+
+- addItemV4 - 상품 등록 처리 - ModelAttribute 전체 생략
+    ```
+    /**
+    * @ModelAttribute 자체 생략 가능
+    * model.addAttribute(item) 자동 추가 
+    * */
+    @PostMapping("/add")
+    public String addItemV4(Item item) {
+
+        itemRepository.save(item);
+
+        return "basic/item";
+    }
+    ```
+    - String 이나 이런 단순 타입들이 오면 @RequestParam이 자동 적용되고, 우리가 만든 임의의 객체가 오게 되면 @ModelAttribute가 자동 적용된다. 
+    - @ModelAttribute 자체도 생략가능하다. 대상 객체는 모델에 자동 등록된다. 나머지 사항은 기존과 동일하다. @ModelAttirbute가 생략되었으므로 Item -> item 첫 글자가 소문자가 되고, 그게 model에 등록이 되고 등의 사항들 그대로 적용.
+
+
+## 상품 수정
+- 상품 수정 콤 컨트롤러
+- BasicItemController에 추가
+```
+@GetMapping("/{itemId}/edit")
+public String editForm(@PathVariable Long itemId, Model model) {
+    Item item = itemRepository.findById(itemId);
+    model.addAttribute("item", item);
+    return "basic/editForm";
+}
+```
+- 수정에 필요한 정보를 조회하고, 수정용 폼 뷰를 호출한다.
+- 상품 수정 폼 뷰
+    - /resources/static/editForm.html -> 복사 -> /resources/templates/basic/editForm.html
+    - /resources/templates/basic/editForm.html
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+        <link th:href="@{/css/bootstrap.min.css}"
+            href="../css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .container {
+                max-width: 560px;
+            }
+        </style>
+    </head>
+    <body>
+    <div class="container">
+        <div class="py-5 text-center">
+            <h2>상품 수정 폼</h2> </div>
+        <form action="item.html" th:action method="post">
+            <div>
+                <label for="id">상품 ID</label>
+                <input type="text" id="id" name="id" class="form-control" value="1" th:value="${item.id}" readonly>
+            </div>
+            <div>
+                <label for="itemName">상품명</label>
+                <input type="text" id="itemName" name="itemName" class="form-control" value="상품A" th:value="${item.itemName}">
+            </div>
+            <div>
+                <label for="price">가격</label>
+                <input type="text" id="price" name="price" class="form-control" value="10000" th:value="${item.price}">
+            </div>
+            <div>
+                <label for="quantity">수량</label>
+                <input type="text" id="quantity" name="quantity" class="form-control" value="10" th:value="${item.quantity}">
+            </div>
+            <hr class="my-4">
+            <div class="row">
+                <div class="col">
+                    <button class="w-100 btn btn-primary btn-lg" type="submit">저장
+                    </button>
+                </div>
+                <div class="col">
+                    <button class="w-100 btn btn-secondary btn-lg"
+                            onclick="location.href='item.html'"
+                            th:onclick="|location.href='@{/basic/items/{itemId}(itemId=${item.id})}'|"
+                            type="button">취소</button> </div>
+            </div>
+        </form>
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+    - 상품 수정 폼은 상품 등록과 유사하고, 특별한 내용이 없다.
+- 상품 수정 개발
+    ```
+    @PostMapping("/{itemId}/edit")
+    public String edit(@PathVariable Long itemId, @ModelAttribute Item item) {
+        itemRepository.update(itemId, item);
+        return "redirect:/basic/items/{itemId}";
+    }
+    ```
+    - 상품 수정은 상품 등록과 전체 프로세스가 유사하다. (url 심플)s
+        - GET /items/{itemId}/edit : 상품수정폼
+        - POST /items/{itemId}/edits : 상품 수정 처리
+    - 리다이렉트
+        - 상품 수정은 마지막에 뷰 템플릿을 호출하는 대신에 상품 상세 화면으로 이동하도록 리다이렉트를 호출한다.
+        -  스프링은 redirect:/... 으로 편리하게 리다이렉트를 지원한다.
+        - redirect:/basic/items/{itemId}"
+            - 컨트롤러에 매핑된 @PathVariable 의 값은 redirect 에도 사용 할 수 있다.
+            - redirect:/basic/items/{itemId} -> {itemId} 는 @PathVariable Long itemId 의 값을 그대로 사용한다.
+        - 리다이렉트에 대한 자세한 내용은 모든 개발자를 위한 HTTP 웹 기본 지식 강의를 참고.
+        - HTML Form 전송은 PUT, PATCH를 지원하지 않는다. GET, POST만 사용할 수 있다. PUT, PATCH는 HTTP API 전송시에 사용. 스프링에서 HTTP POST로 Form 요청할 때 히든 필드를 통해서 PUT, PATCH 매핑을 사용하는 방법이 있지만, HTTP 요청상 POST 요청이다.
+    
+## PRG Post/Redirect/Get
+- 사실 지금까지 진행한 상품 등록 처리 컨트롤러는 심각한 문제가 있다. (addItemV1 ~ addItemV4)
+- 상품 등록을 완료하고 웹 브라우저의 새로고침 버튼을 클릭해보자.
+- 상품이 계속해서 중복 등록되는 것을 확인할 수 있다.
+- 전체 흐름
+    ![image](https://user-images.githubusercontent.com/57219160/135848652-39b60864-ecb6-4a60-9a9a-1ddaa04723e7.png)
+    - 그 이유는 다음 그림을 통해서 확인할 수 있다.
+
+- POST 등록 후 새로 고침
+    ![image](https://user-images.githubusercontent.com/57219160/135848753-45896eda-a0e7-4bb0-a3d3-f7772a1b5754.png)
+    - 웹 브라우저의 새로 고침은 마지막에 서버에 전송한 데이터를 다시 전송한다.
+    - 상품 등록 폼에서 데이터를 입력하고 저장을 선택하면 POST /add + 상품 데이터를 서버로 전송한다.
+    - 이 상태에서 새로 고침을 또 선택하면 마지막에 전송한 POST /add + 상품 데이터를 서버로 다시 전송하게 된다.
+        - 새로고침이란 마지막에 했던 동작을 새로 하는 것
+        - 개발자 도구로 확인하면 POST 메서드, 이전에 보냈던 데이터가 그대로 확인이 됨(Form data 부분에서 확인 가능)s
+    - 그래서 내용은 같고, ID만 다른 상품 데이터가 계속 쌓이게 된다.
+    - 이 문제를 어떻게 해결할 수 있을까? 다음 그림을 보자.
+
+    ![image](https://user-images.githubusercontent.com/57219160/135849451-4d7e7b96-a0ef-437f-8086-c59b1513e779.png)
+    - 웹 브라우저의 새로 고침은 마지막에 서버에 전송한 데이터를 다시 전송한다.
+    - 새로 고침 문제를 해결하려면 상품 저장 후에 뷰 템플릿으로 이동하는 것이 아니라, 상품 상세 화면으로 리다이렉트를 호출해주면 된다.
+    - 웹 브라우저는 리다이렉트의 영향으로 상품 저장 후에 실제 상품 상세 화면으로(다시 요청하는 것임) 다시 이동한다. 따라서 마지막에 호출한 내용이 상품 상세 화면인 GET /items/{id} 가 되는 것이다. (다시 POST로 데이터 등록을 요청하는 것이 아니라)
+    - 이후 새로고침을 해도 상품 상세 화면으로 이동하게 되므로(실제 url이 바뀐다) 새로 고침 문제를 해결할 수 있다.
+    - 이것이 바로 `P`ost -> `R`edirect -> `G`et. PRG 라고 한다.
+    - BasicItemController에 추가
+    ```
+    /**
+    * PRG - Post/Redirect/Get
+    */
+    @PostMapping("/add")
+    public String addItemV5(Item item) {
+        itemRepository.save(item);
+        return "redirect:/basic/items/" + item.getId();
+    }
+    ```
+    - 개발자도구로 확인해보면 처음에 POST방식으로 add를 호출했고 그 리턴값이 302(리다이렉트) 코드가 온다. 그리고 그 resposne 헤더에 Location 필드가 있고 리다이렉트 할 url이 나와있다.
+    - 상품 등록 처리 이후에 뷰 템플릿이 아니라 상품 상세 화면으로 리다이렉트 하도록 코드를 작성해보자. 이런 문제 해결 방식을 PRG Post/Redirect/Get 라 한다.
+    - 주의
+        -  "redirect:/basic/items/" + item.getId() redirect에서 +item.getId() 처럼 URL에 변수를 더해서 사용하는 것은 URL 인코딩이 안되기 때문에 위험하다. 다음에 설명하는 RedirectAttributes 를 사용하자.
+        - item.getId()가 숫자라서 상관없는데 한글이나 띄워쓰기가 있으면 안된다. 왜냐하면 url에는 한글, 띄워쓰기가 들어가면 안됨. 항상 인코딩해서 넘겨야 한다. 직접 인코딩해서 넘기든지 해야함.
+
+
+## RedirectAttributes
+- 상품을 저장하고 상품 상세 화면으로 리다이렉트 한 것 까지는 좋았다. 그런데 고객 입장에서 저장이 잘 된 것인지 안 된 것인지 확신이 들지 않는다. 그래서 저장이 잘 되었으면 상품 상세 화면에 "저장되었습니다"라는 메시지를 보여달라는 요구사항이 왔다. 간단하게 해결해보자.
+
+- BasicItemController에 추가
+    ```
+    /**
+    * RedirectAttributes
+    */
+    @PostMapping("/add")
+    public String addItemV6(Item item, RedirectAttributes redirectAttributes) {
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId());
+        redirectAttributes.addAttribute("status", true);
+        return "redirect:/basic/items/{itemId}";
+    }
+    ```
+    - RedirectAttributes 를 사용하면 URL 인코딩도 해주고, pathVarible , 쿼리 파라미터까지 처리해준다.
+    - 리다이렉트 할 때 간단히 status=true 를 추가해보자. 그리고 뷰 템플릿에서 이 값이 있으면, 저장되었습니다. 라는 메시지를 출력해보자.
+    - 리다이렉트할 떄 파라미터를 붙여서 보냄
+        - redirect:/basic/items/{itemId}
+        - pathVariable 바인딩: {itemId}
+        - 나머지는 쿼리 파라미터로 처리: ?status=true
+    - redirect의 url로 치환되지 않은 것들, status는 쿼리파라미터로 들어가게 된다. 
+        - redirect:/basic/items/{itemId}
+        - pathVariable 바인딩: {itemId}
+        - 나머지는 쿼리 파라미터로 처리: ?status=true   
+    - 실행해보면 다음과 같은 리다이렉트 결과가 나온다.
+        - http://localhost:8080/basic/items/3?status=true
+- 뷰 템플릿 메시지 추가
+    - resources/templates/basic/item.html
+    ```
+     <div class="container">
+    <div class="py-5 text-center"> <h2>상품 상세</h2>
+    </div>
+    <!-- 추가 -->
+    <h2 th:if="${param.status}" th:text="'저장 완료!'"></h2>
+    ```
+    - th:if : 해당 조건이 참이면 실행
+    - ${param.status} : 타임리프에서 쿼리 파라미터를 편리하게 조회하는 기능
+        - 원래는 컨트롤러에서 모델에 직접 담고 값을 꺼내야 한다. 그런데 쿼리 파라미터는 자주 사용해서 타임리프에서 직접 지원한다.
+- 뷰 템플릿에 메시지를 추가하고 실행해보면 "저장 완료!" 라는 메시지가 나오는 것을 확인할 수 있다. 물론 상품 목록에서 상품 상세로 이동한 경우에는 해당 메시지가 출력되지 않는다.
