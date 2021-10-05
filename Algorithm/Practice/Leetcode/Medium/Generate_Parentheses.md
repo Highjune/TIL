@@ -6,7 +6,6 @@
     - 2021.09.30 ~ 2021.10.01
 
 # 내 풀이
-- 푸는 중. 마무리에서 덜 됨
 ```
 import java.util.*;
 
@@ -55,33 +54,39 @@ class Solution {
         // 검증(가능한 것들만 체크)
         Stack<Character> stack = new Stack<>();
         for (String s : allPool) { // 전체 풀에 있는 모든 문자형태 검사
-            char[] charArr = s.toCharArray();
+            boolean b = isValid(s);
+            if (b) {
+                resultList.add(s);
+            } else {
+                continue;
+            }
 
-            for (Character c : charArr) {
-                if (c == '(') {
-                    stack.push(')');
-                    continue;
-                } else if (stack.isEmpty() || stack.pop() != c) {
-                    break;
-                }
-
-                if (stack.isEmpty()) {
-                    resultList.add(s);
-                    stack.clear();
-                } else {
-                    stack.clear();
-                    break;
-                }
-
-            } // 안쪽 for문 끝
         } // 바깥족 for문 끝
 
         return resultList;
     }
 
+    public boolean isValid(String s) {
+        Stack<Character> stack = new Stack<Character>();
+
+        if (s.length() % 2 == 1) {
+            return false;
+        }
+
+        for (Character c : s.toCharArray()) {
+            if (c == '(') {
+                stack.push(')');
+            } else if (stack.isEmpty() || stack.pop() != c) {
+                return false;
+            }
+        }
+
+        return stack.isEmpty();
+    }
+
     public static void main(String[] args) {
         Solution s = new Solution();
-        List<String> list = s.generateParenthesis(2);
+        List<String> list = s.generateParenthesis(4);
         for (String str : list) {
             System.out.println(str);
         }
