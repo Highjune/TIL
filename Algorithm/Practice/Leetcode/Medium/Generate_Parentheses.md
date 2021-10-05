@@ -6,6 +6,9 @@
     - 2021.09.30 ~ 2021.10.01
 
 # 내 풀이
+- 실패
+- 엄청 오래걸려서 비효율적으로 풀었지만, 다른 테스트 케이스 통과 못함
+- 그래서 의미가 매우 있었다
 ```
 import java.util.*;
 
@@ -96,5 +99,33 @@ class Solution {
 ```
 
 
-# 정답1
+# 정답
 - https://www.youtube.com/watch?v=Bt11jaoqt_Y&list=PL2mzT_U4XxDm7p6g1o3KeQMsyRLfzSaVW
+- recursive는 아직도 익숙치가 않다. 이해하면 쉬운 문제
+```
+class Solution {
+    public List<String> generateParenthesis(int n) {
+        List<String> ret = new ArrayList<>();
+        process(n, 0, 0, "", ret); // recurse
+        return ret;
+    }
+
+    // numOpen < numClosed -> inValid
+    public void process(int n, int numOpen, int numClosed, String str, List<String> ret){
+
+        //termination check
+        if (numOpen == n && numClosed == n) {
+            ret.add(str);
+            return;
+        }
+
+        // recurse next
+        if (numOpen < n) {
+            process(n, numOpen + 1, numClosed, str + "(", ret); // add open bracket
+        }
+        if (numOpen > numClosed) {
+            process(n, numOpen, numClosed + 1, str + ")", ret); // add closed bracket
+        }
+
+    }
+```
