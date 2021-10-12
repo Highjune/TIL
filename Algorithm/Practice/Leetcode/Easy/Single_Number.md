@@ -89,3 +89,18 @@ class Solution {
     }
 }
 ```
+
+# 타인 풀이3
+- https://www.youtube.com/watch?v=3J_UlbwUfc0&list=PL2mzT_U4XxDm7p6g1o3KeQMsyRLfzSaVW&index=10
+- 비트연산으로 품
+```
+class Solution {
+    // XOR
+    // n ^ n = 0 
+    public int singleNumber(int[] nums) {
+        int ret = 0;
+        for (int num : nums) ret ^= num;
+        return ret;
+    }
+}
+```
