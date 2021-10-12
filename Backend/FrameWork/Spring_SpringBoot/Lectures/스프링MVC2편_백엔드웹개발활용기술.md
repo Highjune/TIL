@@ -1,6 +1,6 @@
 ## 스프링 MVC 2편 - 백엔드웹개발활용기술
 - [강의](https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-mvc-2/dashboard)
-- [프로젝트코드](link)
+- [프로젝트코드](https://github.com/Highjune/Spring_MVC_Lecture1_Thymeleaf_Basic_Kim_Young_Han-)
 
 
 # 타임리프 - 기본 기능
