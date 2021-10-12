@@ -3,7 +3,6 @@
 - [프로젝트코드](https://github.com/Highjune/Spring_MVC_Lecture1_Thymeleaf_Basic_Kim_Young_Han-)
 
 
-
 # 타임리프 - 기본 기능
 ## 프로젝트 생성
 - Java 11 설치
@@ -900,6 +899,7 @@ public String attribute() {
 ## 조건부 평가
 - 타임리프의 조건식
     - if, unless(if의 반대)
+<<<<<<< HEAD
 - BasicController 추가
 ```
  @GetMapping("/condition")
@@ -1930,4 +1930,5 @@ FormItemController          : item.open=false // 체크 박스를 선택하지 �
     - open 이외에 나머지 필드도 업데이트 되도록 미리 넣어두자.
 
 ## 체크 박스 - 멀티
-- 체크 박스를 멀티로 사용해서, 하나 이상을 체크할 수 있도록 해보자.
+=======
+>>>>>>> 0bf07f64ac42f202f5c8c54e293ddffffe5a07d2
