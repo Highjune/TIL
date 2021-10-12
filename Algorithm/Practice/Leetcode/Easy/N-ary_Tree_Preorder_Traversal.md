@@ -20,7 +20,7 @@ class Solution {
         } else {
             return;
 }
-- 답을 보고 다시 풀어본 내 풀이
+- 정답1을 보고 다시 풀어본 내 풀이
 ```
 class Solution {
     public List<Integer> preorder(Node root) {
