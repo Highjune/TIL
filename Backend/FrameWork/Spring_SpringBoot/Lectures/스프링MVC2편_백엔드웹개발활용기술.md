@@ -1931,3 +1931,117 @@ FormItemController          : item.open=false // 체크 박스를 선택하지 �
 
 ## 체크 박스 - 멀티
 - 체크 박스를 멀티로 사용해서, 하나 이상을 체크할 수 있도록 해보자.
+
+- 등록 지역
+    - 서울, 부산, 제주
+    - 체크 박스로 다중 선택할 수 있다.
+
+- FormItemController - 추가
+    ```
+    @ModelAttribute("regions")
+    public Map<String, String> regions() {
+    Map<String, String> regions = new LinkedHashMap<>(); regions.put("SEOUL", "서울");
+    regions.put("BUSAN", "부산");
+    regions.put("JEJU", "제주");
+        return regions;
+    }
+    ```
+    - @ModelAttribute의 특별한 사용법
+        - 등록 폼, 상세화면, 수정 폼에서 모두 서울, 부산, 제주라는 체크 박스를 반복해서 보여주어야 한다. 이렇게 하려면 각각의 컨트롤러에서 model.addAttribute(...) 을 사용해서 체크 박스를 구성하는 데이터를 반복해서 넣어주어야 한다.
+        - @ModelAttribute 는 이렇게 컨트롤러에 있는 별도의 메서드에 적용할 수 있다.
+        - 이렇게하면 해당 컨트롤러를 요청할 때 regions 에서 반환한 값이 자동으로 모델( model )에 담기게 된다. 
+        - 물론 이렇게 사용하지 않고, 각각의 컨트롤러 메서드에서 모델에 직접 데이터를 담아서 처리해도 된다.
+    - LinkedHashMap 을 사용하는 이유
+        - HashMap을 사용하면 순서 보장이 되지 않으므로
+
+- addForm.html - 추가
+    ```
+    <!-- multi checkbox -->
+    <div>
+        <div>등록 지역</div>
+        <div th:each="region : ${regions}" class="form-check form-check-inline">
+            <input type="checkbox" th:field="*{regions}" th:value="${region.key}" class="form-check-input">
+            <label th:for="${#ids.prev('regions')}" th:text="${region.value}" class="form-check-label">서울</label>
+        </div>
+    </div>
+    ```
+    - `th:for="${#ids.prev('regions')}"`
+        - 멀티 체크박스는 같은 이름의 여러 체크박스를 만들 수 있다. 그런데 문제는 이렇게 반복해서 HTML 태그를 생성할 때, 생성된 HTML 태그 속성에서 name 은 같아도 되지만, id 는 모두 달라야 한다. 따라서 타임리프는 체크박스를 each루프 안에서 반복해서 만들 때 임의로 1,2,3 숫자를 뒤에 붙여준다.
+        - th:fiel=*{regions}; 에서 들고 나올 때 번호를 하나씩 붙여서 나온다.
+- each로 체크박스가 반복 생성된 결과 - id 뒤에 숫자가 추가
+    ```
+    <input type="checkbox" value="SEOUL" class="form-check-input" id="regions1" name="regions">
+    <input type="checkbox" value="BUSAN" class="form-check-input" id="regions2" name="regions">
+    <input type="checkbox" value="JEJU" class="form-check-input" id="regions3" name="regions">
+    ```
+    - HTML의 id 가 타임리프에 의해 동적으로 만들어지기 때문에 `<label for="id 값">` 으로 label 의 대상이 되는 id 값을 임의로 지정하는 것은 곤란하다. 타임리프는 ids.prev(...) , ids.next(...) 을 제공해서 동적으로 생성되는 id 값을 사용할 수 있도록 한다.
+
+
+- 타임리프 HTML 생성 결과
+    ```
+    <!-- multi checkbox -->
+    <div>
+        <div>등록 지역</div>
+        <div class="form-check form-check-inline">
+            <input type="checkbox" value="SEOUL" class="form-check-input" id="regions1" name="regions"><input type="hidden" name="_regions" value="on"/>
+            <label for="regions1" class="form-check-label">서울</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input type="checkbox" value="BUSAN" class="form-check-input" id="regions2" name="regions"><input type="hidden" name="_regions" value="on"/>
+            <label for="regions2" class="form-check-label">부산</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input type="checkbox" value="JEJU" class="form-check-input" id="regions3" name="regions"><input type="hidden" name="_regions" value="on"/>
+            <label for="regions3" class="form-check-label">제주</label>
+        </div>
+    </div>
+    ```
+    - `<label for="id 값">` 에 지정된 id 가 checkbox 에서 동적으로 생성된 regions1 , regions2 , regions3 에 맞추어 순서대로 입력된 것을 확인할 수 있다.
+
+- 로그 출력
+    - FormItemController.addItem() 에 코드 추가
+    ```
+    log.info("item.regions={}", item.getRegions());
+    ```
+    - 서울, 부산 선택
+    ```
+    regions=SEOUL&_regions=on&regions=BUSAN&_regions=on&_regions=on
+    ```
+    - 로그: item.regions=[SEOUL, BUSAN]
+    - 지역 선택X
+    ```
+    _regions=on&_regions=on&_regions=on
+    ```
+    - 로그: item.regions=[] // null이 아님
+    -  _regions 는 앞서 설명한 기능이다. 웹 브라우저에서 체크를 하나도 하지 않았을 때, 클라이언트가 서버에 아무런 데이터를 보내지 않는 것을 방지한다. 참고로 _regions 조차 보내지 않으면 결과는 null 이 된다. _regions 가 체크박스 숫자만큼 생성될 필요는 없지만, 타임리프가 생성되는 옵션 수 만큼 생성해서 그런 것이니 무시하자.
+
+- item.html - 추가
+    ```
+    <!-- multi checkbox -->
+    <div>
+        <div>등록 지역</div>
+        <div th:each="region : ${regions}" class="form-check form-check-inline">
+            <input type="checkbox" th:field="${item.regions}" th:value="${region.key}" class="form-check-input" disabled>
+            <label th:for="${#ids.prev('regions')}" th:text="${region.value}" class="form-check-label">서울</label>
+        </div>
+    </div
+    ```
+    - 주의: item.html 에는 th:object 를 사용하지 않았기 때문에 th:field 부분에 ${item.regions} 으로 적어주어야 한다. disabled 를 사용해서 상품 상세에서는 체크 박스가 선택되지 않도록 했다. 
+    - 타임리프의 체크 확인
+        - checked="checked"
+        - 멀티 체크 박스에서 등록 지역을 선택해서 저장하면, 조회시에 checked 속성이 추가된 것을 확인할 수 있다.
+        - 타임리프는 th:field 에 지정한 값과 th:value 의 값을 비교해서 체크를 자동으로 처리해준다.
+            - th:field="${item.regions}" 에 값이 SEOUL, BUSAN (2개를 클릭했다고 가정) 이 있는데, th:value="${region.key}" 에는 애초에 우리가 넣어둔 전체 데이터 SEOUL, BUSAN, JEJU가 있다. th:value에서 제일 처음에 SEOUL 을 확인하는데, 만약 th:field 에 SEOUL 이 들어가 있으면 checked를 넣어준다. th:value의 다음에는 BUSAN을 똑같이 확인해서 있으니 checked 넣어주고, 마지막으로 JEJU를 꺼냈는데, th:field에는 클릭 안해서 담겨있지 않으므로 checked를 넣지 않는다.
+
+- editForm.html - 추가
+```
+<!-- multi checkbox -->
+<div>
+    <div>등록 지역</div>
+    <div th:each="region : ${regions}" class="form-check form-check-inline">
+        <input type="checkbox" th:field="${item.regions}" th:value="${region.key}" class="form-check-input" disabled>
+        <label th:for="${#ids.prev('regions')}" th:text="${region.value}" class="form-check-label">서울</label>
+    </div>
+</div
+```
+

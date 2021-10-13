@@ -11,6 +11,11 @@
 command + fn + f12
 ```
 
+- 해당 라인 바로 찾아가기
+```
+command + L
+```
+
 - 찾기
 ```
 command + o
