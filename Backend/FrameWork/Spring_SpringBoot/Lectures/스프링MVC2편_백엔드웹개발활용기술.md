@@ -3,6 +3,7 @@
 - 프로젝트 코드
 	- [타임리프](https://github.com/Highjune/Spring_MVC_Lecture1_Thymeleaf_Basic_Kim_Young_Han-)
 	- [타임리프 + 스프링](https://github.com/Highjune/Spring_MVC_Lecture2_Form_Kim_Young_Han-/tree/master)
+	- [메시지, 국제화](https://github.com/Highjune/message/tree/master)
 
 
 # 타임리프 - 기본 기능
