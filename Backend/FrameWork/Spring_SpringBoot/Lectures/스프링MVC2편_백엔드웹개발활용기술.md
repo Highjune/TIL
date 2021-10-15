@@ -2045,3 +2045,215 @@ FormItemController          : item.open=false // 체크 박스를 선택하지 �
 </div
 ```
 
+## 라디오 버튼
+- 라디오 버튼은 여러 선택지 중에 하나를 선택할 때 사용할 수 있다. 이번시간에는 라디오 버튼을 자바 ENUM을 활용해서 개발해보자.
+- 상품 종류
+    - 도서, 식품, 기타
+    - 라디오 버튼으로 하나만 선택할 수 있다.
+
+- FormItemController - 추가
+    ```
+    @ModelAttribute("itemTypes")
+    public ItemType[] itemTypes() {
+        return ItemType.values();
+    }
+    ```
+    - itemTypes 를 등록 폼, 조회, 수정 폼에서 모두 사용하므로 @ModelAttribute 의 특별한 사용법을 적용하자.
+    - Enum.values()를 하면 enum의 값들을 배열로 반환한다.
+        - ItemType.values() 를 사용하면 해당 ENUM의 모든 정보를 배열로 반환한다. 예) [BOOK, FOOD, ETC]
+- 상품 등록 폼에 기능을 추가해보자.
+- addForm.html - 추가
+    ```
+    <!-- radio button -->
+    <div>
+        <div>상품 종류</div>
+        <div th:each="type : ${itemTypes}" class="form-check form-check-inline">
+            <input type="radio" th:field="*{itemType}" th:value="${type.name()}" class="form-check-input">
+            <label th:for="${#ids.prev('itemType')}" th:text="${type.description}" class="form-check-label">BOOK</label>
+        </div>
+    </div>
+    ```
+    - `th:each="type : ${itemTypes}"`에서 itemTypes은 컨트롤러에서 return ItemType.values(); 로 넘긴 값들임
+    - `th:field="*{itemType}"` 에서 itemType은 Item 클래스에서 `private ItemType itemType;` 을 얘기하는 것임
+
+- 로그 추가
+```
+ @PostMapping("/add")
+    public String addItem(@ModelAttribute Item item, RedirectAttributes redirectAttributes) {
+
+        log.info("item.open={}", item.getOpen());
+        log.info("item.regions={}", item.getRegions());
+        log.info("item.itemType={}", item.getItemType()); // 추가
+
+        ...
+
+```
+- 실행 로그
+```
+item.itemType=FOOD: 값이 있을 때 item.itemType=null: 값이 없을 때
+```
+
+- 실행 결과, 폼 전송
+    ```
+    itemType=FOOD //음식 선택시 로그에 뜨는 값, 만약 선택하지 않으면 아무 값도 넘어가지 않는다.(null이 넘어온다)
+    ```
+    - 체크 박스는 수정시 체크를 해제하면 아무 값도 넘어가지 않기 때문에, 별도의 히든 필드로 이런 문제를 해결했다. 라디오 버튼은 이미 선택이 되어 있다면, 수정시에도 항상 하나를 선택하도록 되어 있으므로 체크 박스와 달리 별도의 히든 필드를 사용할 필요가 없다.
+
+- 상품 상세와 수정에도 라디오 버튼을 넣어주자.
+
+- item.html
+    ```
+    <!-- radio button -->
+    <div>
+        <div>상품 종류</div>
+        <div th:each="type : ${itemTypes}" class="form-check form-check-inline">
+            <input type="radio" th:field="${item.itemType}" th:value="${type.name()}" class="form-check-input" disabled>
+            <label th:for="${#ids.prev('itemType')}" th:text="${type.description}" class="form-check-label">BOOK</label>
+        </div>
+    </div>
+    ```
+    - 주의: item.html 에는 th:object 를 사용하지 않았기 때문에 th:field 부분에 ${item.itemType} 으로 적어주어야 한다.
+    - disabled 를 사용해서 상품 상세에서는 라디오 버튼이 선택되지 않도록 했다.
+    - 등록 후 수정 버튼을 눌러보면 체크가 되어있다
+        - th:value 와 th:field의 값이 같으면 checked를 타임리프가 자동으로 넣어준다. 
+        - 소스보기를 통해서 볼 수 있다.  `checked="checked"`
+
+- editForm.html
+```
+<!-- radio button -->
+<div>
+    <div>상품 종류</div>
+    <div th:each="type : ${itemTypes}" class="form-check form-check-inline">
+        <input type="radio" th:field="*{itemType}" th:value="${type.name()}" class="form-check-input">
+        <label th:for="${#ids.prev('itemType')}" th:text="${type.description}" class="form-check-label">
+            BOOK
+        </label>
+    </div>
+</div>
+```
+
+
+- 타임리프로 생성된 HTML
+    ```
+    <!-- radio button -->
+    <div>
+        <div>상품 종류</div>
+        <div class="form-check form-check-inline">
+            <input type="radio" value="BOOK" class="form-check-input" id="itemType1" name="itemType">
+            <label for="itemType1" class="form-check-label">도서</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input type="radio" value="FOOD" class="form-check-input" id="itemType2" name="itemType" checked="checked">
+            <label for="itemType2" class="form-check-label">식품</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input type="radio" value="ETC" class="form-check-input" id="itemType3" name="itemType">
+            <label for="itemType3" class="form-check-label">기타</label> 
+        </div>
+    </div>
+    ```
+    - 선택한 식품( FOOD )에 checked="checked" 가 적용된 것을 확인할 수 있다.
+
+- 타임리프에서 ENUM 직접 사용하기(비추천)
+    - 이렇게 모델에 ENUM을 담아서 전달하는 대신에 타임리프는 자바 객체에 직접 접근할 수 있다.
+    ```
+    @ModelAttribute("itemTypes")
+    public ItemType[] itemTypes() {
+        return ItemType.values();
+    }
+    ```
+    - 타임리프에서 ENUM 직접 접근. editForm.html 수정하기
+    ```
+    <div th:each="type : ${T(hello.itemservice.domain.item.ItemType).values()}">
+    ```
+    - `${T(hello.itemservice.domain.item.ItemType).values()}` 스프링EL 문법으로 ENUM을 직접 사용할 수 있다. ENUM에 values() 를 호출하면 해당 ENUM의 모든 정보가 배열로 반환된다.
+    - 이것을 사용하면 values()들의 값들을 Model 로 안 담아와도 된다.
+    - 그런데 이렇게 사용하면 ENUM의 패키지 위치가 변경되거나 할때 자바 컴파일러가 타임리프까지 컴파일 오류를 잡을 수 없으므로 추천하지는 않는다. Model에서 넘기는 것이 더 깔끔하다.
+
+
+## 셀렉트 박스
+- 셀렉트 박스는 여러 선택지 중에 하나를 선택할 때 사용할 수 있다. 이번시간에는 셀렉트 박스를 자바 객체를 활용해서 개발해보자.
+- 배송 방식
+    - 빠른 배송
+    - 일반 배송
+    - 느린 배송
+    - 셀렉트 박스로 하나만 선택할 수 있다.
+
+- FormItemController - 추가
+    ```
+    @ModelAttribute("deliveryCodes")
+    public List<DeliveryCode> deliveryCodes() {
+        List<DeliveryCode> deliveryCodes = new ArrayList<>();
+        deliveryCodes.add(new DeliveryCode("FAST", "빠른 배송"));
+        deliveryCodes.add(new DeliveryCode("NORMAL", "일반 배송"));
+        deliveryCodes.add(new DeliveryCode("SLOW", "느린 배송"));
+        return deliveryCodes;
+    }
+    ```
+    - DeliveryCode 라는 자바 객체를 사용하는 방법으로 진행하겠다. (다양하게 연습하는 것임. 위에서는 Enum으로 했고 여기서는 자바 객체로~)
+    - DeliveryCode 를 등록 폼, 조회, 수정 폼에서 모두 사용하므로 @ModelAttribute 의 특별한 사용법을 적용하자.
+    - 참고: @ModelAttribute 가 있는 deliveryCodes() 메서드는 컨트롤러가 호출 될 때 마다 사용되므로 deliveryCodes 객체도 계속 생성된다. 이런 부분은 다른 곳에서 미리 static 으로 생성해두고 공유해서, 사용할 때만 들고와서 재사용하는 것이 더 효율적이다. 매번 메모리를 사용안해도 된다는 의미.(지웠다가 다시 생성 반복)
+
+
+- addForm.html - 추가
+    ```
+    <!-- SELECT -->
+    <div>
+        <div>배송 방식</div>
+        <select th:field="*{deliveryCode}" class="form-select">
+            <option value="">==배송 방식 선택==</option>
+            <option th:each="deliveryCode : ${deliveryCodes}" th:value="${deliveryCode.code}" th:text="${deliveryCode.displayName}">FAST</option>
+        </select>
+    </div>
+    ```
+    - `th:field="*{deliveryCode}"` 는 Item 클래스의 `private String deliveryCode; // 배송 방식` 임
+
+- 타임리프로 생성된 HTML
+```
+<!-- SELECT -->
+<div>
+    <DIV>배송 방식</DIV>
+        <select class="form-select" id="deliveryCode" name="deliveryCode"> <option value="">==배송 방식 선택==</option>
+        <option value="FAST">빠른 배송</option>
+        <option value="NORMAL">일반 배송</option>
+        <option value="SLOW">느린 배송</option> 
+    </select>
+</div>
+```
+- 상품 상세와 수정에도 셀렉트 박스를 넣어주자.
+- item.html
+    ```
+    <!-- SELECT -->
+    <div>
+        <div>배송 방식</div>
+        <select th:field="${item.deliveryCode}" class="form-select" disabled>
+            <option value="">==배송 방식 선택==</option>
+            <option th:each="deliveryCode : ${deliveryCodes}" th:value="${deliveryCode.code}" th:text="${deliveryCode.displayName}">FAST</option>
+        </select>
+    </div>
+
+    <hr class="my-4">
+    ```
+    - 주의: item.html 에는 th:object 를 사용하지 않았기 때문에 th:field 부분에 $ {item.deliveryCode} 으로 적어주어야 한다.
+    - disabled 를 사용해서 상품 상세에서는 셀렉트 박스가 선택되지 않도록 했다.
+
+- editForm.html
+    ```        
+    <!-- SELECT -->
+    <div>
+        <div>배송 방식</div>
+        <select th:field="*{deliveryCode}" class="form-select">
+            <option value="">==배송 방식 선택==</option>
+            <option th:each="deliveryCode : ${deliveryCodes}" th:value="${deliveryCode.code}" th:text="${deliveryCode.displayName}">FAST</option>
+        </select>
+    </div>
+
+    <hr class="my-4">
+    ```
+    - 상품 등록 후 수정을 눌러서 소스를 보면 `selected="selected"` 코드가 들어가 있다.
+        - `th:field="*{deliveryCode}"`와 `th:value="${deliveryCode.code}"`를 비교해서 값이 같은 것이 있으면 선택을 넣어둔다. 
+        - 원래도 개발자가 이런 코드 로직을 하나하나 다 넣어야 하고 엄청 귀찮은데 타임리프가 깔끔하게 다 해준다.
+
+# 메시지, 국제화
+## 프로젝트 설정
+- 
