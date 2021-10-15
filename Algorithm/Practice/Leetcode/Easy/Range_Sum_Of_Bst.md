@@ -51,3 +51,27 @@ class Solution {
     }
 }
 ```
+
+# 타인 풀이
+- https://www.youtube.com/watch?v=ZFtl5Mrzb-I&list=PL2mzT_U4XxDl8PP-jMk4rt6BPzBtS__pQ&index=5
+- 2진 검색트리의 특징(왼쪽 자식은 self보다 작고, 오른쪽 자식은 self보다 크다) 을 잘 이용한 풀이
+- 크게 3가지 케이스
+    0. root == null return 0;
+    1. root.val < L -> 오른쪽 섭트리만 탐색
+    2. root.val > H -> 왼쪽 섭트리만 탐색
+    3. L <= root.val <= H -> 왼쪽 섭트리 + 내 값 + 오른쪽 섭트리
+```
+class Solution {
+    public int rangeSumBST(TreeNode root, int low, int high) {
+        if (root == null) return 0;
+        if (root.val < low) {
+            return rangeSumBST(root.right, low, high);
+        } else if (root.val > high) {
+            return rangeSumBST(root.left, low, high);
+        } else {
+            return rangeSumBST(root.right, low, high) + root.val
+                    + rangeSumBST(root.left, low, high);
+        }
+    }
+}
+```
