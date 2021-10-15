@@ -1,10 +1,11 @@
 # Binary Tree Inorder Traversal
 - [문제](https://leetcode.com/problems/binary-tree-inorder-traversal/)
-
+- 풀이
+    - 2021.10월 초(실패)
 
 # 내 풀이
 - 실패, 풀이 2가지 방법보고 혼자 다시 풀어봄
-=
+
 
 # 타인풀이1
 - recursive
