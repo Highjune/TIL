@@ -2323,7 +2323,7 @@ item.quantity=수량
 - 메시지와 국제화 기능을 직접 구현할 수도 있겠지만, 스프링은 기본적인 메시지와 국제화 기능을 모두 제공한다. 그리고 타임리프도 스프링이 제공하는 메시지와 국제화 기능을 편리하게 통합해서 제공한다. 지금부터 스프링이 제공하는 메시지와 국제화 기능을 알아보자.
 
 ## 스프링 메시지 소스 설정
-- 스프링은 기본적인 메시지 관리 기능을 제공한다.
+- 스프링은 기본적인 메시지 관리 기능을 제공한다. (바로 밑처럼 직접 등록하지 않아도 된다)
 - 메시지 관리 기능을 사용하려면 스프링이 제공하는 MessageSource 를 스프링 빈으로 등록하면 되는데, MessageSource 는 인터페이스이다. 따라서 구현체인 ResourceBundleMessageSource 를 스프링 빈으로 등록하면 된다. 다른 구현체들도 있는데 기본 구현체가 ResourceBundleMessageSource 이다.
 - 직접 등록(굳이 직접 등록하겠다면)
     ```
@@ -2513,3 +2513,301 @@ item.quantity=수량
 - 타임리프 템플릿 파일에 메시지를 적용해보자.
     - 적용대상
         - addForm.html, editForm.html, item.html, items.html
+- addForm.html 
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+        <link th:href="@{/css/bootstrap.min.css}"
+            href="../css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .container {
+                max-width: 560px;
+            }
+        </style>
+    </head>
+    <body>
+
+    <div class="container">
+
+        <div class="py-5 text-center">
+            <h2 th:text="#{page.addItem}">상품 등록 폼</h2>
+        </div>
+
+        <form action="item.html" th:action th:object="${item}" method="post">
+            <div>
+                <label for="itemName" th:text="#{label.item.itemName}">상품명</label>
+                <input type="text" id="itemName" th:field="*{itemName}" class="form-control" placeholder="이름을 입력하세요">
+            </div>
+            <div>
+                <label for="price" th:text="#{label.item.price}">가격</label>
+                <input type="text" id="price" th:field="*{price}" class="form-control" placeholder="가격을 입력하세요">
+            </div>
+            <div>
+                <label for="quantity" th:text="#{label.item.quantity}">수량</label>
+                <input type="text" id="quantity" th:field="*{quantity}" class="form-control" placeholder="수량을 입력하세요">
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row">
+                <div class="col">
+                    <button class="w-100 btn btn-primary btn-lg" type="submit" th:text="#{button.save}">상품 등록</button>
+                </div>
+                <div class="col">
+                    <button class="w-100 btn btn-secondary btn-lg"
+                            onclick="location.href='items.html'"
+                            th:onclick="|location.href='@{/message/items}'|"
+                            type="button" th:text="#{button.cancel}">취소</button>
+                </div>
+            </div>
+
+        </form>
+
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+    - 페이지 이름에 적용
+        - `<h2>상품 등록 폼</h2>`
+            - `<h2 th:text="#{page.addItem}">상품 등록</h2>`
+    - 레이블에 적용
+        - `<label for="itemName">상품명</label>`
+            - `<label for="itemName" th:text="#{label.item.itemName}">상품명</label>`
+            - `<label for="price" th:text="#{label.item.price}">가격</label>`
+            - `<label for="quantity" th:text="#{label.item.quantity}">수량</label>`
+    - 버튼에 적용
+        - `<button type="submit">상품 등록</button>`
+            - `<button type="submit" th:text="#{button.save}">저장</button>`
+            - `<button type="button" th:text="#{button.cancel}">취소</button>`
+
+- editForm.html 
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+        <link th:href="@{/css/bootstrap.min.css}"
+            href="../css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .container {
+                max-width: 560px;
+            }
+        </style>
+    </head>
+    <body>
+
+    <div class="container">
+
+        <div class="py-5 text-center">
+            <h2 th:text="#{page.updateItem}">상품 수정</h2>
+        </div>
+
+        <form action="item.html" th:action th:object="${item}" method="post">
+            <div>
+                <label for="id" th:text="#{label.item.id}">상품 ID</label>
+                <input type="text" id="id" th:field="*{id}" class="form-control" readonly>
+            </div>
+            <div>
+                <label for="itemName" th:text="#{label.item.itemName}">상품명</label>
+                <input type="text" id="itemName" th:field="*{itemName}" class="form-control">
+            </div>
+            <div>
+                <label for="price" th:text="#{label.item.price}">가격</label>
+                <input type="text" id="price" th:field="*{price}" class="form-control">
+            </div>
+            <div>
+                <label for="quantity" th:text="#{label.item.quantity}">수량</label>
+                <input type="text" id="quantity" th:field="*{quantity}" class="form-control">
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row">
+                <div class="col">
+                    <button class="w-100 btn btn-primary btn-lg" type="submit" th:text="#{button.save}">저장</button>
+                </div>
+                <div class="col">
+                    <button class="w-100 btn btn-secondary btn-lg"
+                            onclick="location.href='item.html'"
+                            th:onclick="|location.href='@{/message/items/{itemId}(itemId=${item.id})}'|"
+                            type="button" th:text="#{button.cancel}">취소</button>
+                </div>
+            </div>
+
+        </form>
+
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+
+- items.html
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+        <link th:href="@{/css/bootstrap.min.css}"
+                href="../css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+
+    <div class="container" style="max-width: 600px">
+        <div class="py-5 text-center">
+            <h2 th:text="#{page.items}">상품 목록</h2>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <button class="btn btn-primary float-end"
+                        onclick="location.href='addForm.html'"
+                        th:onclick="|location.href='@{/message/items/add}'|"
+                        type="button" th:text="#{page.addItem}">상품 등록</button>
+            </div>
+        </div>
+
+        <hr class="my-4">
+        <div>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th th:text="#{label.item.id}">ID</th>
+                    <th th:text="#{label.item.itemName}">상품명</th>
+                    <th th:text="#{label.item.price}">가격</th>
+                    <th th:text="#{label.item.quantity}">수량</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${items}">
+                    <td><a href="item.html" th:href="@{/message/items/{itemId}(itemId=${item.id})}" th:text="${item.id}">회원id</a></td>
+                    <td><a href="item.html" th:href="@{|/message/items/${item.id}|}" th:text="${item.itemName}">상품명</a></td>
+                    <td th:text="${item.price}">10000</td>
+                    <td th:text="${item.quantity}">10</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div> <!-- /container -->
+
+    </body>
+    </html>
+    ```
+    - 다음 부분을 잘 확인해서 메시지를 사용하도록 적용하자.
+    ```
+    <th th:text="#{label.item.id}">ID</th>
+    <th th:text="#{label.item.itemName}">상품명</th> 
+    <th th:text="#{label.item.price}">가격</th>
+    <th th:text="#{label.item.quantity}">수량</th>
+    ```
+
+- 실행
+    - 잘 동작하는지 확인하기 위해 messages.properties 파일의 내용을 가격 -> 금액과 같이 변경해서 확인해보자. 정상 동작하면 다시 돌려두자.
+    - meesages.properties 에서만 내용 수정해도 모든 페이지에서 다 수정되는 것을 확인할 수 있다. 이렇게 한번에 관리하는 것이 더 좋다s
+- 참고로 파라미터는 다음과 같이 사용할 수 있다.
+    - `hello.name=안녕 {0}`
+    - `<p th:text="#{hello.name(${item.itemName})}"></p>`
+- 정리
+    - 지금까지 메시지를 효율적으로 관리하는 방법을 알아보았다. 이제 여기에 더해서 국제화를 웹 애플리케이션에 어떻게 적용하는지 알아보자.
+
+
+
+## 웹 애플리케이션에 국제화 적용하기
+- 이번에는 웹 애플리케이션에 국제화를 적용해보자. 먼저 영어 메시지를 추가하자.
+- messages_en.properties
+```
+label.item=Item
+label.item.id=Item ID
+label.item.itemName=Item Name
+label.item.price=price
+label.item.quantity=quantity
+
+page.items=Item List
+page.item=Item Detai
+page.addItem=Item Add
+page.updateItem=Item Update
+
+button.save=Save
+button.cancel=Cancel
+```
+- 사실 이것으로 국제화 작업은 거의 끝났다. 앞에서 템플릿 파일에는 모두 #{...} 를 통해서 메시지를 사용하도록 적용해두었기 때문이다.
+- 우리는 이미 messages.properties와 영어를 위한 messages_en.properties 두 파일을 다 생성해 두었고, 언어선택(Locale)만 선택하도록 하면 되는데 스프링이 이것을 기본적으로 다 해준다.
+- 웹으로 확인하기
+    - 웹 브라우저의 언어 설정 값을 변경하면서 국제화 적용을 확인해보자.
+    - 크롬 브라우저 설정 언어를 검색하고, 우선 순위를 변경하면 된다.
+    - 우선순위를 영어로 변경하고 테스트해보자. (영어를 제일 위로 올리기)
+    - 웹 브라우저의 언어 설정 값을 변경하면 요청시 Accept-Language 의 값이 변경된다.
+        - 이 값을 서버에서 읽어서 Locale 로 사용하는 것(스프링이)
+        - `ms.getMessage(파라미터 생략)` 에서 파라미터 부분에 Locale.ENGLISH 로 넘어온다.
+    - Accept-Language 는 클라이언트가 서버에 기대하는 언어 정보를 담아서 요청하는 HTTP 요청 헤더이다. (더 자세한 내용은 모든 개발자를 위한 HTTP 웹 기본지식 강의를 참고하자.)         
+        - 개발자 도구에서 Accept-Lanaguge 필드 확인가능하다. 언어 우선순위를 확인할 수 있음.        
+    - 서버를 재시작 하지 않아도, 크롬에서 다시 언어 선택에서 '한국어'를 우선순위를 제일 위로 올리면 자동으로 한국어로 보인다.
+
+- 스프링의 국제화 메시지 선택
+    - 앞서 MessageSource 테스트에서 보았듯이 메시지 기능은 Locale 정보를 알아야 언어를 선택할 수 있다.
+    - 결국 스프링도 Locale 정보를 알아야 언어를 선택할 수 있는데, 스프링은 언어 선택시 기본으로 Accept-Language 헤더의 값을 사용한다.
+    - 즉 타임리프에서 messages.properties 값을 사용하도록 코딩해놓으면, 실제로 그 코드를 해석할 때 MessageSource를 찾아서 해결.
+    - LocaleResolver
+        - 스프링은 Locale 선택 방식을 변경할 수 있도록 LocaleResolver 라는 인터페이스를 제공하는데, 스프링 부트는 기본으로 Accept-Language 를 활용하는 AcceptHeaderLocaleResolver 를 사용한다.
+        - 사실, 위에서 크롬에서 설정을 바꾼 것처럼 실제로 사용자가 그렇게 잘 바꾸지는 않는다. 쿠키나 세션을 사용하기도 한다.
+    - LocaleResolver 인터페이스
+    ```
+    public interface LocaleResolver {
+        
+        Locale resolveLocale(HttpServletRequest request);
+        
+        void setLocale(HttpServletRequest request, @Nullable HttpServletResponse
+        response, @Nullable Locale locale);
+    }
+    ```
+    - LocaleResolver 변경
+        - 만약 Locale 선택 방식을 변경하려면 LocaleResolver 의 구현체를 변경해서 쿠키나 세션 기반의 Locale 선택 기능을 사용할 수 있다. 예를 들어서 고객이 직접 Locale 을 선택하도록 하는 것이다. 관련해서 LocaleResolver 를 검색하면 수 많은 예제가 나오니 필요한 분들은 참고하자.
+        - LocaleResolver 인터페이스 들어가서, resolveLocale 메서드 옆에 있는 초록색 클릭하면 구현체들을 다 확인해 볼 수 있다.
+
+
+# 검증1 - Validation
+## 검증 요구사항
+- 상품 관리 시스템에 새로운 요구사항이 추가되었다.
+- 요구사항: 검증 로직 추가
+    - 타입 검증
+        - 가격, 수량에 문자가 들어가면 검증 오류 처리
+    - 필드 검증
+        - 상품명: 필수, 공백X
+        - 가격: 1000원 이상, 1백만원 이하
+        - 수량: 최대 9999
+    - 특정 필드의 범위를 넘어서는 검증
+        - 가격 * 수량의 합은 10,000원 이상
+
+- 지금까지 만든 웹 애플리케이션은 폼 입력시 숫자를 문자로 작성하거나해서 검증 오류가 발생하면 오류 화면으로 바로 이동한다. 이렇게 되면 사용자는 처음부터 해당 폼으로 다시 이동해서 입력을 해야 한다. 아마도 이런 서비스라면 사용자는 금방 떠나버릴 것이다. 웹 서비스는 폼 입력시 오류가 발생하면, 고객이 입력한 데이터를 유지한 상태로 어떤 오류가 발생했는지 친절하게 알려주어야 한다.
+- `컨트롤러의 중요한 역할중 하나는 HTTP 요청이 정상인지 검증하는 것`이다. 그리고 정상 로직보다 이런 검증 로직을 잘 개발하는 것이 어쩌면 더 어려울 수 있다.
+
+- 참고 : 클라이언트 검증, 서버 검증 (클라이언트 검증은 주로 JS 로 하는 검증)
+    - 클라이언트 검증은 조작할 수 있으므로 보안에 취약하다. 
+        - 아무리 JS로 검증 로직을 만들어도 보안에 취약하다. 데이터를 다 조작해서 서버로 넘길 수 있다. JS실행 안하고 POSTMAN 같은 툴로 데이터 다 조작해서 서버로 넘길 수도 있다.
+    - 서버만으로 검증하면, 즉각적인 고객 사용성이 부족해진다.
+        - 아무래도 프런트쪽에서 사용자가 잘못 입력할 때마다 실시간으로 JS가 알림을 주면 빠른 피드백이 가능하다.
+    - 둘을 적절히 섞어서 사용하되, 최종적으로 서버 검증은 필수
+    - API 방식을 사용하면 API 스펙을 잘 정의해서 검증 오류를 API 응답 결과에 잘 남겨주어야 함
+
+- 먼저 검증을 직접 구현해보고, 뒤에서 스프링과 타임리프가 제공하는 검증 기능을 활용해보자.
+
+
+## 프로젝트 설정 V1
+- 이전 프로젝트에 이어서 검증(Validation) 기능을 학습해보자.
+- 이전 프로젝트를 일부 수정해서 validation-start 라는 프로젝트에 넣어두었다.
+
+- 프로젝트 설정 순서
+    1. validation-start 의 폴더 이름을 validation 로 변경하자.
+    2. 프로젝트 임포트
+        - File Open 해당 프로젝트의 build.gradle 을 선택하자. 그 다음에 선택창이 뜨는데, Open as Project 를 선택하자
+    3. ItemServiceApplication.main() 을 실행해서 프로젝트가 정상 수행되는지 확인하자.
+
+- 실행
+    - http://localhost:8080
+    - http://localhost:8080/validation/v1/items
+
+
+- 검증 직접 처리 - 소개
+
