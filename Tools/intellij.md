@@ -242,6 +242,15 @@ art + insert
   ```
   ctrl + art + m
   ```
+
+- 단어, 문자 바꾸기 replacement (하나의 파일 안에서)
+```
+command + r
+```
+- 단어, 문자 바꾸기 replacement (하나의 파일 안에서)
+```
+command + shift + r
+```
   
 - 해당 클래스에 대한 테스트클래스 바로 만들기
   - 윈도우/리눅스
