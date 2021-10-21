@@ -3754,7 +3754,7 @@ typeMismatch=타입 오류입니다.
 ## Validator 분리1
 - 목표
     - 복잡한 검증 로직을 별도로 분리하자.
-- 컨트롤러에서 검증 로직이 차지하는 부분은 매우 크다. 이런 경우 별도의 클래스로 역할을 분리하는 것이 좋다. 그리고 이렇게 분리한 검증 로직을 재사용 할 수도 있다. 컨트롤러에서는 검증 로직은 따로 이 클래스에만 맡기고 다른 일에 집중할 수 있도록 하는 것
+- 컨트롤러에서 검증 로직이 차지하는 부분은 매우 크다. 이런 경우 별도의 클래스로 역할을 분리하는 것이 좋다. 그리고 이렇게 분리한 검증 로직을 재사용(다른 비슷한 클래스가 있다면 또 검증할 수 있으니) 할 수도 있다. 컨트롤러에서는 검증 로직은 따로 이 클래스에만 맡기고 다른 일에 집중할 수 있도록 하는 것
 - 직접 클래스에 다 넣어서 만들어도 되지만 이왕 하는 것, 스프링이 제공하는 인터페이스 Validator 를 사용해보자
 
 - ItemValidator 를 만들자
@@ -3834,5 +3834,616 @@ public class ItemValidator implements Validator {
     - 코드 변경
         - addItemV4() 의 @PostMapping 부분 주석 처리
     - ItemValidator 를 스프링 빈으로 주입 받아서 직접 호출했다.
-    - 실행
-        - 실행해보면 기존과 완전히 동일하게 동작하는 것을 확인할 수 있다. 검증과 관련된 부분이 깔끔하게 분리되었다.
+- 실행
+    - 실행해보면 기존과 완전히 동일하게 동작하는 것을 확인할 수 있다. 검증과 관련된 부분이 깔끔하게 분리되었다.
+
+
+## Validator 분리2
+- 스프링이 Validator 인터페이스를 별도로 제공하는 이유는 체계적으로 검증 기능을 도입하기 위해서다. 그런데 앞에서는 검증기를 직접 불러서 사용했고, 이렇게 사용해도 된다. 그런데 Validator 인터페이스를 사용해서 검증기를 만들면 스프링의 추가적인 도움을 받을 수 있다.
+
+- WebDataBinder를 통해서 사용하기
+    - WebDataBinder 는 스프링의 파라미터 바인딩의 역할을 해주고 검증 기능도 내부에 포함한다.
+
+- ValidationItemControllerV2에 다음 코드를 추가하자 (ValidationItemControllerV2 컨트롤러 클래스에 적용)
+    ```
+    @InitBinder
+    public void init(WebDataBinder dataBinder) {
+        log.info("init binder {}", dataBinder);
+        dataBinder.addValidators(itemValidator);
+    }
+    ```
+    - 이렇게 WebDataBinder 에 검증기를 추가하면 해당 컨트롤러에서는 검증기를 자동으로 적용할 수 있다. @InitBinder 해당 컨트롤러에만 영향을 준다. 글로벌 설정은 별도로 해야한다. (마지막에 설명)
+    - 위에서처럼 설정하면 이 컨트롤러가 호출될 때마다 먼저 실행이 되면서 WebDataBinder(매번 내부적으로 새로 생성) 에 Validator(검증기)를 미리 다 넣어두는 것. 그러면 다른 맵핑메서드들이 호출될때마다 검증할 수가 있다. 해당컨트롤러에서만 적용된다.
+
+
+- @Validated 적용
+    - ValidationItemControllerV2 - addItemV6()
+    ```
+    @PostMapping("/add")
+    public String addItemV6(@Validated @ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
+
+        // 검증에 실패하면 다시 입력 폼으로
+        if (bindingResult.hasErrors()) {
+            log.info("errors={}", bindingResult);
+            return "validation/v2/addForm";
+        }
+
+        // 성공 로직
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId());
+        redirectAttributes.addAttribute("status", true);
+        return "redirect:/validation/v2/items/{itemId}";
+    }
+    ```
+    - Item에 대해서 자동적으로 검증기가 실행이 된다. 우리가 설정해`dataBinder.addValidators(itemValidator);` 놓은 것 덕분에 검증기 적용됨
+    - 코드 변경
+        - addItemV5() 의 @PostMapping 부분 주석 처리
+    - validator를 직접 호출하는 부분이 사라지고, 대신에 검증 대상 앞에 @Validated 가 붙었다.
+    - 검증을 다하고 그 결과들은 BindingResult에 담겨있다.
+
+- 실행
+    - 기존과 동일하게 잘 동작하는 것을 확인할 수 있다.
+
+- 동작방식
+    - @Validated 는 검증기를 실행하라는 애노테이션이다.
+    - 이 애노테이션이 붙으면 앞서 WebDataBinder 에 등록한 검증기를 찾아서 실행한다. 그런데 여러 검증기를 등록한다면 그 중에 어떤 검증기가 실행되어야 할지 구분이 필요하다.
+        - 예를 들어 `dataBinder.addValidators(itemValidator);`, `dataBinder.addValidators(userValidator);` 등 여러 검증기 등록시.
+        - 그런데 이 구분을 위해서, 바로! 이때 supports() 가 사용된다. Item 클래스 타입 정보가 넘어간다 (ItemValidator 클래스 내의 supports 메서드 보면 됨)
+    - 여기서는 supports(Item.class) 호출되고, 결과가 true 이므로 ItemValidator 의 validate() 가 호출된다. 
+
+    ```
+    @Component
+    public class ItemValidator implements Validator {
+
+        @Override
+        public boolean supports(Class<?> clazz) {
+            return Item.class.isAssignableFrom(clazz);
+        }
+
+        @Override
+            public void validate(Object target, Errors errors) {...}
+        }
+    ```
+
+- 글로벌 설정 - 모든 컨트롤러에 다 적용
+    ```
+    @SpringBootApplication
+    public class ItemServiceApplication implements WebMvcConfigurer {
+
+        public static void main(String[] args) {
+            SpringApplication.run(ItemServiceApplication.class, args);
+        }
+
+        @Override
+        public Validator getValidator() {
+            return new ItemValidator();
+        }
+    }
+    ```
+    - 이렇게 글로벌 설정을 추가할 수 있다. 기존 컨트롤러의 @InitBinder 를 제거해도 글로벌 설정으로 정상 동작하는 것을 확인할 수 있다. 이어지는 다음 강의를 위해서 글로벌 설정은 꼭 제거해두자.
+
+- 주의
+    - 글로벌 설정을 하면 다음에 설명할 BeanValidator가 자동 등록되지 않는다. 글로벌 설정 부분은 주석처리 해두자. 참고로 글로벌 설정을 직접 사용하는 경우는 드물다.
+
+- 참고
+    - 검증시 @Validated @Valid 둘다 사용가능하다.
+    - javax.validation.@Valid 를 사용하려면 build.gradle 의존관계 추가가 필요하다. 추가 후 gradle refresh
+    ```
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    ```
+    - @Validated 는 스프링 전용 검증 애노테이션이고, @Valid 는 자바 표준 검증 애노테이션이다. 둘 다 스프링이 지원하기 때문에 어느 것을 사용해도 되긴 한다.
+    - 자세한 내용은 다음 Bean Validation에서 설명하겠다.
+
+
+# Bean Validation
+## Bean Validation - 소개
+- 검증 기능을 지금처럼 매번 코드로 작성하는 것(가격이 1000원 이상이어야 하며...등)은 상당히 번거롭다. 특히 특정 필드에 대한 검증 로직은 대부분 빈 값인지 아닌지, 특정 크기를 넘는지 아닌지와 같이 매우 일반적인 로직이다. 다음 코드를 보자.
+    ```
+    public class Item {
+        
+        private Long id;
+        
+        @NotBlank
+        private String itemName;
+        
+        @NotNull
+        @Range(min = 1000, max = 1000000)
+        private Integer price;
+        
+        @NotNull
+        @Max(9999)
+        private Integer quantity;
+        //...
+    }
+    ```
+    - 이런 검증 로직을 모든 프로젝트에 적용할 수 있게 공통화하고, 표준화 한 것이 바로 Bean Validation 이다.
+    - Bean Validation을 잘 활용하면, 애노테이션 하나로 검증 로직을 매우 편리하게 적용할 수 있다.
+
+- Bean Validation 이란?
+    - 먼저 Bean Validation은 특정한 구현체가 아니라 자바에서 지원하는 Bean Validation 2.0(JSR-380)이라는 기술 표준이다. 쉽게 이야기해서 검증 애노테이션과 여러 인터페이스의 모음이다. 마치 JPA가 표준 기술이고 그 구현체로 하이버네이트가 있는 것과 같다. 구현체를 바꿔 끼울 수 있다.
+    - Bean Validation을 구현한 기술중에 일반적으로 사용하는 구현체는 하이버네이트 Validator이다. 이름이 하이버네이트가 붙어서 그렇지 ORM과는 관련이 없다.
+
+- 하이버네이트 Validator 관련 링크
+    - 공식 사이트: http://hibernate.org/validator/
+    - 공식 메뉴얼: https://docs.jboss.org/hibernate/validator/6.2/reference/en-US/html_single/
+    - 검증 애노테이션 모음: https://docs.jboss.org/hibernate/validator/6.2/reference/en-US/ html_single/#validator-defineconstraints-spec
+
+
+## Bean Validation - 시작
+- Bean Validation 기능을 어떻게 사용하는지 코드로 알아보자. 먼저 스프링과 통합하지 않고, 순수한 Bean Validation 사용법 부터 테스트 코드로 알아보자.
+- Bean Validation 의존관계 추가
+    - 의존관계 추가
+        - Bean Validation을 사용하려면 다음 의존관계를 추가해야 한다.
+        - build.gradle
+        ```
+        implementation 'org.springframework.boot:spring-boot-starter-validation'
+        ```
+        - spring-boot-starter-validation 의존관계를 추가하면 라이브러리가 추가 된다.
+        - Jakarta Bean Validation
+            - jakarta.validation-api : Bean Validation 인터페이스
+            - hibernate-validator 구현체
+- 테스트 코드 작성
+    - Item - Bean Validation 애노테이션 적용
+    ``` 
+    package hello.itemservice.domain.item;
+
+    import lombok.Data;
+    import org.hibernate.validator.constraints.Range;
+
+    import javax.validation.constraints.Max;
+    import javax.validation.constraints.NotBlank;
+    import javax.validation.constraints.NotNull;
+
+    @Data
+    public class Item {
+
+        private Long id;
+
+        @NotBlank
+        private String itemName;
+
+
+        @NotNull
+        @Range(min = 1000, max = 1000000)
+        private Integer price;
+
+        @NotNull
+        @Max(9999)
+        private Integer quantity;
+
+        public Item() {
+        }
+
+        public Item(String itemName, Integer price, Integer quantity) {
+            this.itemName = itemName;
+            this.price = price;
+            this.quantity = quantity;
+        }
+    }
+    ```
+    - 검증 애노테이션
+        - @NotBlank : 빈값 + 공백만 있는 경우를 허용하지 않는다.
+        - @NotNull : null 을 허용하지 않는다.
+        - @Range(min = 1000, max = 1000000) : 범위 안의 값이어야 한다.
+        - @Max(9999) : 최대 9999까지만 허용한다.
+- 참고
+    - `javax.validation.constraints.NotNull`
+    - `org.hibernate.validator.constraints.Range`
+    - javax.validation 으로 시작하면 특정 구현에 관계없이 제공되는 표준 인터페이스이고, org.hibernate.validator 로 시작하면 하이버네이트 validator 구현체를 사용할 때만 제공되는 검증 기능이다. 실무에서 대부분 하이버네이트 validator를 사용하므로 자유롭게 사용해도 된다.
+
+- BeanValidationTest - Bean Validation 테스트 코드 작성
+    ```
+    public class BeanValidationTest {
+
+    @Test
+    void beanValidation() {
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        Validator validator = factory.getValidator();
+
+        Item item = new Item();
+        item.setItemName(" "); // 공백
+        item.setPrice(0);
+        item.setQuantity(10000);
+
+        Set<ConstraintViolation<Item>> violations = validator.validate(item);
+        for (ConstraintViolation<Item> violation : violations) {
+            System.out.println("violation = " + violation);
+            System.out.println("violation = " + violation.getMessage());
+        }
+        }
+    }
+
+    ```
+    - 검증기 생성
+        - 다음 코드와 같이 검증기를 생성한다. 이후 스프링과 통합하면 우리가 직접 이런 코드를 작성하지는 않으므로, 이렇게 사용하는구나 정도만 참고하자.
+        ```
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        Validator validator = factory.getValidator();
+        ```
+    - 검증 실행
+        - 검증 대상( item )을 직접 검증기에 넣고 그 결과를 받는다. Set 에는 ConstraintViolation 이라는 검증 오류가 담긴다. 따라서 결과가 비어있으면 검증 오류가 없는 것이다.
+        ```
+         Set<ConstraintViolation<Item>> violations = validator.validate(item);
+        ```
+- 실행 결과를 보자
+    - 실행 결과 (일부 생략)
+    ```
+    violation={interpolatedMessage='공백일 수 없습니다', propertyPath=itemName, rootBeanClass=class hello.itemservice.domain.item.Item, messageTemplate='{javax.validation.constraints.NotBlank.message}'} violation.message=공백일 수 없습니다
+
+    violation={interpolatedMessage='9999 이하여야 합니다', propertyPath=quantity, rootBeanClass=class hello.itemservice.domain.item.Item, messageTemplate='{javax.validation.constraints.Max.message}'} violation.message=9999 이하여야 합니다
+
+    violation={interpolatedMessage='1000에서 1000000 사이여야 합니다', propertyPath=price, rootBeanClass=class hello.itemservice.domain.item.Item, messageTemplate='{org.hibernate.validator.constraints.Range.message}'} violation.message=1000에서 1000000 사이여야 합니다
+    ```
+    - ConstraintViolation 출력 결과를 보면, 검증 오류가 발생한 객체, 필드, 메시지 정보등 다양한 정보를 확인할 수 있다.
+    - 메시지들은 내가 설정한 것이 아니다. hibernate validator에서 기본적으로 제공하는 메시지며, 내가 원하는대로 아래처럼 설정할 수도 있다.(또는 properties에서도 해도 됨)
+    ```
+    @NotBlank(message = "공백X)
+    ...
+    ```
+
+- 정리
+    - 이렇게 빈 검증기(Bean Validation)를 직접 사용하는 방법을 알아보았다. 아마 지금까지 배웠던 스프링 MVC 검증 방법에 빈 검증기를 어떻게 적용하면 좋을지 여러가지 생각이 들 것이다. 스프링은 이미 개발자를 위해 빈 검증기를 스프링에 완전히 통합해두었다.
+
+
+
+## Bean Validation - 프로젝트 준비 V3
+- 앞서 만든 기능을 유지하기 위해, 컨트롤러와 템플릿 파일을 복사하자.
+- ValidationItemControllerV3 컨트롤러 생성
+    - hello.itemservice.web.validation.ValidationItemControllerV2 복사
+    - hello.itemservice.web.validation.ValidationItemControllerV3 붙여넣기
+    - URL 경로 변경: validation/v2/ -> validation/v3/
+
+- 템플릿 파일 복사
+    - validation/v2 디렉토리의 모든 템플릿 파일을 validation/v3 디렉토리로 복사
+        - /resources/templates/validation/v2/ -> /resources/templates/validation/v3/
+            - addForm.html
+            - editForm.html
+            - item.html
+            - itesm.html
+
+    - /resources/templates/validation/v3/ 하위 4개 파일 모두 URL 경로 변경: validation/v2/ -> validation/v3/ (v3 클릭 후 command + shift + r)
+        - addForm.html
+        - editForm.html
+        - item.html
+        - itesm.html
+
+
+- 실행
+    - http://localhost:8080/validation/v3/items
+    - 실행 후 웹 브라우저의 URL이 validation/v3 으로 잘 유지되는지 확인해자.
+
+
+## Bean Validation - 스프링 적용
+- ValidationItemControllerV3 코드 수정
+    ```
+
+    @Slf4j
+    @Controller
+    @RequestMapping("/validation/v3/items")
+    @RequiredArgsConstructor
+    public class ValidationItemControllerV3 {
+
+        private final ItemRepository itemRepository;
+
+        @GetMapping
+        public String items(Model model) {
+            List<Item> items = itemRepository.findAll();
+            model.addAttribute("items", items);
+            return "validation/v3/items";
+        }
+
+        @GetMapping("/{itemId}")
+        public String item(@PathVariable long itemId, Model model) {
+            Item item = itemRepository.findById(itemId);
+            model.addAttribute("item", item);
+            return "validation/v3/item";
+        }
+
+        @GetMapping("/add")
+        public String addForm(Model model) {
+            model.addAttribute("item", new Item());
+            return "validation/v3/addForm";
+        }
+
+        @PostMapping("/add")
+        public String addItem(@Validated @ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
+
+            // 검증에 실패하면 다시 입력 폼으로
+            if (bindingResult.hasErrors()) {
+                log.info("errors={}", bindingResult);
+                return "validation/v3/addForm";
+            }
+
+            // 성공 로직
+            Item savedItem = itemRepository.save(item);
+            redirectAttributes.addAttribute("itemId", savedItem.getId());
+            redirectAttributes.addAttribute("status", true);
+            return "redirect:/validation/v3/items/{itemId}";
+        }
+
+        @GetMapping("/{itemId}/edit")
+        public String editForm(@PathVariable Long itemId, Model model) {
+            Item item = itemRepository.findById(itemId);
+            model.addAttribute("item", item);
+            return "validation/v3/editForm";
+        }
+
+        @PostMapping("/{itemId}/edit")
+        public String edit(@PathVariable Long itemId, @ModelAttribute Item item) {
+            itemRepository.update(itemId, item);
+            return "redirect:/validation/v3/items/{itemId}";
+        }
+
+    }
+    ```
+    - 제거: addItemV1() ~ addItemV5()
+    - 변경: addItemV6() addItem()
+    - 코드 제거
+        - 기존에 등록한 ItemValidator를 제거해두자! 오류 검증기가 중복 적용된다.
+        ```
+        private final ItemValidator itemValidator;
+        @InitBinder
+        public void init(WebDataBinder dataBinder) {
+            log.info("init binder {}", dataBinder);
+            dataBinder.addValidators(itemValidator);
+        }
+        ```
+
+- 실행
+    - http://localhost:8080/validation/v3/items
+    - 실행해보면 애노테이션 기반의 Bean Validation이 정상 동작하는 것을 확인할 수 있다.
+
+- 참고
+    - 특정 필드의 범위를 넘어서는 검증(가격 * 수량의 합은 10,000원 이상) 기능이 빠졌는데, 이 부분은 조금 뒤에 설명한다.
+
+
+- 스프링 MVC는 어떻게 Bean Validator를 사용?
+    - 스프링 부트가 spring-boot-starter-validation 라이브러리를 넣으면 자동으로 Bean Validator를 인지하고 스프링에 통합한다.
+- 스프링 부트는 자동으로 글로벌 Validator로 등록한다.
+    - LocalValidatorFactoryBean 을 글로벌 Validator로 등록한다. 이 Validator는 @NotNull 같은 애노테이션을 보고 검증을 수행한다. 이렇게 글로벌 Validator가 적용되어 있기 때문에, @Valid , @Validated 만 적용하면 된다.
+    - 검증 오류가 발생하면, FieldError , ObjectError 를 생성해서 BindingResult 에 담아준다.
+- 주의
+    - 다음과 같이 직접 글로벌 Validator를 직접 등록하면(다른 validator를 등록하지 않는다) 스프링 부트는 Bean Validator를 글로벌 Validator 로 등록하지 않는다. 따라서 애노테이션 기반의 빈 검증기가 동작하지 않는다. 다음 부분은 제거하자.
+    ```
+    @SpringBootApplication
+    public class ItemServiceApplication implements WebMvcConfigurer {
+    
+        // 글로벌 검증기 추가
+        @Override
+        public Validator getValidator() {
+                return new ItemValidator();
+            }
+        // ...
+    }
+    ```
+
+- 참고
+    -  검증시 @Validated @Valid 둘다 사용가능하다. (@Validated는 스프링 것, @Valid는 자바표준-스프링이 아닌 다른 프레임워크에서도 동작할 가능성 있다는 것)
+    -  javax.validation.@Valid 를 사용하려면 build.gradle 의존관계 추가가 필요하다. (이전에 추가했다.)
+    ```
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    ```
+    - @Validated 는 스프링 전용 검증 애노테이션이고, @Valid 는 자바 표준 검증 애노테이션이다. 둘중 아무거나 사용해도 동일하게 작동하지만, @Validated 는 내부에 groups 라는 기능을 포함하고 있다. 이 부분은 조금 뒤에 다시 설명하겠다.
+
+- 검증 순서
+    1. @ModelAttribute 각각의 필드에 타입 변환 시도
+        1. 성공하면 다음으로
+        2. 실패하면 typeMismatch 로 FieldError 추가
+    2. Validator 적용
+
+- 바인딩에 성공한 필드만 Bean Validation 적용
+    - BeanValidator는 바인딩에 실패한 필드는 BeanValidation을 적용하지 않는다.
+    - 생각해보면 타입 변환에 성공해서 바인딩에 성공한 필드여야 BeanValidation 적용이 의미 있다. (일단 모델 객체에 바인딩 받는 값이 정상으로 들어와야 검증도 의미가 있다.)
+    - @ModelAttribute -> 각각의 필드 타입 변환시도 -> 변환에 성공한 필드만 BeanValidation 적용
+    - 예)
+        - itemName 에 문자 "A" 입력 -> 타입 변환 성공 -> itemName 필드에 BeanValidation 적용
+        - price 에 문자 "A" 입력 -> "A"를 숫자 타입 변환 시도 실패 -> typeMismatch FieldError 추가 -> price 필드는 BeanValidation 적용 X(애초에 타입 변환자체에 실패했으므로)
+            - typeMismatch 에러 코드는  erros.properties에 있음
+
+
+## Bean Validation - 에러 코드
+- Bean Validation이 기본으로 제공하는 오류 메시지를 좀 더 자세히 변경하고 싶으면 어떻게 하면 될까?
+- Bean Validation을 적용하고 bindingResult 에 등록된 검증 오류 코드를 보자. 
+- 오류 코드가 애노테이션 이름으로 등록된다. 마치 typeMismatch 와 유사하다.
+- NotBlank 라는 오류 코드를 기반으로 MessageCodesResolver 를 통해 다양한 메시지 코드가 순서대로 생성된다.
+
+- @NotBlank (아래 순서대로 적용됨. 있는것에서 바로 걸림)
+    - NotBlank.item.itemName 
+    - NotBlank.itemName 
+    - NotBlank.java.lang.String 
+    - NotBlank
+- @Range
+    - Range.item.price
+    - Range.price 
+    - Range.java.lang.Integer 
+    - Range
+- 메시지 등록
+    - 이제 메시지를 등록해보자.
+    - errors.properties
+    ```
+    #Bean Validation 추가 
+    NotBlank={0} 공백X 
+    Range={0}, {2} ~ {1} 허용 
+    Max={0}, 최대 {1}
+    ```
+    - {0} 은 필드명이고, {1} , {2} ...은 각 애노테이션 마다 다르다.
+
+- 실행
+    - 실행해보면 방금 등록한 메시지가 정상 적용되는 것을 확인할 수 있다.
+
+
+- BeanValidation 메시지 찾는 순서
+    1. 생성된 메시지 코드 순서대로 messageSource 에서 메시지 찾기
+    2. 애노테이션의 message 속성 사용 -> @NotBlank(message = "공백! {0}")
+    3. 라이브러리가 제공하는 기본 값 사용 -> 공백일 수 없습니다.
+
+- 애노테이션의 message 사용 예
+```
+@NotBlank(message = "공백은 입력할 수 없습니다.") 
+private String itemName;
+```
+
+## Bean Validation - 오브젝트 오류
+- Bean Validation에서 특정 필드( FieldError )가 아닌(애너테이션들이 다 필드에 직접 다 명시했었음) 해당 오브젝트 관련 오류( ObjectError )는 어떻게 처리할 수 있을까?
+- 다음과 같이 @ScriptAssert() 를 사용하면 된다.
+```
+@Data
+  @ScriptAssert(lang = "javascript", script = "_this.price * _this.quantity >= 10000", message = "총합이 10000원 넘게 입력해주세요.")
+  public class Item {
+//...
+}
+```
+- 실행해보면 정상 수행되는 것을 확인할 수 있다. 메시지 코드도 다음과 같이 생성된다.
+- 메시지 코드
+    - ScriptAssert.item (오류코드.객체)
+    - ScriptAssert
+
+- 그런데 실제 사용해보면 제약이 많고 복잡하다. 그리고 실무에서는 검증 기능이 해당 객체의 범위를 넘어서는 경우들(DB에서 꺼내오기도 하고 등)도 종종 등장하는데, 그런 경우 대응이 어렵다.
+- 따라서 오브젝트 오류(글로벌 오류)의 경우 @ScriptAssert 을 억지로 사용하는 것 보다는 다음과 같이 오브젝트 오류 관련 부분만 직접 자바 코드로 작성하는 것을 권장한다.
+- ValidationItemControllerV3 - 글로벌 오류 추가
+```
+@PostMapping("/add")
+public String addItem(@Validated @ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
+
+    // 특정 필드 예외가 아닌 전체 예외
+    if (item.getPrice() != null && item.getQuantity() != null) {
+        int resultPrice = item.getPrice() * item.getQuantity();
+        if (resultPrice < 10000) {
+            bindingResult.reject("totalPriceMin", new Object[]{10000, resultPrice}, null);
+        }
+    }
+
+    // 검증에 실패하면 다시 입력 폼으로
+    if (bindingResult.hasErrors()) {
+        log.info("errors={}", bindingResult);
+        return "validation/v3/addForm";
+    }
+
+    // 성공 로직
+    Item savedItem = itemRepository.save(item);
+    redirectAttributes.addAttribute("itemId", savedItem.getId());
+    redirectAttributes.addAttribute("status", true);
+    return "redirect:/validation/v3/items/{itemId}";
+}
+```
+- @ScriptAssert 부분 제거
+    - 새로운 기술이 있지만 단순하지 않고, 기능의 제약이 많고 하면 기존의 방법대로 하는 것이 현명할 떄도 종종 있다.
+- 김영한 선생님 추천
+    - 필드를 해결할 때는 Validator 사용하고, ObjectErorr는 위처럼 자바로 따로 관리
+
+
+
+## Bean Validation - 수정에 적용
+- 상품 수정에도 여지껏 해온(상품 등록에만 적용한 것) 빈 검증(Bean Validation)을 적용해보자.
+- 수정에도 검증 기능을 추가하자
+- ValidationItemControllerV3 - edit() 변경
+    ```
+    @PostMapping("/{itemId}/edit")
+    public String edit(@PathVariable Long itemId, @Validated @ModelAttribute Item item, BindingResult bindingResult) {
+
+        // 특정 필드가 아닌 복합 룰 검증
+        if (item.getPrice() != null && item.getQuantity() != null) {
+            int resultPrice = item.getPrice() * item.getQuantity();
+            if (resultPrice < 10000) {
+                bindingResult.reject("totalPriceMin", new Object[]{10000, resultPrice}, null);
+            }
+        }
+
+        if (bindingResult.hasErrors()) {
+            log.info("errors={}", bindingResult);
+            return "validation/v3/editForm";
+        }
+
+        itemRepository.update(itemId, item);
+        return "redirect:/validation/v3/items/{itemId}";
+    }
+    ```
+    - edit() : Item 모델 객체에 @Validated 를 추가하자.
+    - 검증 오류가 발생하면 editForm 으로 이동하는 코드 추가
+
+- validation/v3/editForm.html 변경
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+        <link th:href="@{/css/bootstrap.min.css}"
+            href="../css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .container {
+                max-width: 560px;
+            }
+            .field-error {
+                border-color: #dc3545;
+                color: #dc3545;
+            }
+        </style>
+    </head>
+    <body>
+
+    <div class="container">
+
+        <div class="py-5 text-center">
+            <h2 th:text="#{page.updateItem}">상품 수정</h2>
+        </div>
+
+        <form action="item.html" th:action th:object="${item}" method="post">
+
+            <div th:if="${#fields.hasGlobalErrors()}">
+                <p class="field-error" th:each="err : ${#fields.globalErrors()}" th:text="${err}">전체 오류 메시지</p>
+            </div>
+
+            <div>
+                <label for="id" th:text="#{label.item.id}">상품 ID</label>
+                <input type="text" id="id" th:field="*{id}" class="form-control" readonly>
+            </div>
+            <div>
+                <label for="itemName" th:text="#{label.item.itemName}">상품명</label>
+                <input type="text" id="itemName" th:field="*{itemName}"
+                    th:errorclass="field-error" class="form-control">
+                <div class="field-error" th:errors="*{itemName}">
+                    상품명 오류
+                </div>
+            </div>
+            <div>
+                <label for="price" th:text="#{label.item.price}">가격</label>
+                <input type="text" id="price" th:field="*{price}"
+                    th:errorclass="field-error" class="form-control">
+                <div class="field-error" th:errors="*{price}">
+                    상품명 오류
+                </div>
+            </div>
+            <div>
+                <label for="quantity" th:text="#{label.item.quantity}">수량</label>
+                <input type="text" id="quantity" th:field="*{quantity}"
+                    th:errorclass="field-error" class="form-control">
+                <div class="field-error" th:errors="*{quantity}">
+                    상품명 오류
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row">
+                <div class="col">
+                    <button class="w-100 btn btn-primary btn-lg" type="submit" th:text="#{button.save}">저장</button>
+                </div>
+                <div class="col">
+                    <button class="w-100 btn btn-secondary btn-lg"
+                            onclick="location.href='item.html'"
+                            th:onclick="|location.href='@{/validation/v3/items/{itemId}(itemId=${item.id})}'|"
+                            type="button" th:text="#{button.cancel}">취소</button>
+                </div>
+            </div>
+
+        </form>
+
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+    - .field-error css 추가
+    - 글로벌 오류 메시지
+    - 상품명, 가격, 수량 필드에 검증 기능 추가
+- 실행
+    - 
