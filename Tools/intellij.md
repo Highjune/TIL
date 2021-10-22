@@ -242,6 +242,10 @@ art + insert
   ```
   ctrl + art + m
   ```
+- 변수 일괄 변경
+```
+shift + f6
+```
 
 - 단어, 문자 바꾸기 replacement (하나의 파일 안에서)
 ```
