@@ -5,6 +5,7 @@
 	- [타임리프 + 스프링](https://github.com/Highjune/Spring_MVC_Lecture2_Form_Kim_Young_Han-/tree/master)
 	- [메시지, 국제화](https://github.com/Highjune/message/tree/master)
 	- [검증](https://github.com/Highjune/Spring_MVC_Lecture2_Validation_Kim_Young_Han--)
+	- [로그인-쿠키, 세션](https://github.com/Highjune/Spring_MVC_Lecture2_login-Cookie-Session-_Kim_Young_Han--/tree/master)
 
 
 # 타임리프 - 기본 기능
