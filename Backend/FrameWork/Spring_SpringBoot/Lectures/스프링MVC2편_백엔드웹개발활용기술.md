@@ -5032,3 +5032,664 @@ API 컨트롤러 호출
 ## 홈 화면
 - 홈 화면을 개발하자
 - HomeController - home() 수정
+```
+@Slf4j
+@Controller
+public class HomeController {
+
+    @GetMapping("/")
+    public String home() {
+        return "home";
+    }
+}
+```
+
+- templates/home.html 추가
+```
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <link th:href="@{/css/bootstrap.min.css}"
+          href="../css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container" style="max-width: 600px">
+    <div class="py-5 text-center">
+        <h2>홈 화면</h2> </div>
+    <div class="row">
+        <div class="col">
+            <button class="w-100 btn btn-secondary btn-lg" type="button"
+                    th:onclick="|location.href='@{/members/add}'|">
+                회원 가입
+            </button>
+        </div>
+        <div class="col">
+            <button class="w-100 btn btn-dark btn-lg"
+                    onclick="location.href='items.html'"
+                    th:onclick="|location.href='@{/login}'|" type="button">
+                로그인
+            </button>
+        </div>
+    </div>
+    <hr class="my-4">
+</div> <!-- /container -->
+</body>
+</html>
+```
+
+## 회원 가입
+- Member
+```
+@Data
+public class Member {
+
+    private Long id; // DB에 저장되는 Id
+
+    @NotEmpty
+    private String loginId; // 로그인 ID
+    @NotEmpty
+    private String name; // 사용자 이름
+    @NotEmpty
+    private String password;
+}
+
+```
+
+- MemberRepository
+```
+@Slf4j
+@Repository
+public class MemberRepository {
+
+    private static Map<Long, Member> store = new HashMap<>();
+    private static long sequence = 0L; // static 사용
+
+    public Member save(Member member) {
+        member.setId(++sequence);
+        log.info("save: member={}", member);
+        store.put(member.getId(), member);
+        return member;
+    }
+
+    public Member findById(Long id) {
+        return store.get(id);
+    }
+
+    public Optional<Member> findByLoginId(String loginId) {
+/*
+        List<Member> all = findAll();
+        for (Member m : all) {
+            if (m.getLoginId().equals(loginId)) {
+                return Optional.of(m);
+            }
+        }
+        return Optional.empty();
+*/
+        return findAll().stream()
+                .filter(m -> m.getLoginId().equals(loginId))
+                .findFirst();
+    }
+
+    public List<Member> findAll() {
+        return new ArrayList<>(store.values());
+    }
+
+    public void clearStore() {
+        store.clear();
+    }
+}
+```
+
+- MemberController
+    ```
+    @Controller
+    @RequiredArgsConstructor
+    @RequestMapping("/members")
+    public class MemberController {
+
+        private final MemberRepository memberRepository;
+
+        @GetMapping("/add")
+        public String addForm(@ModelAttribute("member") Member member) {
+            return "members/addMemberForm";
+        }
+
+        @PostMapping("/add")
+        public String svae(@Valid @ModelAttribute Member member, BindingResult bindingResult) {
+            if (bindingResult.hasErrors()) {
+                return "members/addMemberForm";
+            }
+
+            memberRepository.save(member);
+            return "redirect:/";
+        }
+    }
+
+    ```
+    - @ModelAttribute("member") 를 @ModelAttribute 로 변경해도 결과는 같다. 여기서는 IDE에서 인식 문제가 있어서 적용했다.
+
+- 회원 가입 뷰 템플릿
+    - templates/members/addMemberForm.html
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+    <meta charset="utf-8">
+    <link th:href="@{/css/bootstrap.min.css}"
+            href="../css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container {
+        max-width: 560px;
+        }
+        .field-error {
+        border-color: #dc3545;
+        color: #dc3545;
+        }
+    </style>
+    </head>
+    <body>
+
+    <div class="container">
+
+    <div class="py-5 text-center">
+        <h2>회원 가입</h2>
+    </div>
+
+    <h4 class="mb-3">회원 정보 입력</h4>
+
+    <form action="" th:action th:object="${member}" method="post">
+
+        <div th:if="${#fields.hasGlobalErrors()}">
+        <p class="field-error" th:each="err : ${#fields.globalErrors()}" th:text="${err}">전체 오류 메시지</p>
+        </div>
+
+        <div>
+        <label for="loginId">로그인 ID</label>
+        <input type="text" id="loginId" th:field="*{loginId}" class="form-control" th:errorclass="field-error">
+        <div class="field-error" th:errors="*{loginId}" />
+        </div>
+
+        <div>
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" th:field="*{password}" class="form-control" th:errorclass="field-error">
+        <div class="field-error" th:errors="*{password}" />
+        </div>
+
+        <div>
+        <label for="name">이름</label>
+        <input type="text" id="name" th:field="*{name}" class="form-control" th:errorclass="field-error">
+        <div class="field-error" th:errors="*{name}" />
+        </div>
+
+        <hr class="my-4">
+
+        <div class="row">
+        <div class="col">
+            <button class="w-100 btn btn-primary btn-lg" type="submit">회원 가입</button>
+        </div>
+
+        <div class="col">
+            <button class="w-100 btn btn-secondary btn-lg"
+                    onclick="location.href='items.html'"
+                    th:onclick="|location.href='@{/}'|"
+                    type="button">취소</button>
+        </div>
+        </div>
+
+    </form>
+
+    </div> <!-- /container -->
+
+    </body>
+    </html>
+    ```
+
+- 실행하고 회원가입 후 로그로 결과를 확인하자
+- 회원용 테스트 데이터 추가
+    - 편의상 테스트용 회원 데이터를 추가하자.
+        - loginId : test
+        - password : test!
+        - name : 테스터
+
+- TestDataInit
+```
+@Component
+@RequiredArgsConstructor
+public class TestDataInit {
+
+    private final ItemRepository itemRepository;
+    private final MemberRepository memberRepository;
+
+    /**
+     * 테스트용 데이터 추가
+     */
+    @PostConstruct
+    public void init() {
+        itemRepository.save(new Item("itemA", 10000, 10));
+        itemRepository.save(new Item("itemB", 20000, 20));
+
+        Member member = new Member();
+        member.setLoginId("test");
+        member.setPassword("test!");
+        member.setName("테스터");
+
+        memberRepository.save(member);
+    }
+
+}
+```
+
+## 로그인 기능
+- 로그인 기능을 개발해보자. 지금은 로그인 ID, 비밀번호를 입력하는 부분에 집중하자.
+
+- LoginService
+    ```
+    @Service
+    @RequiredArgsConstructor
+    public class LoginService {
+
+        private final MemberRepository memberRepository;
+
+        /**
+        * @return null 로그인 실패
+        */
+        public Member login(String loginId, String password) {
+    /*
+            Optional<Member> findMemberOptional = memberRepository.findByLoginId(loginId);
+            Member member = findMemberOptional.get();
+            if (member.getPassword().equals(password)) {
+                return member;
+            } else {
+                return null;
+            }
+    */
+            return memberRepository.findByLoginId(loginId)
+                    .filter(m -> m.getPassword().equals(password))
+                    .orElse(null);
+        }
+
+    }
+
+    ```
+    - 로그인의 핵심 비즈니스 로직은 회원을 조회한 다음에 파라미터로 넘어온 password와 비교해서 같으면 회원을 반환하고, 만약 password가 다르면 null 을 반환한다.
+- LoginForm
+```
+@Data
+public class LoginForm {
+
+    @NotEmpty
+    private String loginId;
+
+    @NotEmpty
+    private String password;
+
+}
+
+```
+
+- LoginController
+    ```
+    @Slf4j
+    @Controller
+    @RequiredArgsConstructor
+    public class LoginController {
+
+        private final LoginService loginService;
+
+        @GetMapping("/login")
+        public String loginForm(@ModelAttribute("loginForm") LoginForm loginForm) {
+            return "login/loginForm";
+        }
+
+        @PostMapping("/login")
+        public String login(@Valid @ModelAttribute LoginForm form, BindingResult bindingResult) {
+            if (bindingResult.hasErrors()) {
+                return "login/loginForm";
+            }
+
+            Member loginMember = loginService.login(form.getLoginId(), form.getPassword());
+
+            if (loginMember == null) {
+                bindingResult.reject("loginFail", "아이디 또는 비밀번호가 맞지 않습니다.");
+                return "login/loginForm";
+            }
+
+            // 로그인 성공 처리 TODO
+
+            return "redirect:/";
+        }
+    }
+
+    ```
+    - 로그인 컨트롤러는 로그인 서비스를 호출해서 로그인에 성공하면 홈 화면으로 이동하고, 로그인에 실패하면 bindingResult.reject() 를 사용해서 글로벌 오류( ObjectError )를 생성한다. 그리고 정보를 다시 입력하도록 로그인 폼을 뷰 템플릿으로 사용한다.
+    - 여기서 글로벌 오류는 사실 DB를 거쳐서 갔다오는 것이기 때문에(객체만으로 해결되는 것이 아니다) 코드로 하는 것이 더 수월하다. 그래서 @Script~ 로 하는 것으로는 한계가 있는 것
+
+- 로그인 폼 뷰 템플릿
+    - templates/login/loginForm.html
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+    <meta charset="utf-8">
+    <link th:href="@{/css/bootstrap.min.css}"
+            href="../css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container {
+        max-width: 560px;
+        }
+        .field-error {
+        border-color: #dc3545;
+        color: #dc3545;
+        }
+    </style>
+    </head>
+    <body>
+
+    <div class="container">
+    <div class="py-5 text-center">
+        <h2>로그인</h2>
+    </div>
+
+    <form action="item.html" th:action th:object="${loginForm}" method="post">
+        <div th:if="${#fields.hasGlobalErrors()}">
+        <p class="field-error" th:each="err : ${#fields.globalErrors()}" th:text="${err}">전체 오류 메시지</p>
+        </div>
+        <div>
+        <label for="loginId">로그인 ID</label>
+        <input type="text" id="loginId" th:field="*{loginId}" class="form-control"  th:errorclass="field-error">
+        <div class="field-error" th:errors="*{loginId}" />
+        </div>
+        <div>
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" th:field="*{password}" class="form-control" th:errorclass="field-error">
+        <div class="field-error" th:errors="*{password}" />
+        </div>
+
+        <hr class="my-4">
+
+        <div class="row">
+        <div class="col">
+            <button class="w-100 btn btn-primary btn-lg" type="submit"> 로그인</button>
+        </div>
+        <div class="col">
+            <button class="w-100 btn btn-secondary btn-lg" onclick="location.href='items.html'" th:onclick="|location.href='@{/}'|" type="button">취소</button>
+        </div>
+        </div>
+    </form>
+
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+    - 로그인 폼 뷰 템플릿에는 특별한 코드는 없다. loginId , password 가 틀리면 글로벌 오류가 나타난다.
+- 실행
+    - 실행해보면 로그인이 성공하면 홈으로 이동하고, 로그인에 실패하면 "아이디 또는 비밀번호가 맞지 않습니다."라는 경고와 함께 로그인 폼이 나타난다.
+    - 그런데 아직 로그인이 되면 홈 화면에 고객 이름이 보여야 한다는 요구사항을 만족하지 못한다. 로그인의 상태를 유지하면서, 로그인에 성공한 사용자는 홈 화면에 접근시 고객의 이름을 보여주려면 어떻게 해야할까?
+
+## 로그인 처리하기 - 쿠키 사용
+- 참고
+    - 여기서는 여러분이 쿠키의 기본 개념을 이해하고 있다고 가정한다. 쿠키에 대해서는 모든 개발자를 위한 HTTP 기본 지식 강의를 참고하자. 혹시 잘 생각이 안나면 쿠키 관련 내용을 꼭! 복습하고 돌아오자.
+    - 쿠키를 사용해서 로그인, 로그아웃 기능을 구현해보자.
+- 로그인 상태 유지하기
+    - 로그인의 상태를 어떻게 유지할 수 있을까?
+    - HTTP 강의에서 일부 설명했지만, 쿼리 파라미터를 계속 유지하면서 보내는 것은 매우 어렵고 번거로운 작업이다. 쿠키를 사용해보자.
+
+- 쿠키
+    - 서버에서 로그인에 성공하면 HTTP 응답에 쿠키를 담아서 브라우저에 전달하자. 그러면 브라우저는 앞으로 해당 쿠키를 지속해서 보내준다.
+
+- 쿠키 생성
+![image](https://user-images.githubusercontent.com/57219160/138590012-ca854f0f-9b1c-4f8e-ae00-3188b34e94da.png)
+
+- 클라이언트 쿠키 전달1
+![image](https://user-images.githubusercontent.com/57219160/138590040-51a960bf-225e-43b5-aefb-becb7c1b4129.png)
+
+- 클라이언트 쿠키 전달2
+![image](https://user-images.githubusercontent.com/57219160/138590055-9b91f1bd-ff45-4311-b693-478473615b13.png)
+
+
+- 쿠키에는 영속 쿠키와 세션 쿠키가 있다.
+    - 영속 쿠키: 만료 날짜를 입력하면 해당 날짜까지 유지 (웹 브라우저를 껐다가 다시 키더라도)
+    - 세션 쿠키: 만료 날짜를 생략하면 브라우저 종료시 까지만 유지 (여기서 말하는 `세션`은 그냥 쿠키 종류 중 하나를 말하는 것. HTTP 세션이나 서버 세션을 말하는 것이 아님)
+    - 브라우저 종료시 로그아웃이 되길 기대하므로, 우리에게 필요한 것은 세션 쿠키이다.
+
+- LoginController - login()
+    - 로그인 성공시 세션 쿠키를 생성하자.
+    ```
+        @PostMapping("/login")
+    public String login(@Valid @ModelAttribute LoginForm form, BindingResult bindingResult, HttpServletResponse response) {
+        if (bindingResult.hasErrors()) {
+            return "login/loginForm";
+        }
+
+        Member loginMember = loginService.login(form.getLoginId(), form.getPassword());
+
+        if (loginMember == null) {
+            bindingResult.reject("loginFail", "아이디 또는 비밀번호가 맞지 않습니다.");
+            return "login/loginForm";
+        }
+
+        // 로그인 성공 처리
+
+        // 쿠키에 시간 정보를 주지 않으면 세션 쿠키가 됨(브라우저 종료시 모두 종료)
+        Cookie idCookie = new Cookie("memberId", String.valueOf(loginMember.getId()));
+        response.addCookie(idCookie);
+        return "redirect:/";
+    }
+    ```
+    - 쿠키 생성 로직
+        ```
+        Cookie idCookie = new Cookie("memberId", String.valueOf(loginMember.getId()));
+        response.addCookie(idCookie);
+        ``` 
+        - 로그인에 성공하면 쿠키를 생성하고 HttpServletResponse 에 담는다. 쿠키 이름은 memberId 이고, 값은 회원의 id를담아둔다.웹브라우저는종료전까지회원의 id를서버에계속보내줄것이다.
+
+
+- 실행
+    - 크롬 브라우저를(개발자 도구) 통해 HTTP 응답 헤더에 쿠키가 추가된 것을 확인할 수 있다.
+    - 로그인 했을 때 Response Header에 담겨있는 것을 볼 수 있고, 로그인 상태에서 홈(localhost:8080)으로 들어갔을 때 Request Header에 보면 Cookie 를 확인(매번 클라이언트는 발급받은 Cookie값을 넘겨 보낸다)할 수 있다.
+    - 그리고 개발자 도구에서 Application 탭에 들어가서 왼쪽의 Storage 영역에 Cookie를 또 확인할 수 있다.
+
+
+
+- 이제 요구사항에 맞추어 로그인에 성공하면 로그인 한 사용자 전용 홈 화면을 보여주자.
+- 홈 로그인 처리
+    ```
+    @Slf4j
+    @Controller
+    @RequiredArgsConstructor
+    public class HomeController {
+
+        private final MemberRepository memberRepository;
+
+    //    @GetMapping("/")
+        public String home() {
+            return "home";
+        }
+
+        @GetMapping("/")
+        public String homeLogin(@CookieValue(name = "memberId", required = false) Long memberId, Model model) {
+
+            if (memberId == null) {
+                return "home";
+            }
+
+            // 로그인
+            Member loginMember = memberRepository.findById(memberId);
+            if (loginMember == null) {
+                return "home";
+            }
+
+            model.addAttribute("member", loginMember);
+            return "loginHome";
+
+        }
+    }
+    ```
+    - 기존 home() 에 있는 @GetMapping("/") 은 주석 처리하자.
+    - @CookieValue 를 사용하면 편리하게 쿠키를 조회할 수 있다.
+        - @CookieValue 는 스프링에서 제공하는 것. 원래는 HttpServletRequest 로 꺼내도 된다.
+    - 로그인 하지 않은 사용자도 홈에 접근할 수 있기 때문에 required = false 를 사용한다.
+    - 로직 분석
+        - 로그인 쿠키( memberId )가 없는 사용자는 기존 home 으로 보낸다. 추가로 로그인 쿠키가 있어도 DB에 회원이 없으면 home 으로 보낸다.
+        - 로그인 쿠키( memberId )가 있는 사용자는 로그인 사용자 전용 홈 화면인 loginHome 으로 보낸다. 추가로 홈 화면에 화원 관련 정보도 출력해야 해서 member 데이터도 모델에 담아서 전달한다.
+
+- 홈 - 로그인 사용자 전용
+    - templates/loginHome.html
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+        <link th:href="@{/css/bootstrap.min.css}"
+            href="../css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+    <div class="container" style="max-width: 600px">
+        <div class="py-5 text-center">
+            <h2>홈 화면</h2>
+        </div>
+        <h4 class="mb-3" th:text="|로그인: ${member.name}|">로그인 사용자 이름</h4>
+
+        <hr class="my-4">
+
+        <div class="row">
+
+            <div class="col">
+                <button class="w-100 btn btn-secondary btn-lg" type="button"
+                        th:onclick="|location.href='@{/items}'|">
+                    상품 관리
+                </button>
+            </div>
+
+            <div class="col">
+                <form th:action="@{/logout}" method="post">
+                    <button class="w-100 btn btn-dark btn-lg"
+                            onclick="location.href='items.html'" type="submit"> 로그아웃
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+        <hr class="my-4">
+
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+    - `th:text="|로그인: ${member.name}|"` : 로그인에 성공한 사용자 이름을 출력한다.
+    - 상품 관리, 로그아웃 버튼을 노출한다.
+
+
+- 실행
+    - 로그인에 성공하면 사용자 이름이 출력되면서 상품 관리, 로그아웃 버튼을 확인할 수 있다. 로그인에 성공시 세션 쿠키가 지속해서 유지되고, 웹 브라우저에서 서버에 요청시 memberId 쿠키를 계속 보내준다.
+
+- 로그아웃 기능
+    - 이번에는 로그아웃 기능을 만들어보자. 로그아웃 방법은 다음과 같다.
+    - 세션 쿠키이므로 웹 브라우저 종료시
+    - 서버에서 해당 쿠키의 종료 날짜를 0으로 지정
+- LoginController - logout 기능 추가
+    ```
+    @PostMapping("/logout")
+    public String logout(HttpServletResponse response) {
+        // 쿠키를 날리는 방법은 쿠키의 시간을 없애면 된다.
+        expireCookie(response, "memberId");
+        return "redirect:/";
+    }
+
+    private void expireCookie(HttpServletResponse response, String cookieName) {
+        Cookie cookie = new Cookie(cookieName, null);
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+    }
+    ```
+
+- 실행
+    - 개발자 도구에서 확인하기
+        - Network 탭에서 Response Header에서 Set-Cookie 에서 Max-Age:0인 것을 확인가능
+        - Application 탭에서 Cookies에서, 로그아웃을 누르는 순간 쿠키가 사라짐
+
+- 보통 웹 어플리케이션들은 쿠키로 유지가 된다. 다른 방법들도 있지만 (ex. SPA) 보통 쿠키를 많이 사용한다. 
+- 하지만 이 방식은 보안상 엄청 큰 문제가 있다! 이렇게 개발하면 큰일난다.
+
+
+## 쿠키와 보안 문제
+- 쿠키를 사용해서 로그인Id를 전달해서 로그인을 유지할 수 있었다. 그런데 여기에는 심각한 보안 문제가 있다.
+
+- 보안 문제
+    1. 쿠키 값은 임의로 변경할 수 있다.
+        - 클라이언트가 쿠키를 강제로 변경하면 다른 사용자가 된다.
+        - 실제 웹브라우저 개발자모드 -> Application -> Cookie 변경으로 확인(value부분에 더블클릭해서 값을 변경하면 된다. 만약에 Value값을 다른 memberId값으로 변경 후에 새로고침 하면 화면에는 변경한 memberId 값의 사용자 정보가 나온다)
+        - Cookie: memberId=1 -> Cookie: memberId=2 (다른 사용자의 이름이 보임)
+    2. 쿠키에 보관된 정보는 훔쳐갈 수 있다.
+        - 만약 쿠키에 회원 아이디가 아니라 개인정보나, 신용카드 정보가 있다면?
+        - 이 정보가 웹 브라우저에도 보관되고, 네트워크 요청마다 계속 클라이언트에서 서버로 전달된다. (물론 HTTPS 를 사용해야 한다)
+        - 쿠키의 정보가 나의 로컬 PC에서 누군가가 털어서 갖고 갈 수도 있고, 네트워크 전송 구간에서 털릴 수도 있다.
+    3. 해커가 쿠키를 한번 훔쳐가면 평생 사용할 수 있다.
+        - 해커가 쿠키를 훔쳐가서 그 쿠키로 악의적인 요청을 계속 시도할 수 있다.
+- 대안
+    1. 쿠키에 중요한 값을 노출하지 않고, 사용자 별로 예측 불가능한 임의의 토큰(랜덤 값)을 노출하고, 서버에서 토큰과 사용자 id를 매핑해서 인식한다. 그리고 서버에서 토큰을 관리한다.
+    2. 토큰은 해커가 임의의 값을 넣어도 찾을 수 없도록 예상 불가능 해야 한다.
+    3. 해커가 토큰을 털어가도 시간이 지나면 사용할 수 없도록 서버에서 해당 토큰의 만료시간을 짧게(예: 30분) 유지한다. 또는 해킹이 의심되는 경우 서버에서 해당 토큰을 강제로 제거하면 된다.
+
+## 로그인 처리하기 - 세션 동작 방식
+- 목표
+    - 앞서 쿠키에 중요한 정보를 보관하는 방법은 여러가지 보안 이슈가 있었다. 이 문제를 해결하려면 결국 `중요한 정보를 모두 서버에 저장해야 한다.` 그리고 `클라이언트와 서버는 추정 불가능한 임의의 식별자 값으로 연결`해야 한다.
+    - 이렇게 서버에 중요한 정보를 보관하고 연결을 유지하는 방법을 `세션`이라 한다.
+
+- 세션 동작 방식
+    - 세션을 어떻게 개발할지 먼저 개념을 이해해보자.
+
+- 로그인
+    ![image](https://user-images.githubusercontent.com/57219160/138595493-79169194-7d76-4b0d-a871-d6c552f2eb65.png)
+    - 사용자가 loginId , password 정보를 전달하면 서버에서 해당 사용자가 맞는지 확인한다.
+
+- 세션 생성
+    ![image](https://user-images.githubusercontent.com/57219160/138595549-370ecf7f-4c8b-4db9-8065-63da160c87bf.png)
+    - 세션 ID를 생성하는데, 추정 불가능해야 한다.
+    - `UUID는 추정이 불가능하다.`
+        - Cookie: mySessionId=zz0101xx-bab9-4b92-9b32-dadb280f4b61
+    - 생성된 세션 ID와 세션에 보관할 값( memberA )을 서버의 세션 저장소에 보관한다.
+- 세션id를 응답 쿠키로 전달
+    ![image](https://user-images.githubusercontent.com/57219160/138595585-7d116997-fe61-44b2-8c53-7a0087886bfc.png)
+    - `클라이언트와 서버는 결국 쿠키로 연결이 되어야 한다.`
+        - 서버는 클라이언트에 mySessionId 라는 이름으로 세션ID 만 쿠키에 담아서 전달한다.
+        - 클라이언트는 쿠키 저장소에 mySessionId 쿠키를 보관한다.
+
+- 중요
+    - 여기서 중요한 포인트는 회원과 관련된 정보는 전혀 클라이언트에 전달하지 않는다는 것이다.
+    - 오직 추정 불가능한 세션 ID만 쿠키를 통해 클라이언트에 전달한다.
+
+
+- 클라이언트의 세션id 쿠키 전달
+    ![image](https://user-images.githubusercontent.com/57219160/138595629-06066132-0596-40dd-add5-4f84bc6fd908.png)
+    - 클라이언트는 요청시 항상 mySessionId 쿠키를 전달한다.
+    - 서버에서는 클라이언트가 전달한 mySessionId 쿠키 정보로 세션 저장소를 조회해서 로그인시 보관한 세션 정보를 사용한다.
+
+- 정리
+    - 세션을 사용해서 서버에서 중요한 정보를 관리하게 되었다. 덕분에 다음과 같은 보안 문제들을 해결할 수 있다.
+    1. 쿠키 값을 변조 가능, -> 예상 불가능한 복잡한 세션Id를 사용한다.
+    2. 쿠키에 보관하는 정보는 클라이언트 해킹시 털릴 가능성이 있다. -> 세션Id가 털려도 여기에는 중요한 정보가 없다.
+    3. 쿠키 탈취 후 사용 -> 해커가 토큰을 털어가도 시간이 지나면 사용할 수 없도록 서버에서 세션의 만료시간을 짧게(예: 30분) 유지한다. 또는 해킹이 의심되는 경우 서버에서 해당 세션을 강제로 제거하면 된다.
+
+- 실제로 이런 식으로 많이 개발한다.
+
+
+## 로그인 처리하기 - 세션 직접 만들기
+- 세션을 직접 개발해서 적용해보자. 원래는 기존에 존재하는 세션도 있다. 하지만 여기서는 세션, 보안에 대해서 깊이 있게 이해하기 위해서 직접 만들어 본다. 이렇게 직접 만들어 보고 나서 HTTP Session으로 변경하는 방법으로 진행해보자!
+- 세션 관리는 크게 다음 3가지 기능을 제공하면 된다.
+    1. 세션 생성
+        - sessionId 생성 (임의의 추정 불가능한 랜덤 값)
+        - 세션 저장소에 sessionId와 보관할 값 저장
+        - sessionId로 응답 쿠키를 생성해서 클라이언트에 전달
+
+    2. 세션 조회
+        - 클라이언트가 요청한 sessionId 쿠키의 값으로, 세션 저장소에 보관한 값 조회
+
+    3. 세션 만료
+        - 클라이언트가 요청한 sessionId 쿠키의 값으로, 세션 저장소에 보관한 sessionId와 값 제거
+
+- SessionManager - 세션 관리
+
+
