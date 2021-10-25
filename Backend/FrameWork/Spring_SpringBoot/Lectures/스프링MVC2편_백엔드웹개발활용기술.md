@@ -5642,16 +5642,19 @@ public class LoginForm {
     - 세션을 어떻게 개발할지 먼저 개념을 이해해보자.
 
 - 로그인
+
     ![image](https://user-images.githubusercontent.com/57219160/138595493-79169194-7d76-4b0d-a871-d6c552f2eb65.png)
     - 사용자가 loginId , password 정보를 전달하면 서버에서 해당 사용자가 맞는지 확인한다.
 
 - 세션 생성
+
     ![image](https://user-images.githubusercontent.com/57219160/138595549-370ecf7f-4c8b-4db9-8065-63da160c87bf.png)
     - 세션 ID를 생성하는데, 추정 불가능해야 한다.
     - `UUID는 추정이 불가능하다.`
         - Cookie: mySessionId=zz0101xx-bab9-4b92-9b32-dadb280f4b61
     - 생성된 세션 ID와 세션에 보관할 값( memberA )을 서버의 세션 저장소에 보관한다.
 - 세션id를 응답 쿠키로 전달
+- 
     ![image](https://user-images.githubusercontent.com/57219160/138595585-7d116997-fe61-44b2-8c53-7a0087886bfc.png)
     - `클라이언트와 서버는 결국 쿠키로 연결이 되어야 한다.`
         - 서버는 클라이언트에 mySessionId 라는 이름으로 세션ID 만 쿠키에 담아서 전달한다.
@@ -5663,6 +5666,7 @@ public class LoginForm {
 
 
 - 클라이언트의 세션id 쿠키 전달
+
     ![image](https://user-images.githubusercontent.com/57219160/138595629-06066132-0596-40dd-add5-4f84bc6fd908.png)
     - 클라이언트는 요청시 항상 mySessionId 쿠키를 전달한다.
     - 서버에서는 클라이언트가 전달한 mySessionId 쿠키 정보로 세션 저장소를 조회해서 로그인시 보관한 세션 정보를 사용한다.
