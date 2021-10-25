@@ -5691,5 +5691,347 @@ public class LoginForm {
         - 클라이언트가 요청한 sessionId 쿠키의 값으로, 세션 저장소에 보관한 sessionId와 값 제거
 
 - SessionManager - 세션 관리
+    ```
+    @Component
+    public class SessionManager {
+
+        public static final String SESSION_COOKIE_NAME = "mySessionId"; // 자주 사용하니까 상수로 빼냄
+        private Map<String, Object> sessionStore = new ConcurrentHashMap<>();
+
+        /**
+        * 세션 생성
+        */
+        public void createSession(Object value, HttpServletResponse response) {
+
+            // 세션 id를 생성하고, 값을 세션에 저장
+            String sessionId = UUID.randomUUID().toString(); // UUID 자바가 제공.
+            sessionStore.put(sessionId, value);
+
+            // 쿠키 생성
+            Cookie mySessionCookie = new Cookie(SESSION_COOKIE_NAME, sessionId);
+            response.addCookie(mySessionCookie);
+        }
+
+        /**
+        * 세션 조회
+        */
+        public Object getSession(HttpServletRequest request) {
+    /*
+            Cookie[] cookies = request.getCookies();
+            if (cookies == null) {
+                return null;
+            }
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals(SESSION_COOKIE_NAME)) {
+                    return sessionStore.get(cookie.getValue());
+                }
+            }
+            return null;
+    */
+            Cookie sessionCookie = findCookie(request, SESSION_COOKIE_NAME);
+            if (sessionCookie == null) {
+                return null;
+            }
+            return sessionStore.get(sessionCookie.getValue());
+        }
+
+        /**
+        * 세션 만료
+        */
+        public void expire(HttpServletRequest request) {
+            Cookie sessionCookie = findCookie(request, SESSION_COOKIE_NAME);
+            if (sessionCookie != null) {
+                sessionStore.remove(sessionCookie.getValue());
+            }
+
+        }
+
+        public Cookie findCookie(HttpServletRequest request, String cookieName) {
+            if (request.getCookies() == null) {
+                return null;
+            }
+            return Arrays.stream(request.getCookies())
+                    .filter(cookie -> cookie.getName().equals(cookieName))
+                    .findAny()
+                    .orElse(null);
+        }
+    }
+
+    ```
+    - 로직은 어렵지 않아서 쉽게 이해가 될 것이다.
+    - @Component : 스프링 빈으로 자동 등록한다.
+    - ConcurrentHashMap : HashMap 은 동시 요청에 안전하지 않다. 동시 요청에 안전한 ConcurrentHashMap 를 사용했다.
 
 
+- SessionManagerTest - 테스트
+    ```
+
+    class SessionManagerTest {
+
+        SessionManager sessionManager = new SessionManager();
+
+        @Test
+        void sessionTest() {
+
+            // 세션 생성 (서버 -> 클라이언트에게 세션 만들어서 쿠키에 담아서 response)
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            Member member = new Member();
+            sessionManager.createSession(member, response);
+
+            // 요청에 응답 쿠키 저장 (웹 브라우저의 요청임)
+            MockHttpServletRequest request = new MockHttpServletRequest();
+            request.setCookies(response.getCookies()); // mySessionId=1231244-124125-sdfdf
+
+            // 세션 조회
+            Object result = sessionManager.getSession(request);
+            Assertions.assertThat(result).isEqualTo(member);
+
+            // 세션 만료
+            sessionManager.expire(request);
+            Object expired = sessionManager.getSession(request);
+            Assertions.assertThat(expired).isNull();
+        }
+    }
+    ```
+    - 간단하게 테스트를 진행해보자. 여기서는 HttpServletRequest , HttpservletResponse 객체를 직접 사용할 수 없기 때문에 테스트에서 비슷한 역할을 해주는 가짜 MockHttpServletRequest , MockHttpServletResponse 를 사용했다.
+    - HttpServetRequest, HttpServletResponse 는 인터페이스고, 이들의 구현체는 Tomcat이 별도로 제공하는 것이므로, 스프링이 가짜로 테스트할 수 있도록 지원해주는 구현체를 제공해준다(`MockHttpServletRequest, MockHttpServletResposne`)
+
+
+
+## 로그인 처리하기 - 직접 만든 세션 적용
+- 지금까지 개발한 세션 관리 기능을 실제 웹 애플리케이션에 적용해보자.
+
+- LoginController - loginV2()
+    ```
+        @PostMapping("/login")
+        public String loginV2(@Valid @ModelAttribute LoginForm form, BindingResult bindingResult, HttpServletResponse response) {
+            if (bindingResult.hasErrors()) {
+                return "login/loginForm";
+            }
+
+            Member loginMember = loginService.login(form.getLoginId(), form.getPassword());
+
+            if (loginMember == null) {
+                bindingResult.reject("loginFail", "아이디 또는 비밀번호가 맞지 않습니다.");
+                return "login/loginForm";
+            }
+
+            // 로그인 성공 처리
+
+            // 세션 관리자를 통해 세션을 생성하고, 회원 데이터 보관
+            sessionManager.createSession(loginMember, response);
+
+            return "redirect:/";
+        }
+    ```
+    - 기존 login() 의 @PostMapping("/login") 주석 처리
+    - private final SessionManager sessionManager; 주입
+    - sessionManager.createSession(loginMember, response);
+    - 로그인 성공시 세션을 등록한다. 세션에 loginMember 를 저장해두고, 쿠키도 함께 발행한다.
+- LoginController - logoutV2()
+    ```
+    @PostMapping("/logout")
+    public String logoutV2(HttpServletRequest request) {
+        sessionManager.expire(request);
+        return "redirect:/";
+    }
+    ```
+    - 기존 logout() 의 @PostMapping("/logout") 주석 처리
+    - 로그 아웃시 해당 세션의 정보를 제거한다.
+    - 로그아웃 시, 개발자 도구의 Application의 쿠키탭에 세션이 남아있긴 하지만 의미없다. 왜냐하면 로그아웃 처리한 순간 이미 그 값은 서버에서 사라지기 때문이다. 
+
+- HomeController - homeLoginV2()
+    ```
+    @GetMapping("/")
+    public String homeLoginV2(HttpServletRequest request, Model model) {
+
+        // 세션 관리자에 저장된 회원 정보 조회
+        Object member = (Member)sessionManager.getSession(request);
+
+        // 로그인
+        if (member == null) {
+            return "home";
+        }
+
+        model.addAttribute("member", member);
+        return "loginHome";
+    }
+    ```
+    - private final SessionManager sessionManager; 주입
+    - 기존 homeLogin() 의 @GetMapping("/") 주석 처리
+    - 세션 관리자에서 저장된 회원 정보를 조회한다. 만약 회원 정보가 없으면, 쿠키나 세션이 없는 것 이므로 로그인 되지 않은 것으로 처리한다.
+    - 로그인 시, 개발자 도구의 Application의 쿠키탭에서 Value값을 변경 한 후 새로고침 하면 로그인한 사람의 이름이 뜨지 않는다. 즉 인증되지 못한 것임.
+
+- 정리
+    - 이번 시간에는 세션과 쿠키의 개념을 명확하게 이해하기 위해서 직접 만들어보았다. 사실 세션이라는 것이 뭔가 특별한 것이 아니라 단지 쿠키를 사용하는데, 서버에서 데이터를 유지하는 방법일 뿐이라는 것을 이해했을 것이다.
+    - 그런데 프로젝트마다 이러한 세션 개념을 직접 개발하는 것은 상당히 불편할 것이다. 그래서 서블릿도 세션 개념을 지원한다.
+    - 이제 직접 만드는 세션 말고, 서블릿이 공식 지원하는 세션을 알아보자. 서블릿이 공식 지원하는 세션은 우리가 직접 만든 세션과 동작 방식이 거의 같다(코드 안에 들여다 보면 사실 다 자바 코드임). 추가로 세션을 일정시간 사용하지 않으면 해당 세션을 삭제하는 기능을 제공한다.
+    
+
+## 로그인 처리하기 - 서블릿 HTTP 세션1
+- 세션이라는 개념은 대부분의 웹 애플리케이션에 필요한 것이다. 어쩌면 웹이 등장하면서 부터 나온 문제이다.
+- 서블릿은 세션을 위해 HttpSession 이라는 기능을 제공하는데, 지금까지 나온 문제들을 해결해준다. 우리가 직접 구현한 세션의 개념이 이미 구현되어 있고, 더 잘 구현되어 있다.
+
+- HttpSession 소개
+    - 서블릿이 제공하는 HttpSession 도 결국 우리가 직접 만든 SessionManager 와 같은 방식으로 동작한다. 서블릿을 통해 HttpSession 을 생성하면 다음과 같은 쿠키를 생성한다. 쿠키 이름이 JSESSIONID 이고, 값은 추정 불가능한 랜덤 값이다.
+    ```
+    Cookie: JSESSIONID=5B78E23B513F50164D6FDD8C97B0AD05
+    ```
+- HttpSession 사용
+    - 서블릿이 제공하는 HttpSession 을 사용하도록 개발해보자.
+- SessionConst
+    ```
+    package hello.login.web;
+    public class SessionConst {
+        public static final String LOGIN_MEMBER = "loginMember";
+    }
+    ```
+    - 사실 위처럼 새로운 클래스를 생성하는 목적이 아닌 상수 보관 용으로만 사용할 때는 단순 클래스보다 아래처럼, 객체 생성이 불가능한 추상클래스나 인터페이스를 많이 사용한다. 보통 인터페이스를 더 사용
+    ```
+    public abstract class SessionConst {
+        public static final String LOGIN_MEMBER = "loginMember";
+    }
+    ```
+
+    ```
+    public interface SessionConst { 
+        String LOGIN_MEMBER = "loginMember";
+    }
+
+    ```
+- LoginController - loginV3()
+    ```
+    @PostMapping("/login")
+    public String loginV3(@Valid @ModelAttribute LoginForm form, BindingResult bindingResult, HttpServletRequest request) {
+        if (bindingResult.hasErrors()) {
+            return "login/loginForm";
+        }
+
+        Member loginMember = loginService.login(form.getLoginId(), form.getPassword());
+
+        if (loginMember == null) {
+            bindingResult.reject("loginFail", "아이디 또는 비밀번호가 맞지 않습니다.");
+            return "login/loginForm";
+        }
+
+        // 로그인 성공 처리
+        // 세션이 있으면 있는 세션 반환, 없으면 신규 세션을 생성
+        HttpSession session = request.getSession(); // request.getSession(true); 로 반환 or 생성하면 되는데 default 가 true임
+        // 세션에 로그인 회원 정보 보관
+        session.setAttribute(SessionConst.LOGIN_MEMBER, loginMember);
+
+        // 세션 관리자를 통해 세션을 생성하고, 회원 데이터 보관
+    //        sessionManager.createSession(loginMember, response);
+
+        return "redirect:/";
+    }
+    ```
+    - 기존 loginV2() 의 @PostMapping("/login") 주석 처리
+    - 세션 생성과 조회
+        - 세션을 생성하려면 request.getSession(true) 를 사용하면 된다.
+        - public HttpSession getSession(boolean create);
+    - 세션의 create 옵션에 대해 알아보자.
+        - request.getSession(true)
+            - 세션이 있으면 기존 세션을 반환한다.(로그인이 되어있으면 그 기존의 세션을 반환)
+            - 세션이 없으면 새로운 세션을 생성해서 반환한다.
+        - request.getSession(false)
+            - 세션이 있으면 기존 세션을 반환한다.
+            - 세션이 없으면 새로운 세션을 생성하지 않는다. null 을 반환한다.
+        - request.getSession() : 신규 세션을 생성하는 request.getSession(true) 와 동일하다.
+    - 세션에 로그인 회원 정보 보관
+        - `session.setAttribute(SessionConst.LOGIN_MEMBER, loginMember);`
+        - 세션에 데이터를 보관하는 방법은 request.setAttribute(..) 와 비슷하다. 하나의 세션에 여러 값을 저장할 수 있다(메모리에 다 저장)
+        ```
+        session.setAttribute("SessionConst.LOGIN_MEMBER, loginMember);
+        session.setAttribute("AAA", loginMember);
+        ```
+
+- LoginController - logoutV3()
+    ```
+    @PostMapping("/logout")
+    public String logoutV3(HttpServletRequest request) {
+    //세션을 삭제한다.
+    HttpSession session = request.getSession(false);
+    if (session != null) {
+            session.invalidate();
+        }
+    return "redirect:/";
+    }
+    ```
+    - 기존 logoutV2() 의 @PostMapping("/logout") 주석 처리
+    - `request.getSession(false);` 
+        - true로 하면 세션이 없을 경우 생성해버리기 때문에 false.
+        - false니까 없으면 그냥 null로 반환하고, 있다면 들고 나와서 invalidate()
+    - session.invalidate() : 세션을 제거한다.
+        - 세션뿐만 아니라 그 안의 데이터까지 다 제거
+
+- HomeController - homeLoginV3()
+    ```
+    @GetMapping("/")
+    public String homeLoginV3(HttpServletRequest request, Model model) {
+
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            return "home";
+        }
+
+        Member loginMember = (Member)session.getAttribute(SessionConst.LOGIN_MEMBER);
+
+        // 세션에 회원 데이터가 없으면 home
+        if (loginMember == null) {
+            return "home";
+        }
+
+        // 세션이 유지되면 로그인으로 이동
+        model.addAttribute("member", loginMember);
+        return "loginHome";
+
+    }
+    ```
+    - 기존 homeLoginV2() 의 @GetMapping("/") 주석 처리
+    - request.getSession(false) : request.getSession() 를 사용하면 기본 값이 create: true 이므로, 로그인 하지 않을 사용자도 의미없는 세션이 만들어진다. 따라서 세션을 찾아서 사용하는 시점에는 create: false 옵션을 사용해서 세션을 생성하지 않아야 한다.
+    - 세션은 메모리를 사용하는 것이기 때문에 꼭 필요할 때만 생성해야 한다.
+    - session.getAttribute(SessionConst.LOGIN_MEMBER) : 로그인 시점에 세션에 보관한 회원 객체를 찾는다.
+
+- 실행
+    - JSESSIONID 쿠키가 적절하게 생성되는 것을 확인하자.
+
+## 로그인 처리하기 - 서블릿 HTTP 세션2
+- @SessionAttribute
+    - 스프링은 세션을 더 편리하게 사용할 수 있도록 @SessionAttribute 을 지원한다.
+- 이미 로그인 된 사용자를 찾을 때는 다음과 같이 사용하면 된다. 참고로 이 기능은 세션을 생성하지 않는다.
+```
+@SessionAttribute(name = "loginMember", required = false) Member loginMember
+```
+
+- HomeController - homeLoginV3Spring()
+    ```
+    @GetMapping("/")
+    public String homeLoginV3Spring(
+            @SessionAttribute(name = SessionConst.LOGIN_MEMBER, required = false) Member loginMember, Model model) {
+
+        // 세션에 회원 데이터가 없으면 home
+        if (loginMember == null) {
+            return "home";
+        }
+
+        // 세션이 유지되면 로그인으로 이동
+        model.addAttribute("member", loginMember);
+        return "loginHome";
+    }
+    ```
+    - homeLoginV3() 의 @GetMapping("/") 주석 처리
+    - 세션을 찾고, 세션에 들어있는 데이터를 찾는 번거로운 과정을 스프링이 한번에 편리하게 처리해주는 것을 확인할 수 있다.
+- TrackingModes
+    - 로그인을 처음 시도하면 URL이 다음과 같이 jsessionid 를 포함하고 있는 것을 확인할 수 있다.
+    ```
+    http://localhost:8080/;jsessionid=F59911518B921DF62D09F0DF8F83F872
+    ```
+    - 이것은 웹 브라우저가 쿠키를 지원하지 않을 때 쿠키 대신 URL을 통해서 세션을 유지하는 방법이다. 이 방법을 사용하려면 URL에 이 값을 계속 포함해서 전달해야 한다. 타임리프 같은 템플릿은 엔진을 통해서 링크를 걸면 jsessionid 를 URL에 자동으로 포함해준다. 서버 입장에서 웹 브라우저가 쿠키를 지원하는지 하지 않는지 최초에는 판단하지 못하므로, 쿠키 값도 전달하고, URL에 jsessionid 도 함께 전달한다.
+    - URL 전달 방식을 끄고 항상 쿠키를 통해서만 세션을 유지하고 싶으면 다음 옵션을 넣어주면 된다. 이렇게 하면 URL에 jsessionid 가 노출되지 않는다.
+    - application.properties
+    ```
+    server.servlet.session.tracking-modes=cookie
+    ```
+
+## 세션 정보와 타임아웃 설정

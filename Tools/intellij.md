@@ -251,6 +251,11 @@ shift + f6
 option + command + p
 ```
 
+- String을 별도의 상수로 뽑기
+```
+option + command + c
+```
+
 
 - 단어, 문자 바꾸기 replacement (하나의 파일 안에서)
 ```
