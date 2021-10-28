@@ -6262,6 +6262,8 @@ session.setMaxInactiveInterval(1800); //1800초
     - 필터를 등록하는 방법은 여러가지가 있지만, 스프링 부트를 사용한다면 FilterRegistrationBean 을 사용해서 등록하면 된다. 
         - 왜냐하면 스프링부트는 직접 WAS를 들고 띄우기 때문에, WAS를 띄울 때 Filter를 등록해준다.
     - setFilter(new LogFilter()) : 등록할 필터를 지정한다.
+        - 사실 LogFilter를 스프링 빈으로 등록해서(LogFilter클래스에 @Component 붙임) 이 WebConf에서 `@Autowired LoginCheckFilter loginCheckFilter;` 로 주입받아서(사실 생성자 주입으로 받으면 더 좋음) `setFilter(loginCheckFilter);` 로 등록해도 된다.
+        - 뒤의 인터셉터도 마찬가지지만, 만든 필터나 인터셉터를 등록할 때 new 자바클래스로 등록해도 되지만, 스프링 빈으로 등록해서 설정해도 된다.
     - setOrder(1) : 필터는 체인으로 동작한다. 따라서 순서가 필요하다. 낮을 수록 먼저 동작한다.
     - addUrlPatterns("/*") : 필터를 적용할 URL 패턴을 지정한다. 한번에 여러 패턴을 지정할 수 있다.
 
@@ -6424,3 +6426,345 @@ session.setMaxInactiveInterval(1800); //1800초
 ## 스프링 인터셉터 - 소개
 - 서블릿보다 훨씬 더 많은 기능을 제공하고 더 좋다.
 - 스프링 인터셉터도 서블릿 필터와 같이 웹과 관련된 공통 관심 사항을 효과적으로 해결할 수 있는 기술이다. 서블릿 필터가 서블릿이 제공하는 기술이라면, 스프링 인터셉터는 스프링 MVC가 제공하는 기술이다. 둘다 웹과 관련된 공통 관심 사항을 처리하지만, 적용되는 순서와 범위, 그리고 사용방법이 다르다.
+
+- `스프링 인터셉터 흐름`
+    ```
+    HTTP 요청 ->WAS-> 필터 -> 서블릿 -> 스프링 인터셉터 -> 컨트롤러
+    ```
+    - 스프링 인터셉터는 디스패처 서블릿과 컨트롤러 사이에서 컨트롤러 호출 직전에 호출 된다.
+    - 스프링 인터셉터는 스프링 MVC가 제공하는 기능이기 때문에 결국 디스패처 서블릿 이후에 등장하게 된다. 스프링 MVC의 시작점이 디스패처 서블릿이라고 생각해보면 이해가 될 것이다.
+    - 스프링 인터셉터에도 URL 패턴을 적용할 수 있는데, 서블릿 URL 패턴과는 다르고, 매우 정밀하게 설정할 수 있다.
+
+- `스프링 인터셉터 제한`
+    ```
+    HTTP 요청 -> WAS -> 필터 -> 서블릿 -> 스프링 인터셉터 -> 컨트롤러 //로그인 사용자
+    HTTP 요청 -> WAS -> 필터 -> 서블릿 -> 스프링 인터셉터(적절하지 않은 요청이라 판단, 컨트롤러 호출 X) // 비 로그인 사용자
+    ```
+    - 인터셉터에서 적절하지 않은 요청이라고 판단하면 거기에서 끝을 낼 수도 있다. 그래 로그인 여부를 체크하기에 딱 좋다.
+
+- `스프링 인터셉터 체인`
+    ```
+    HTTP 요청 -> WAS -> 필터 -> 서블릿 -> 인터셉터1 -> 인터셉터2 -> 컨트롤러
+    ```
+    - 스프링 인터셉터는 체인으로 구성되는데, 중간에 인터셉터를 자유롭게 추가할 수 있다. 예를 들어서 로그를 남기는 인터셉터를 먼저 적용하고, 그 다음에 로그인 여부를 체크하는 인터셉터를 만들 수 있다.
+- 지금까지 내용을 보면 서블릿 필터와 호출 되는 순서만 다르고, 제공하는 기능은 비슷해 보인다. 앞으로 설명하겠지만, 스프링 인터셉터는 서블릿 필터보다 편리하고, 더 정교하고 다양한 기능을 지원한다.
+
+- 스프링 인터셉터 인터페이스
+    - 스프링의 인터셉터를 사용하려면 HandlerInterceptor 인터페이스를 구현하면 된다.
+    ``` 
+    public interface HandlerInterceptor {
+
+        default boolean preHandle(HttpServletRequest request, HttpServletResponse
+    response, Object handler) throws Exception {}
+                                
+        default void postHandle(HttpServletRequest request, HttpServletResponse
+    response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {}
+    
+        default void afterCompletion(HttpServletRequest request, HttpServletResponse
+    response,Object handler, @Nullable Exception ex) throws Exception {}
+    
+    }
+    ```
+    - 서블릿 필터의 경우 단순하게 doFilter() 하나만 제공된다. 인터셉터는 컨트롤러 호출 전( preHandle ), 호출 후( postHandle ), 요청 완료 이후( afterCompletion )와 같이 단계적으로 잘 세분화 되어 있다.
+    - 서블릿 필터의 경우 단순히 request , response 만 제공했지만, 인터셉터는 어떤 컨트롤러( handler )가 호출되는지 호출 정보도 받을 수 있다. 그리고 어떤 modelAndView 가 반환되는지 응답 정보도 받을 수 있다.
+
+- 스프링 인터셉터 호출 흐름
+    ![image](https://user-images.githubusercontent.com/57219160/139265182-7aa8ce6a-d59c-4c67-b099-46d178f410c1.png)
+    - 정상 흐름
+        - preHandle : 컨트롤러 호출 전에 호출된다. (더 정확히는 핸들러 어댑터 호출 전에 호출된다.)
+            - preHandle 의 응답값이 true 이면 다음으로 진행하고(다음 인터셉터 있으면 인터셉터로, 없으면 그 다음으로), false 이면 더는 진행하지 않는다. false인 경우 나머지 인터셉터는 물론이고, 핸들러 어댑터도 호출되지 않는다. 그림에서 1번에서 끝이나버린다.
+        - postHandle : 컨트롤러 호출 후에 호출된다. (더 정확히는 핸들러 어댑터 호출 후에 호출된다.)
+        - afterCompletion : 뷰가 렌더링 된 이후에 호출된다.
+
+- 스프링 인터셉터 예외 상황
+    ![image](https://user-images.githubusercontent.com/57219160/139265578-389f23fb-1064-4733-b03a-0e62d1cd88e6.png)
+    - 예외가 발생시
+        - preHandle : 컨트롤러 호출 전에 호출된다.
+        - postHandle : 컨트롤러에서 예외가 발생하면 postHandle 은 호출되지 않는다.
+        - afterCompletion : afterCompletion 은 항상 호출된다. 이 경우 예외( ex )를 파라미터로 받아서 어떤 예외가 발생했는지 로그로 출력할 수 있다.
+    - afterCompletion은 예외가 발생해도 호출된다.
+        - 예외가 발생하면 postHandle() 는 호출되지 않으므로 예외와 무관하게 공통 처리를 하려면 afterCompletion() 을 사용해야 한다.
+        - 예외가 발생하면 afterCompletion() 에 예외 정보( ex )를 포함해서 호출된다.
+        - 참고로 정상 흐름에서는 예외가 Null로 넘어온다. 예외가 발생해야지만 그 객체가 넘어오는 것임.
+
+- 정리  
+    - 인터셉터는 스프링 MVC 구조에 특화된 필터 기능을 제공한다고 이해하면 된다. 스프링 MVC를 사용하고, 특별히 필터를 꼭 사용해야 하는 상황이 아니라면 인터셉터를 사용하는 것이 더 편리하다.
+    - 훨씬 더 편리함.
+
+- 필터로 만들었던 것을 똑같이, 인터셉터로 만들어보자!
+
+## 스프링 인터셉터 - 요청 로그
+- LogInterceptor - 요청 로그 인터셉터
+    ```
+    @Slf4j
+    public class LogInterceptor implements HandlerInterceptor {
+
+        public static final String LOG_ID = "logId";
+
+        @Override
+        public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+            String requestURI = request.getRequestURI();
+            String uuid = UUID.randomUUID().toString();
+
+            request.setAttribute(LOG_ID, uuid); // afterCompletion 에서 꺼내서 사용하려고 넣어둠. 이 request는 하나의 사용자에 대해서 요청->응답까지 하나의 객체로 보장을 받으니.
+
+            //@RequestMapping : HandlerMethod
+            //정적 리소스 : ResourceHttpRequestHandler
+            if (handler instanceof HandlerMethod) {
+                HandlerMethod hm = (HandlerMethod)handler; // 호출할 컨트롤러 메서드의 모든 정보가 포함되어 있다.
+            }
+
+            log.info("REQUEST [{}][{}][{}]", uuid, requestURI, handler); // handler(컨트롤러) 도 넘어오므로 사용가능하다!
+            return true; // false면 끝.
+        }
+
+        @Override
+        public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+            log.info("postHandle [{}]", modelAndView);
+        }
+
+        @Override
+        public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+            String requestURI = request.getRequestURI();
+            String logId = (String)request.getAttribute(LOG_ID);
+            log.info("RESPONSE [{}][{}][{}]", logId, requestURI, handler);
+            if (ex != null) {
+                log.error("afterCompletion error!!", ex);
+            }
+        }
+    }
+    ```
+    - String uuid = UUID.randomUUID().toString()
+        - 요청 로그를 구분하기 위한 uuid 를 생성한다.
+    - request.setAttribute(LOG_ID, uuid)
+        - 서블릿 필터의 경우 지역변수로 해결이 가능하지만, 스프링 인터셉터는 호출 시점이 완전히 분리되어 있다. 따라서 preHandle 에서 지정한 값을 postHandle , afterCompletion 에서 함께 사용하려면 어딘가에 담아두어야 한다. LogInterceptor 도 싱글톤 처럼 사용되기 때문에 맴버변수를 사용하면 위험하다(내가 요청한 상태서, 다른 쓰레드 요청이 오면 바뀌어버린다). 따라서 request 에 담아두었다. 이 값은 afterCompletion 에서 request.getAttribute(LOG_ID) 로 찾아서 사용한다.
+    - return true
+        - true 면 정상 호출이다. 다음 인터셉터나 컨트롤러가 호출된다.
+    - log.error("afterCompletion error!!", ex);
+        - 오류를 로그로 남길 때는 log.error("afterCompletion error!!`{}`", ex);처럼  괄호 {} 안 넣어도 된다. 그냥 ex 오류 찍으면 
+    ```
+    if (handler instanceof HandlerMethod) {
+        HandlerMethod hm = (HandlerMethod) handler; //호출할 컨트롤러 메서드의 모든 정보가
+    포함되어 있다. }
+    ```
+- HandlerMethod
+    - 핸들러 정보는 어떤 핸들러 매핑을 사용하는가에 따라 달라진다. 스프링을 사용하면 일반적으로 @Controller , @RequestMapping 을 활용한 핸들러 매핑을 사용하는데, 이 경우 핸들러 정보로 HandlerMethod 가 넘어온다.
+
+
+- ResourceHttpRequestHandler
+    - @Controller 가 아니라 /resources/static 와 같은 정적 리소스가 호출 되는 경우 ResourceHttpRequestHandler 가 핸들러 정보로 넘어오기 때문에 타입에 따라서 처리가 필요하다.
+
+- postHandle, afterCompletion
+    - 종료 로그를 postHandle 이 아니라 afterCompletion 에서 실행한 이유는, 예외가 발생한 경우 postHandle 가 호출되지 않기 때문이다. afterCompletion 은 예외가 발생해도 호출 되는 것을 보장한다.
+
+
+- WebConfig - 인터셉터 등록
+    ```
+    @Configuration
+    public class WebConfig implements WebMvcConfigurer {
+        @Override
+        public void addInterceptors(InterceptorRegistry registry) {
+            registry.addInterceptor(new LogInterceptor())
+                    .order(1)
+        }
+    //...
+    }
+    ```
+    - 인터셉터와 필터가 중복되지 않도록 필터를 등록하기 위한 logFilter() 의 @Bean 은 주석처리하자.
+    - WebMvcConfigurer 가 제공하는 addInterceptors() 를 사용해서 인터셉터를 등록할 수 있다.
+    - registry.addInterceptor(new LogInterceptor()) : 인터셉터를 등록한다.
+    - order(1) : 인터셉터의 호출 순서를 지정한다. 낮을 수록 먼저 호출된다.
+    - addPathPatterns("/**") : 인터셉터를 적용할 URL 패턴을 지정한다. 의미는 / 하위에 있는 모든 것 다
+    - excludePathPatterns("/css/**", "/*.ico", "/error") : 인터셉터에서 제외할 패턴을 지정한다.
+- 필터와 비교해보면 인터셉터는 addPathPatterns , excludePathPatterns 로 매우 정밀하게 URL 패턴을 지정할 수 있다.
+
+- 실행 로그
+```
+REQUEST  [6234a913-f24f-461f-a9e1-85f153b3c8b2][/members/add][hello.login.web.member.MemberController#addForm(Member)]
+
+postHandle [ModelAndView [view="members/addMemberForm";model={member=Member(id=null, loginId=null, name=null, password=null),org.springframework.validation.BindingResult.member=org.springframework.validation.BeanPropertyBindingResult: 0 errors}]]
+
+RESPONSE [6234a913-f24f-461f-a9e1-85f153b3c8b2][/members/add]
+```
+
+- 스프링의 URL 경로
+    - 스프링이 제공하는 URL 경로는 서블릿 기술이 제공하는 URL 경로와 완전히 다르다. 더욱 자세하고, 세밀하게 설정할 수 있다.
+- 자세한 내용은 다음을 참고하자
+    - PathPattern 공식 문서
+    ```
+    ? 한 문자 일치
+    * 경로(/) 안에서 0개 이상의 문자 일치
+    ** 경로 끝까지 0개 이상의 경로(/) 일치
+    {spring} 경로(/)와 일치하고 spring이라는 변수로 캡처
+    {spring:[a-z]+} matches the regexp [a-z]+ as a path variable named "spring" {spring:[a-z]+} regexp [a-z]+ 와 일치하고, "spring" 경로 변수로 캡처
+    {*spring} 경로가 끝날 때 까지 0개 이상의 경로(/)와 일치하고 spring이라는 변수로 캡처
+    /pages/t?st.html — matches /pages/test.html, /pages/tXst.html but not /pages/
+    toast.html
+    /resources/*.png — matches all .png files in the resources directory
+    /resources/** — matches all files underneath the /resources/ path, including /
+    resources/image.png and /resources/css/spring.css
+    /resources/{*path} — matches all files underneath the /resources/ path and
+    captures their relative path in a variable named "path"; /resources/image.png
+    will match with "path" → "/image.png", and /resources/css/spring.css will match
+    with "path" → "/css/spring.css"
+    /resources/{filename:\\w+}.dat will match /resources/spring.dat and assign the
+    value "spring" to the filename variable
+    ```
+    - https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/ springframework/web/util/pattern/PathPattern.html
+
+## 스프링 인터셉터 - 인증 체크
+- 서블릿 필터에서 사용했던 인증 체크 기능을 스프링 인터셉터로 개발해보자.(인증 체크시 필터 말고 인터셉터를 써야 하는 이유!)
+- LoginCheckInterceptor
+    ```
+    @Slf4j
+    public class LoginCheckInterceptor implements HandlerInterceptor {
+
+        @Override
+        public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+
+            String requestURI = request.getRequestURI();
+
+            log.info("인증 체크 인터셉터 실행 {}", requestURI);
+
+            HttpSession session = request.getSession();
+
+            if (session == null || session.getAttribute(SessionConst.LOGIN_MEMBER) == null) {
+                log.info("미인증 사용자 요청");
+                // 로그인으로 redirect
+                response.sendRedirect("/login?redirectURL=" + requestURI);
+                return false; // 꼭 해줘야 함. 더 이상 진행 안하겠다는 뜻
+            }
+            return true;
+        }
+    }
+    ```
+    - 서블릿 필터와 비교해서 코드가 매우 간결하다. 인증이라는 것은 컨트롤러 호출 전에만 호출되면 된다. 따라서 preHandle 만 구현하면 된다.
+- 순서 주의, 세밀한 설정 가능
+    ```
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) { // 인터셉터로 구현한 로그남기는 것
+        // 요청 로그 남기기
+        registry.addInterceptor(new LogInterceptor())
+                .order(1)
+                .addPathPatterns("/**") //   /의 하위에 있는 모든 것 다
+                .excludePathPatterns("/css/**", "/*.ico", "/error");
+
+        // 인증 체크
+        registry.addInterceptor(new LoginCheckInterceptor())
+                .order(2)
+                .addPathPatterns("/**")
+                .excludePathPatterns("/", "/members/add", "/login", "/logout",
+                        "/css/**", "/*.ico", "/error");
+    }
+    ```
+    - 인터셉터와 필터가 중복되지 않도록 필터를 등록하기 위한 logFilter() , loginCheckFilter() 의 @Bean 은 주석처리하자.
+    - 인터셉터를 적용하거나 하지 않을 부분은 addPathPatterns 와 excludePathPatterns 에 작성하면 된다. 기본적으로 모든 경로에 해당 인터셉터를 적용하되 ( /** ), 홈( / ), 회원가입( /members/add ), 로그인( /login ), 리소스 조회( /css/** ), 오류( /error )와 같은 부분은 로그인 체크 인터셉터를 적용하지 않는다. 서블릿 필터와 비교해보면 매우 편리한 것을 알 수 있다.
+
+- 정리
+    - 서블릿 필터와 스프링 인터셉터는 웹과 관련된 공통 관심사를 해결하기 위한 기술이다. 서블릿 필터와 비교해서 스프링 인터셉터가 개발자 입장에서 훨씬 편리하다는 것을 코드로 이해했을 것이다. 특별한 문제가 없다면 인터셉터를 사용하는 것이 좋다.
+
+## ArgumentResolver 활용
+- MVC1편 6. 스프링 MVC - 기본 기능 요청 매핑 헨들러 어뎁터 구조에서 ArgumentResolver 를 학습했다.
+- 이번 시간에는 해당 기능을 사용해서 로그인 회원을 조금 편리하게 찾아보자. (실제로 많이 사용함)
+- HomeController - 추가
+    ```
+    @GetMapping("/")
+    public String homeLoginV3ArgumentResolver(@Login Member loginMember, Model model) {
+
+        //세션에 회원 데이터가 없으면 home 
+        if (loginMember == null) {
+            return "home";
+        }
+
+        //세션이 유지되면 로그인으로 이동 
+        model.addAttribute("member", loginMember); 
+        return "loginHome";
+    }
+    ```
+    - homeLoginV3Spring() 의 @GetMapping 주석 처리
+    - @SessionAttribute 와 같이 길게 안 쓰고 @Login 으로 간단하게 처리가 가능하다
+    - 다음에 설명하는 @Login 애노테이션을 만들어야 컴파일 오류가 사라진다.
+    - @Login 애노테이션이 있으면 직접 만든 ArgumentResolver 가 동작해서 자동으로 세션에 있는 로그인 회원을 찾아주고, 만약 세션에 없다면 null 을 반환하도록 개발해보자.
+- @Login 애노테이션 생성
+    ```
+    @Target(ElementType.PARAMETER)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Login {
+    }
+    ```
+    - @Target(ElementType.PARAMETER) : 파라미터에만 사용
+    - @Retention(RetentionPolicy.RUNTIME) : 리플렉션 등을 활용할 수 있도록 런타임까지 애노테이션 정보가 남아있음
+
+- MVC1에서 학습한 HandlerMethodArgumentResolver 를 구현해보자.
+- LoginMemberArgumentResolver 생성
+    ```
+    @Slf4j
+    public class LoginMemberArgumentResolver implements HandlerMethodArgumentResolver {
+
+        @Override
+        public boolean supportsParameter(MethodParameter parameter) {
+            log.info("supportsParameter 실행");
+
+            boolean hasLoginAnnotation = parameter.hasParameterAnnotation(Login.class); // 로그인 호출전에 Parameter에 @Login 있는지 확인
+            boolean hasMemberType = Member.class.isAssignableFrom(parameter.getParameterType()); // Member타입인가
+
+            return hasLoginAnnotation && hasMemberType;
+        }
+
+        @Override
+        public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+
+            log.info("resolveArgument 실행");
+
+            HttpServletRequest request = (HttpServletRequest)webRequest.getNativeRequest();
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return null;    // 세션이 null이면 컨트롤러에서 @Login 붙어있는 곳에 null을 넣는다.
+            }
+
+            return session.getAttribute(SessionConst.LOGIN_MEMBER);
+        }
+    }
+    ```
+    - boolean hasLoginAnnotation = parameter.hasParameterAnnotation(Login.class);
+        - 로그인 호출전에 Parameter에 @Login 있는지 확인
+    - supportsParameter() : @Login 애노테이션이 있으면서 Member 타입이면 해당 ArgumentResolver 가 사용된다
+        - supportsParameter 메서드가 true면 resolveArgument 메서드가 실행이 된다. false면 실행이 안됨
+    - resolveArgument() : 컨트롤러 호출 직전에 호출 되어서 필요한 파라미터 정보를 생성해준다. 여기서는 세션에 있는 로그인 회원 정보인 member 객체를 찾아서 반환해준다. 이후 스프링MVC는 컨트롤러의 메서드를 호출하면서 여기에서 반환된 member 객체를 파라미터에 전달해준다.
+
+- WebMvcConfigurer에 설정 추가
+    ```
+    @Configuration
+    public class WebConfig implements WebMvcConfigurer {
+    @Override
+        public void addArgumentResolvers(List<HandlerMethodArgumentResolver>
+    resolvers) {
+            resolvers.add(new LoginMemberArgumentResolver());
+        }
+    //...
+    }
+    ```
+    - 앞서 개발한 LoginMemberArgumentResolver 를 등록하자.
+    - resolvers.add(new LoginMemberArgumentResolver());
+        - 꼭 new LoginMemberArgumentResolver() 로 등록 안해도 되고 LoginMemberArgumentResolver클래슬르 @Comopnent 붙여서 스프링 빈으로 등록한 후에, 이곳에서 주입받아(@Autowired든지, 생성자든지) 대입해도 된다. `resolvers.add(loginMemberArgumentResolver);` 처럼.
+
+# 예외 처리와 오류 페이지
+## 프로젝트 생성
+- 스프링 부트 스타터 사이트로 이동해서 스프링 프로젝트 생성
+    - https://start.spring.io
+- 프로젝트 선택
+    - Project: Gradle Project
+    - Language: Java
+    - Spring Boot: 2.5.x
+- Project Metadata
+    - Group: hello
+    - Artifact: exception
+    - Name: exception
+    - Package name: hello.exception
+    - Packaging: Jar
+    - Java: 11
+
+- Dependencies: Spring Web, Lombok , Thymeleaf, Validation
+
+- 동작 확인
+    - 

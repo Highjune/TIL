@@ -256,6 +256,10 @@ option + command + p
 option + command + c
 ```
 
+- 오버라이드 메서드 불러오기 (인터페이스 등 구현했을 때)
+```
+control + o 
+```
 
 - 단어, 문자 바꾸기 replacement (하나의 파일 안에서)
 ```
