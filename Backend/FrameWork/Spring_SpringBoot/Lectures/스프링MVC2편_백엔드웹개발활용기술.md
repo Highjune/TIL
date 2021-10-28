@@ -6039,3 +6039,388 @@ public class LoginForm {
     ```
 
 ## 세션 정보와 타임아웃 설정
+- 세션 정보 확인
+    - 세션이 제공하는 정보들을 확인해보자.
+
+- SessionInfoController
+    ```
+    @Slf4j
+    @RestController
+    public class SessionInfoController {
+
+        @GetMapping("/session-info")
+        public String sessionInfo(HttpServletRequest request) {
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return "세션이 없습니다.";
+            }
+
+            // 세션 데이터 출력
+            session.getAttributeNames().asIterator()
+                    .forEachRemaining(name -> log.info("session name={}, value={}", name, session.getAttribute(name)));
+
+            log.info("sessionId={}", session.getId());
+            log.info("getMaxInactiveInterval={}", session.getMaxInactiveInterval());
+            log.info("creationTime={}", new Date(session.getCreationTime()));
+            log.info("lastAccessedTime={}", new Date(session.getLastAccessedTime()));
+            log.info("isNew={}", session.isNew());
+
+            return "세션 출력";
+        }
+    }
+    ```
+    - sessionId : 세션Id, JSESSIONID 의 값이다. 예) 34B14F008AA3527C9F8ED620EFD7A4E1
+    - maxInactiveInterval : 세션의 유효 시간, 예) 1800초, (30분)
+    - creationTime : 세션 생성일시
+    - lastAccessedTime :세션과 연결된 사용자가 최근에 서버에 접근한 시간, 클라이언트에서 서버로 sessionId ( JSESSIONID )를 요청한 경우에 갱신된다.
+    - isNew : 새로 생성된 세션인지, 아니면 이미 과거에 만들어졌고, 클라이언트에서 서버로 sessionId ( JSESSIONID )를 요청해서 조회된 세션인지 여부
+- 세션 타임아웃 설정
+    - 세션은 사용자가 로그아웃을 직접 호출해서 session.invalidate() 가 호출 되는 경우에 삭제된다. 그런데 대부분의 사용자는 로그아웃을 선택하지 않고, 그냥 웹 브라우저를 종료한다. 문제는 HTTP가 비 연결성(ConnectionLess)이므로 서버 입장에서는 해당 사용자가 웹 브라우저를 종료한 것인지 아닌지를 인식할 수 없다. 따라서 서버에서 세션 데이터를 언제 삭제해야 하는지 판단하기가 어렵다.
+    - 이 경우 남아있는 세션을 무한정 보관하면 다음과 같은 문제가 발생할 수 있다.
+    - 세션과 관련된 쿠키( JSESSIONID )를 탈취 당했을 경우 오랜 시간이 지나도 해당 쿠키로 악의적인 요청을 할 수 있다.
+    - 세션은 기본적으로 메모리에 생성된다. 메모리의 크기가 무한하지 않기 때문에 꼭 필요한 경우만 생성해서 사용해야 한다. 10만명의 사용자가 로그인하면 10만게의 세션이 생성되는 것이다.
+
+- 세션의 종료 시점
+    - 세션의 종료 시점을 어떻게 정하면 좋을까? 가장 단순하게 생각해보면, 세션 생성 시점으로부터 30분 정도로 잡으면 될 것 같다. 그런데 문제는 30분이 지나면 세션이 삭제되기 때문에, 열심히 사이트를 돌아다니다가 또 로그인을 해서 세션을 생성해야 한다 그러니까 30분 마다 계속 로그인해야 하는 번거로움이 발생한다. 더 나은 대안은 세션 생성 시점이 아니라 사용자가 서버에 최근에 요청한 시간을 기준으로 30분 정도를 유지해주는 것이다. 이렇게 하면 사용자가 서비스를 사용하고 있으면, 세션의 생존 시간이 30분으로 계속 늘어나게 된다. 따라서 30분 마다 로그인해야 하는 번거로움이 사라진다. HttpSession 은 이 방식을 사용한다.
+- 세션 타임아웃 설정
+    - 스프링 부트로 글로벌 설정
+    - application.properties
+    ```
+    server.servlet.session.timeout=60 // 60초, 기본은 1800(30분)
+    ```
+    - 참고 - 글로벌 설정은 분 단위로 설정해야 한다. 60(1분), 120(2분), .. (그리고 글로벌 설정 분단위는 60보다 작은 단위면 안된다. 즉 1분이 최소)
+
+- 글로벌한 수정은 이렇게 설정하면 모든 세션이 다 세팅이 되는데, 특정 세션만 따로 관리하고자 한다면 아래와 같이 세션생성시 같이 세팅하면 된다.(ex. 보안상 중요하니 5분만 설정해야되거나 할 경우)
+```
+session.setMaxInactiveInterval(1800); //1800초
+```
+
+- 세션 타임아웃 발생
+    - 세션의 타임아웃 시간은 해당 세션과 관련된 JSESSIONID 를 전달하는 HTTP 요청이 있으면 현재 시간으로 다시 초기화 된다. 이렇게 초기화 되면 세션 타임아웃으로 설정한 시간동안 세션을 추가로 사용할 수 있다.
+    - session.getLastAccessedTime() : 최근 세션 접근 시간
+    - LastAccessedTime 이후로 timeout 시간이 지나면, WAS가 내부에서 해당 세션을 제거한다.
+
+- 세션 날리는 과정 테스트
+    - application.properties 에 `server.servlet.session.timeout=60` 설정. 즉 세션 1분으로 세팅
+    - 로그인 하기
+    - 아무것도 하지 않고(다른 세션을 요청하면 다시 1분이 연장되니까) 1분동안 대기
+    - 새로고침 누르면 로그인 상태가 풀려버린다.
+
+
+
+- 정리
+    - 서블릿의 HttpSession 이 제공하는 타임아웃 기능 덕분에 세션을 안전하고 편리하게 사용할 수 있다. 실무에서 주의할 점은 세션에는 최소한의 데이터만 보관해야 한다는 점이다. 보관한 데이터 용량 * 사용자 수로 세션의 메모리 사용량이 급격하게 늘어나서 장애로 이어질 수 있다. 추가로 세션의 시간을 너무 길게 가져가면 메모리 사용이 계속 누적 될 수 있으므로 적당한 시간을 선택하는 것이 필요하다. 기본이 30 분이라는 것을 기준으로 고민하면 된다.
+    - 여기서는 멤버 객체(만약 필드가 30개 이상이라면)를 그대로 다 담았지만, 로그인용 멤버 객체를 따로 만들어서 자주 사용하는 간단한 정보들(memberId, memberName)만 작게 만들어서 세션에 객체를 보관하는 것이 맞다. 
+
+- 남아있는 문제점
+    - 로그인한 사용자가 로그아웃 후에(로그인 안된 사용자인데) 상품 리스트 페이지 `localhost:8080/items` URL만 알면 접근이 가능하다. 즉 보안적으로 위험하다는 뜻. 상품 리스트 페이지에서 심지어 상품 등록도 사용가능하다.
+    - 다음 강의부터는 이런 문제들을 해결하는 방법들!
+
+
+## 로그인 처리2 - 필터, 인터셉터
+- 필터는 서블릿이 제공하는 기능, 인터셉터는 스프링이 제공하는 기능. 둘 다 비슷한 역할
+### 서블릿 필터 - 소개
+- 공통 관심 사항
+- 요구사항을 보면 로그인 한 사용자만 상품 관리 페이지에 들어갈 수 있어야 한다. 앞에서 로그인을 하지 않은 사용자에게는 상품 관리 버튼이 보이지 않기 때문에 문제가 없어 보인다. 그런데 문제는 로그인 하지 않은 사용자도 다음 URL을 직접 호출하면 상품 관리 화면에 들어갈 수 있다는 점이다.
+    - http://localhost:8080/items
+- 상품 관리 컨트롤러에서 로그인 여부를 체크하는 로직을 하나하나 작성하면 되겠지만, 등록, 수정, 삭제, 조회 등등 상품관리의 모든 컨트롤러 로직에 공통으로 로그인 여부를 확인해야 한다. 더 큰 문제는 향후 로그인과 관련된 로직이 변경될 때 이다. 작성한 모든 로직을 다 수정해야 할 수 있다.
+- 이렇게 애플리케이션 여러 로직에서 공통으로 관심이 있는 있는 것을 공통 관심사(cross-cutting concern)라고 한다. 여기서는 등록, 수정, 삭제, 조회 등등 여러 로직에서 공통으로 인증에 대해서 관심을 가지고 있다.
+
+- 이러한 공통 관심사는 스프링의 AOP로도 해결할 수 있지만, 웹(URL관련 등)과 관련된 공통 관심사는 지금부터 설명할 서블릿 필터 또는 스프링 인터셉터를 사용하는 것이 좋다(AOP보다 웹과 관련된 부가기능들이 더 많다). 웹과 관련된 공통 관심사를 처리할 때는 HTTP의 헤더나 URL의 정보들이 필요한데, 서블릿 필터나 스프링 인터셉터는 HttpServletRequest 를 제공한다. 
+
+- 서블릿 필터 소개 
+    - 필터는 서블릿이 지원하는 수문장이다. 필터의 특성은 다음과 같다.
+
+- `필터 흐름`
+    ```
+    HTTP 요청 ->WAS-> 필터 -> 서블릿 -> 컨트롤러
+    ```
+    - 필터를 적용하면 필터가 호출 된 다음에 서블릿이 호출된다. 그래서 모든 고객의 요청 로그를 남기는 요구사항이 있다면 필터를 사용하면 된다. 참고로 필터는 특정 URL 패턴에 적용할 수 있다. /* 이라고 하면 모든 요청에 필터가 적용된다(WAS에 등록).
+    - 참고로 스프링을 사용하는 경우 여기서 말하는 서블릿은 스프링의 디스패처 서블릿으로 생각하면 된다.
+
+- `필터 제한`
+    ```
+    HTTP 요청 -> WAS -> 필터 -> 서블릿 -> 컨트롤러 //로그인 사용자
+    HTTP 요청 -> WAS -> 필터(적절하지 않은 요청이라 판단, 서블릿 호출X) //비 로그인 사용자
+    ```
+    - 로그인한 사용자만 특정 행동이 가능하게 할 수 있다.
+    - 서블릿, 컨트롤까지 호출하지 않고 필터선에서 끊을 수 있다
+    - 필터에서 적절하지 않은 요청이라고 판단하면 거기에서 끝을 낼 수도 있다. 그래서 로그인 여부를 체크하기에 딱 좋다.
+
+- `필터 체인`
+    ```
+    HTTP 요청 ->WAS-> 필터1-> 필터2-> 필터3-> 서블릿 -> 컨트롤러
+    ```
+    - 필터는 체인으로 구성되는데, 중간에 필터를 자유롭게 추가할 수 있다. 예를 들어서 로그를 남기는 필터를 먼저 적용하고, 그 다음에 로그인 여부를 체크하는 필터를 만들 수 있다.
+
+- `필터 인터페이스`
+    ```
+    public interface Filter {
+        public default void init(FilterConfig filterConfig) throws ServletException
+    {}
+        public void doFilter(ServletRequest request, ServletResponse response,
+                FilterChain chain) throws IOException, ServletException;
+        public default void destroy() {}
+    }
+    ```
+    - 필터 인터페이스를 구현하고 등록하면 서블릿 컨테이너가 필터를 싱글톤 객체로 생성하고, 관리한다.
+    - init(): 필터 초기화 메서드, 서블릿 컨테이너가 생성될 때 호출된다.
+    - `doFilter()`: 고객의 요청이 올 때 마다 해당 메서드가 호출된다. 필터의 로직을 구현하면 된다.
+        - 중요
+        - WAS에서 doFilter()호출하고 통과 후에 필터가 없으면 서블릿 호출
+    - destroy(): 필터 종료 메서드, 서블릿 컨테이너가 종료될 때 호출된다.
+
+
+
+## 서블릿 필터 - 요청 로그
+- 필터가 정말 수문장 역할을 잘 하는지 확인하기 위해 가장 단순한 필터인, 모든 요청을 로그로 남기는 필터를 개발하고 적용해보자.
+- LogFilter - 로그 필터
+    ```
+
+    ```
+    - doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+        - 게다가 ServletRequset에는 기능이 별로 없다.
+
+
+    
+- WebConfig - 필터 설정
+    ```
+    @Slf4j
+    public class LogFilter implements Filter { // Filter는 javax.servlet 패키지에 있는 것
+
+        @Override
+        public void init(FilterConfig filterConfig) throws ServletException {
+    //        Filter.super.init(filterConfig); // 지워도 됨
+            log.info("log filter init");
+        }
+
+        @Override
+        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+            // 하고자 하는 로직 넣으면 된다
+            log.info("log filter doFilter");
+
+            HttpServletRequest httpRequest = (HttpServletRequest) request;
+            String requestURI = httpRequest.getRequestURI(); // 모든 사용자의 요청 URI 남김
+
+            String uuid = UUID.randomUUID().toString();
+
+            try {
+                // 이곳에 시간을 찍어도 됨
+                log.info("REQUEST [{}][{}]", uuid, requestURI);
+                chain.doFilter(request, response);
+            } catch (Exception e) {
+                throw e;
+            } finally {
+                // 시간을 찍어서 작업 시간이 얼마 나오는지 확인해도 된다.
+                log.info("RESPONSE [{}][{}]", uuid, requestURI);
+            }
+        }
+
+        @Override
+        public void destroy() {
+    //        Filter.super.destroy(); // 지워도 됨
+            log.info("log filter destroy");
+        }
+    }
+    ```
+    - public class LogFilter implements Filter {}
+        - 필터를 사용하려면 필터 인터페이스를 구현해야 한다.
+        - 3가지 @Override 메서드 중에서 init() 과 destory()는 인터페이스의 default 메서드라서 꼭 구현하지 않아도 된다.
+    - doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+        - HTTP 요청이 오면 doFilter 가 호출된다.
+        - ServletRequest request 는 HTTP 요청이 아닌 경우까지 고려해서 만든 인터페이스이다. HTTP를 사용하면 HttpServletRequest httpRequest = (HttpServletRequest) request; 와 같이다운 케스팅 하면 된다.
+    - String uuid = UUID.randomUUID().toString();
+        - HTTP 요청을 구분하기 위해 요청당 임의의 uuid 를 생성해둔다.
+    - `log.info("REQUEST [{}][{}]", uuid, requestURI);`
+        - uuid 와 requestURI 를 출력한다.
+        - 아래처럼 같은 값이 짝지어서 나옴
+        ```
+        REQUEST [eed8d4bd-378b-4aea-9c13-b49792c4c9d2][/login]
+        RESPONSE [eed8d4bd-378b-4aea-9c13-b49792c4c9d2][/login]
+        ```
+    - chain.doFilter(request, response);
+        - 이 부분이 가장 중요하다. 다음 필터가 있으면 필터를 호출하고, 필터가 없으면 서블릿을 호출한다. 만약 이 로직을 호출하지 않으면 다음 단계로 진행되지 않는다.
+    - try 와 finally, 각각에 시간을 찍어서 작업시간이 얼마 걸리는지 확인하고 최적화를 시도해도 된다. 
+    
+
+- WebConfig - 필터 설정
+    ```
+    @Configuration
+    public class WebConfig {
+
+        @Bean
+        public FilterRegistrationBean logFilter() {
+            FilterRegistrationBean<Filter> filterRegistrationBean = new FilterRegistrationBean<>();
+            filterRegistrationBean.setFilter(new LogFilter()); // 내가 만든 필터 클래스 등록
+            filterRegistrationBean.setOrder(1); // 여러 필터가 있다면 그 순서 정해주는 것
+            filterRegistrationBean.addUrlPatterns("/*"); // 필터를 적용할 URL 패턴을 지정한다. 한번에 여러 패턴을 지정할 수 있다. /* 는 모든 URL에 다 적용
+
+            return filterRegistrationBean;
+        }
+    }
+    ```
+    - 필터를 등록하는 방법은 여러가지가 있지만, 스프링 부트를 사용한다면 FilterRegistrationBean 을 사용해서 등록하면 된다. 
+        - 왜냐하면 스프링부트는 직접 WAS를 들고 띄우기 때문에, WAS를 띄울 때 Filter를 등록해준다.
+    - setFilter(new LogFilter()) : 등록할 필터를 지정한다.
+    - setOrder(1) : 필터는 체인으로 동작한다. 따라서 순서가 필요하다. 낮을 수록 먼저 동작한다.
+    - addUrlPatterns("/*") : 필터를 적용할 URL 패턴을 지정한다. 한번에 여러 패턴을 지정할 수 있다.
+
+- 참고
+    - URL 패턴에 대한 룰은 필터도 서블릿과 동일하다. 자세한 내용은 서블릿 URL 패턴으로 검색해보자.
+    - @ServletComponentScan @WebFilter(filterName = "logFilter", urlPatterns = "/*") 로 필터 등록이 가능하지만 필터 순서 조절이 안된다. 따라서 FilterRegistrationBean 을 사용하자.
+
+- 서버를 띄우면?
+    - 서버를 띄우기만 했는데도 `log filter init` 로그가 찍힌다. 즉 filter가 init() 초기화되었다는 것
+    - 서버 띄우고 상품리스트 클릭 시 로그'
+    ```
+    REQUEST [875d4677-e468-4381-b368-113661e40928][/items]
+    RESPONSE [875d4677-e468-4381-b368-113661e40928][/items]
+    ```
+    - 필터를 등록할 때 urlPattern 을 /* 로 등록했기 때문에 모든 요청에 해당 필터가 적용된다.
+
+- 참고
+    - 실무에서 HTTP 요청시 같은 요청의 로그에 모두 같은 식별자를 자동으로 남기는 방법은 logback mdc로 검색해보자.
+    - 즉, 하나의 HTTP 요청이 들어와서 나가는 동안, 전부 다 UUID(식별자) 를 남기고 싶은 경우이다. 이렇게 설정해주면 `아 이 하나의 요청이 이런저런 요청들을 남기고 나갔구나~` 라고 추적을 할 수 있다.
+    ```
+    REQUEST [bed3518a-dba9-45f9-98bc-3f9c3c51e069][/items/add] // 아이템 요청 로그
+
+    errors=org.springframework.validation.BeanPropertyBindingResult ... (중략) ... // 수량 등 제한조건 잘못 입력해서 에러가 터진경우(컨트롤러에서)
+
+    RESPONSE [bed3518a-dba9-45f9-98bc-3f9c3c51e069][/items/add] // response
+    ```
+    - 위에서 중간에 에러터진 부분에서도 `bed3518a-dba9-45f9-98bc-3f9c3c51e0691` 를 남기고 싶다는 의미이다. 중간의 에러 로그가 사실 `bed3518a-dba9-45f9-98bc-3f9c3c51e06` 과 관련이 있는지 헷갈릴 수도 있다(수많은 요청이 있는 경우)
+
+
+## 서블릿 필터 - 인증 체크
+- 드디어 인증 체크 필터를 개발해보자. 로그인 되지 않은 사용자는 상품 관리 뿐만 아니라 미래에 개발될 페이지에도 접근하지 못하도록 하자.
+- LoginCheckFilter - 인증 체크 필터
+    ```
+    @Slf4j
+    public class LoginCheckFilter implements Filter {
+
+        private static final String[] whiteList = {"/", "/members/add", "/login", "/logout", "/css/*"}; // 로그인하지 않은 사람들도 들어올 수 있는 whiteList 풀어준 것임
+
+        @Override
+        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+
+            HttpServletRequest httpRequest = (HttpServletRequest) request;
+            String requestURI = httpRequest.getRequestURI();
+
+            HttpServletResponse httpResponse = (HttpServletResponse)response;
+
+            try {
+                log.info("인증 체크 필터 시작{}", requestURI);
+
+                if (isLoginCheckPath(requestURI)) {
+                    // 화이트리스트가 아니란 것
+                    log.info("인증 체크 로직 실행 {}", requestURI);
+                    HttpSession session = httpRequest.getSession(false);
+                    if (session == null || session.getAttribute(SessionConst.LOGIN_MEMBER) == null) {
+
+                        log.info("미인증 사용자 요청 {}", requestURI);
+                        // 로그인하라고 로그인페이지로 redirect
+                        httpResponse.sendRedirect("/login?redirectURL=" + requestURI); // 로그인 시킨 후, 로그인하면 다시 이 페이지로 돌아오게 하는 것. 이 넘겨준 URL을 LoginController 에서 받아서 사용
+                        return; // 서블릿, 컨트롤러 호출 하지 않고 끝내버림
+                    }
+                }
+                // 화이트리스트면 if 조건문 타지 않고 바로 doFilter
+                chain.doFilter(request, response);
+            } catch (Exception e) {
+                throw e; // 예외 로깅 가능하지만, 톰캣까지 예외를 보내주어야 함.
+            } finally {
+                log.info("인증 체크 필터 종료 {}", requestURI);
+            }
+        }
+
+        /**
+        * 화이트 리스트의 경우 인증 체크X
+        */
+        private boolean isLoginCheckPath(String requestURI) {
+            return !PatternMatchUtils.simpleMatch(whiteList, requestURI);
+        }
+    }
+    ```
+    - whitelist = {"/", "/members/add", "/login", "/logout","/css/*"};
+        - 인증 필터를 적용해도 홈, 회원가입, 로그인 화면, css 같은 리소스에는 접근할 수 있어야 한다. 이렇게 화이트 리스트 경로는 인증과 무관하게 항상 허용한다. 화이트 리스트를 제외한 나머지 모든 경로에는 인증 체크 로직을 적용한다.
+    - isLoginCheckPath(requestURI)
+        - 화이트 리스트를 제외한 모든 경우에 인증 체크 로직을 적용한다.
+        - `PatternMatchUtils.simpleMatch(whiteList, requestURI);`
+            - 스프링 제공 메서드
+    - httpResponse.sendRedirect("/login?redirectURL=" + requestURI);
+        - 미인증 사용자는 로그인 화면으로 리다이렉트 한다. 그런데 로그인 이후에 다시 홈으로 이동해버리면, 원하는 경로를 다시 찾아가야 하는 불편함이 있다. 예를 들어서 상품 관리 화면을 보려고 들어갔다가 로그인 화면으로 이동하면, 로그인 이후에 다시 상품 관리 화면으로 들어가는 것이 좋다. 이런 부분이 개발자 입장에서는 좀 귀찮을 수 있어도 사용자 입장으로 보면 편리한 기능이다. 이러한 기능을 위해 현재 요청한 경로인 requestURI 를 /login 에 쿼리 파라미터로 함께 전달한다. 물론 /login 컨트롤러에서 로그인 성공시 해당 경로로 이동하는 기능은 추가로 개발해야 한다.
+    - return; 여기가 중요하다. 필터를 더는 진행하지 않는다. 이후 필터는 물론 서블릿, 컨트롤러가 더는 호출되지 않는다. 앞서 redirect 를 사용했기 때문에 redirect 가 응답으로 적용되고 요청이 끝난다.
+    - try catch 구문에서 catch 에서 예외를 던지는 이유?
+        - 예외 로깅 가능하지만, 톰캣까지 예외를 보내주어야 한다. 왜냐하면 서블릿 필터 부분에서 예외가 터졌으면 그 예외가 올라올 건데, 그것을 여기서 먹어버리면 정상처럼 동작한다. 그래서 서블릿 컨테이너, 즉 WAS 까지 던져줘야 한다.
+
+- WebConfig - loginCheckFilter() 추가
+    ```
+    @Bean
+    public FilterRegistrationBean loginCheckFilter() {
+        FilterRegistrationBean<Filter> filterRegistrationBean = new FilterRegistrationBean<>();
+        filterRegistrationBean.setFilter(new LoginCheckFilter());
+        filterRegistrationBean.setOrder(2);
+        filterRegistrationBean.addUrlPatterns("/*");
+
+        return filterRegistrationBean;
+    }
+    ```
+    - setFilter(new LoginCheckFilter()) : 로그인 필터를 등록한다.
+    - setOrder(2) : 순서를 2번으로 잡았다. 로그 필터 다음에 로그인 필터가 적용된다.
+    - addUrlPatterns("/*") : 모든 요청에 로그인 필터를 적용한다.
+
+- RedirectURL 처리
+    - 로그인에 성공하면 처음 요청한 URL로 이동하는 기능을 개발해보자.
+- LoginController - loginV4()
+    ```
+        @PostMapping("/login")
+        public String loginV4(@Valid @ModelAttribute LoginForm form, BindingResult bindingResult,
+                            @RequestParam(defaultValue = "/") String redirectURL,
+                            HttpServletRequest request) {
+
+            if (bindingResult.hasErrors()) {
+                return "login/loginForm";
+            }
+
+            Member loginMember = loginService.login(form.getLoginId(), form.getPassword());
+
+            if (loginMember == null) {
+                bindingResult.reject("loginFail", "아이디 또는 비밀번호가 맞지 않습니다.");
+                return "login/loginForm";
+            }
+
+            // 로그인 성공 처리
+            // 세션이 있으면 있는 세션 반환, 없으면 신규 세션을 생성
+            HttpSession session = request.getSession(); // request.getSession(true); 로 반환 or 생성하면 되는데 default 가 true임
+            // 세션에 로그인 회원 정보 보관
+            session.setAttribute(SessionConst.LOGIN_MEMBER, loginMember);
+
+            // 세션 관리자를 통해 세션을 생성하고, 회원 데이터 보관
+    //        sessionManager.createSession(loginMember, response);
+
+            return "redirect:" + redirectURL;
+        }
+
+    ```
+    - loginV3() 의 @PostMapping("/login") 제거
+    - 로그인 체크 필터에서, 미인증 사용자는 요청 경로를 포함해서 /login 에 redirectURL 요청 파라미터를 추가해서 요청했다. 이 값을 사용해서 로그인 성공시 해당 경로로 고객을 redirect 한다.
+        - `@RequestParam(defaultValue = "/") String redirectURL,` 에서 만약 redirectURL 가 넘어오지 않으면 / 가 붙어서 `redirect:/` 로 가게 된다.
+
+- 실행
+    - (로그아웃 상태에서 요청) http://localhost:8080/items
+    - 로그인 하라고 뜬다. 그런데 그 URL 이 `http://localhost:8080/login?redirectURL=/items`다
+    - 로그인을 성공하면 홈(/)으로 가지 않고 기존에 요청했던 http://localhost:8080/items 로 가게 된다.
+
+- 정리
+    - 서블릿 필터를 잘 사용한 덕분에 로그인 하지 않은 사용자는 나머지 경로에 들어갈 수 없게 되었다. 공통 관심사를 서블릿 필터를 사용해서 해결한 덕분에 향후 로그인 관련 정책이 변경되어도 이 부분만 변경하면 된다.
+
+
+
+- 참고
+    -  필터에는 다음에 설명할 스프링 인터셉터는 제공하지 않는, 아주 강력한 기능이 있는데 chain.doFilter(request, response); 를 호출해서 다음 필터 또는 서블릿을 호출할 때 request , response 를 다른 객체로 바꿀 수 있다. ServletRequest , ServletResponse 를 구현한 다른 객체를 만들어서 넘기면 해당 객체가 다음 필터 또는 서블릿에서 사용된다. 잘 사용하는 기능은 아니니 참고만 해두자.
+
+- 사실 스프링 시큐리티도 비슷하게 동작한다.
+
+
+## 스프링 인터셉터 - 소개
+- 서블릿보다 훨씬 더 많은 기능을 제공하고 더 좋다.
+- 스프링 인터셉터도 서블릿 필터와 같이 웹과 관련된 공통 관심 사항을 효과적으로 해결할 수 있는 기술이다. 서블릿 필터가 서블릿이 제공하는 기술이라면, 스프링 인터셉터는 스프링 MVC가 제공하는 기술이다. 둘다 웹과 관련된 공통 관심 사항을 처리하지만, 적용되는 순서와 범위, 그리고 사용방법이 다르다.
