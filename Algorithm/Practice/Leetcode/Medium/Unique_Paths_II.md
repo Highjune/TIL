@@ -49,7 +49,7 @@ class Solution {
         for (int i = 0 ; i < obstacleGrid.length ; i++) {
             for (int j = 0 ; j < obstacleGrid[0].length ; j++) {
                 int cur = o[i][j];
-                if (cur == 1) {
+                if (cur == 1) { // 장애물이 처음
                     d[i][j] = 0;
                 } else {
                     if(i>0) d[i][j] += d[i-1][j];   // 이 부분이 간단명료

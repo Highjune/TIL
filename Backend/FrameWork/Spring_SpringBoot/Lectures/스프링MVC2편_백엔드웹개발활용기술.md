@@ -5882,6 +5882,7 @@ public class LoginForm {
     ```
     Cookie: JSESSIONID=5B78E23B513F50164D6FDD8C97B0AD05
     ```
+    - `JSESSIONID` 이 이름은 Tomcat 설정으로 변경 가능하다. 스프링부트라면 Embedded Tomcat을 사용하고 있으며 Embedded Tomcat의 기본 설정을 변경하는 방법도 있으니 이 부분은 검색해서 찾아보기
 - HttpSession 사용
     - 서블릿이 제공하는 HttpSession 을 사용하도록 개발해보자.
 - SessionConst
@@ -6005,9 +6006,10 @@ public class LoginForm {
 - @SessionAttribute
     - 스프링은 세션을 더 편리하게 사용할 수 있도록 @SessionAttribute 을 지원한다.
 - 이미 로그인 된 사용자를 찾을 때는 다음과 같이 사용하면 된다. 참고로 이 기능은 세션을 생성하지 않는다.
-```
-@SessionAttribute(name = "loginMember", required = false) Member loginMember
-```
+    ```
+    @SessionAttribute(name = "loginMember", required = false) Member loginMember
+    ```
+    - 참고로 추후에 ArgumentResolver를 사용해서 @Login을 생성해 이 코드마저 줄일 수 있다(뒤에 ArgumentResolver 강의에서 확인 가능)
 
 - HomeController - homeLoginV3Spring()
     ```
@@ -6112,6 +6114,17 @@ session.setMaxInactiveInterval(1800); //1800초
 - 정리
     - 서블릿의 HttpSession 이 제공하는 타임아웃 기능 덕분에 세션을 안전하고 편리하게 사용할 수 있다. 실무에서 주의할 점은 세션에는 최소한의 데이터만 보관해야 한다는 점이다. 보관한 데이터 용량 * 사용자 수로 세션의 메모리 사용량이 급격하게 늘어나서 장애로 이어질 수 있다. 추가로 세션의 시간을 너무 길게 가져가면 메모리 사용이 계속 누적 될 수 있으므로 적당한 시간을 선택하는 것이 필요하다. 기본이 30 분이라는 것을 기준으로 고민하면 된다.
     - 여기서는 멤버 객체(만약 필드가 30개 이상이라면)를 그대로 다 담았지만, 로그인용 멤버 객체를 따로 만들어서 자주 사용하는 간단한 정보들(memberId, memberName)만 작게 만들어서 세션에 객체를 보관하는 것이 맞다. 
+- 용어와 관련한 정리 (인프런 질문글 정리)
+    - 쿠키 이름 : JSESSIONID 
+    - 쿠키 값(이 값이 세션 id이자 key이다) : 34DDLFIJOIJDF3DF  (UUID 랜덤값)
+    - 세션ID는 세션을 가져올 수 있는 key이고, "loginMember" 문자열은 세션 내 Member 객체를 가져올 수 있는 key.
+        - `세션 KEY이자 ID = 34DDLFIJOIJDF3DF` (UUID 랜덤값)
+            - 세션ID는 WAS에서 세션을 관리하기 위해 필요한 값. 특정 요청에서 사용되는 세션(value)을 가져오려면 세션을 식별할 수 있는 세션ID(key)가 필요.
+        - `세션 내 KEY, Member객체를 들고 나올 수 있는`
+            - 세션을 가져왔다면 해당 세션에 저장된 멤버 객체(value)를 불러와야 한다. 이때 이전에 사용한 key("loginMember")가 필요한 것.
+        - `세션 value`
+            - Member 객체
+    - 쿠키의 값이 세션 key(id) 이다. 
 
 - 남아있는 문제점
     - 로그인한 사용자가 로그아웃 후에(로그인 안된 사용자인데) 상품 리스트 페이지 `localhost:8080/items` URL만 알면 접근이 가능하다. 즉 보안적으로 위험하다는 뜻. 상품 리스트 페이지에서 심지어 상품 등록도 사용가능하다.
@@ -6177,72 +6190,57 @@ session.setMaxInactiveInterval(1800); //1800초
 - 필터가 정말 수문장 역할을 잘 하는지 확인하기 위해 가장 단순한 필터인, 모든 요청을 로그로 남기는 필터를 개발하고 적용해보자.
 - LogFilter - 로그 필터
     ```
-
-    ```
-    - doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-        - 게다가 ServletRequset에는 기능이 별로 없다.
-
-
-    
-- WebConfig - 필터 설정
-    ```
     @Slf4j
-    public class LogFilter implements Filter { // Filter는 javax.servlet 패키지에 있는 것
+    public class LogFilter implements Filter {
 
         @Override
         public void init(FilterConfig filterConfig) throws ServletException {
-    //        Filter.super.init(filterConfig); // 지워도 됨
             log.info("log filter init");
         }
 
         @Override
         public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-            // 하고자 하는 로직 넣으면 된다
-            log.info("log filter doFilter");
-
+        
             HttpServletRequest httpRequest = (HttpServletRequest) request;
-            String requestURI = httpRequest.getRequestURI(); // 모든 사용자의 요청 URI 남김
-
+            String requestURI = httpRequest.getRequestURI();
             String uuid = UUID.randomUUID().toString();
-
+        
             try {
-                // 이곳에 시간을 찍어도 됨
                 log.info("REQUEST [{}][{}]", uuid, requestURI);
                 chain.doFilter(request, response);
             } catch (Exception e) {
                 throw e;
             } finally {
-                // 시간을 찍어서 작업 시간이 얼마 나오는지 확인해도 된다.
                 log.info("RESPONSE [{}][{}]", uuid, requestURI);
             }
         }
 
         @Override
         public void destroy() {
-    //        Filter.super.destroy(); // 지워도 됨
             log.info("log filter destroy");
         }
     }
     ```
     - public class LogFilter implements Filter {}
-        - 필터를 사용하려면 필터 인터페이스를 구현해야 한다.
+        - 필터를 사용하려면 필터 인터페이스를 구현해야 한다
         - 3가지 @Override 메서드 중에서 init() 과 destory()는 인터페이스의 default 메서드라서 꼭 구현하지 않아도 된다.
     - doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-        - HTTP 요청이 오면 doFilter 가 호출된다.
-        - ServletRequest request 는 HTTP 요청이 아닌 경우까지 고려해서 만든 인터페이스이다. HTTP를 사용하면 HttpServletRequest httpRequest = (HttpServletRequest) request; 와 같이다운 케스팅 하면 된다.
+        - HTTP 요청이 오면 doFilter 가 호출된다
+        - ServletRequest request 는 HTTP 요청이 아닌 경우까지 고려해서 만든 인터페이스이다. HTTP를 사용하면 HttpServletRequest httpRequest = (HttpServletRequest) request; 와 같이 다운 케스팅 하면 된다.
+        - 게다가 ServletRequset에는 기능이 별로 없다.
     - String uuid = UUID.randomUUID().toString();
         - HTTP 요청을 구분하기 위해 요청당 임의의 uuid 를 생성해둔다.
     - `log.info("REQUEST [{}][{}]", uuid, requestURI);`
-        - uuid 와 requestURI 를 출력한다.
+        - uuid와 requestURI를 출력한다.
         - 아래처럼 같은 값이 짝지어서 나옴
         ```
         REQUEST [eed8d4bd-378b-4aea-9c13-b49792c4c9d2][/login]
         RESPONSE [eed8d4bd-378b-4aea-9c13-b49792c4c9d2][/login]
         ```
-    - chain.doFilter(request, response);
+    - chain.doFilter(request, response);  
         - 이 부분이 가장 중요하다. 다음 필터가 있으면 필터를 호출하고, 필터가 없으면 서블릿을 호출한다. 만약 이 로직을 호출하지 않으면 다음 단계로 진행되지 않는다.
     - try 와 finally, 각각에 시간을 찍어서 작업시간이 얼마 걸리는지 확인하고 최적화를 시도해도 된다. 
-    
+
 
 - WebConfig - 필터 설정
     ```
