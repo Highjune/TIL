@@ -76,3 +76,24 @@ class Solution {
 
 # 타인 풀이2
 - https://leetcode.com/problems/merge-intervals/discuss/1545704/Simple-JAVA-Code-with-comments-96-(5-ms)-faster
+```
+class Solution {
+    public int[][] merge(int[][] intervals) {
+        Arrays.sort(intervals, (i1,i2)->Integer.compare(i1[0],i2[0])); //Sort the intervals a/c to their starting position
+        
+        List<int[]> ans=new ArrayList<>(); //result List
+        ans.add(intervals[0]);  // adding first interval
+        for(int[] in:intervals){
+            int[] I=ans.get(ans.size()-1); //fetching last interval from ans list to compare it from current interval
+            if(in[0]<=I[1]){ //checking if current interval contains last interval fetched from list 
+                ans.add(new int[]{I[0],Math.max(I[1],in[1])});  // we have to take max of both as we have sorted a/c to start but not a/c to end in [start,end] 
+                ans.remove(ans.size()-2); //removing interval which was prevoiusly true 
+            }
+            else{
+                ans.add(in); // we simply add the interval in ans
+            }
+        }
+        return ans.toArray(new int[0][]); //converting to int[][]
+    }
+}
+```
