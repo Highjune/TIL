@@ -6471,6 +6471,7 @@ session.setMaxInactiveInterval(1800); //1800초
 
 - 스프링 인터셉터 호출 흐름
     ![image](https://user-images.githubusercontent.com/57219160/139265182-7aa8ce6a-d59c-4c67-b099-46d178f410c1.png)
+    
     - 정상 흐름
         - preHandle : 컨트롤러 호출 전에 호출된다. (더 정확히는 핸들러 어댑터 호출 전에 호출된다.)
             - preHandle 의 응답값이 true 이면 다음으로 진행하고(다음 인터셉터 있으면 인터셉터로, 없으면 그 다음으로), false 이면 더는 진행하지 않는다. false인 경우 나머지 인터셉터는 물론이고, 핸들러 어댑터도 호출되지 않는다. 그림에서 1번에서 끝이나버린다.
@@ -6479,6 +6480,7 @@ session.setMaxInactiveInterval(1800); //1800초
 
 - 스프링 인터셉터 예외 상황
     ![image](https://user-images.githubusercontent.com/57219160/139265578-389f23fb-1064-4733-b03a-0e62d1cd88e6.png)
+    
     - 예외가 발생시
         - preHandle : 컨트롤러 호출 전에 호출된다.
         - postHandle : 컨트롤러에서 예외가 발생하면 postHandle 은 호출되지 않는다.
