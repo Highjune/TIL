@@ -6864,5 +6864,312 @@ public class ServletExController {
 
 ## 서블릿 예외 처리 - 오류 화면 제공
 - 서블릿 컨테이너가 제공하는 기본 예외 처리 화면은 고객 친화적이지 않다. 서블릿이 제공하는 오류 화면 기능을 사용해보자.
-- 서블릿은 Exception (예외)가 발생해서 서블릿 밖으로 전달되거나 또는 response.sendError() 가 호출 되었을 때 각각의 상황에 맞춘 오류 처리 기능을 제공한다. 이 기능을 사용하면 친절한 오류 처리 화면을 준비해서 고객에게 보여줄 수 있다.
+- 서블릿은 Exception (예외)가 발생해서 서블릿 밖으로 전달되거나(서블릿 컨테이너까지 가거나) 또는 response.sendError() 가 호출 되었을 때 각각의 상황에 맞춘 오류 처리 기능을 제공한다. 이 기능을 사용하면 친절한 오류 처리 화면을 준비해서 고객에게 보여줄 수 있다.
+- 과거에는 web.xml 이라는 파일에 다음과 같이 오류 화면을 등록했다.
+```
+<web-app>
+      <error-page>
+        <error-code>404</error-code>
+        <location>/error-page/404.html</location>
+      </error-page>
+      <error-page>
+        <error-code>500</error-code>
+        <location>/error-page/500.html</location>
+      </error-page>
+      <error-page>
+        <exception-type>java.lang.RuntimeException</exception-type>
+        <location>/error-page/500.html</location>
+      </error-page>
+</web-app>
+```
+- 지금은 스프링 부트를 통해서 서블릿 컨테이너를 실행하기 때문에, 스프링 부트가 제공하는 기능을 사용해서 서블릿 오류 페이지를 등록하면 된다.
+- 서블릿 오류 페이지 등록
+    ```
+    import org.springframework.boot.web.server.ConfigurableWebServerFactory;
+    import org.springframework.boot.web.server.ErrorPage;
+    import org.springframework.boot.web.server.WebServerFactoryCustomizer;
+    import org.springframework.http.HttpStatus;
 
+    @Component
+    public class WebServerCustomizer implements WebServerFactoryCustomizer<ConfigurableWebServerFactory> {
+
+        @Override
+        public void customize(ConfigurableWebServerFactory factory) {
+
+            ErrorPage errorPage404 = new ErrorPage(HttpStatus.NOT_FOUND, "/error-page/404");
+            ErrorPage errorPage500 = new ErrorPage(HttpStatus.INTERNAL_SERVER_ERROR, "/error-page/500");
+
+            ErrorPage errorPageEx = new ErrorPage(RuntimeException.class, "/error-page/500");
+
+            factory.addErrorPages(errorPage404, errorPage500, errorPageEx); // 설정한 페이지들을 등록
+
+        }
+    }
+    ``` 
+    - 서블릿 컨테이너가 제공하는 기능이라 그냥 이대로 쓰면 됨
+        - 페이지 등록해 놓으면, 스프링 부트가 뜨면서 tomcat에 에러페이지를 등록해 놓는다.
+    - response.sendError(404) : errorPage404 호출
+    - response.sendError(500) : errorPage500 호출
+    - RuntimeException 또는 그 자식 타입의 예외: errorPageEx 호출
+    - 500 예외가 서버 내부에서 발생한 오류라는 뜻을 포함하고 있기 때문에 여기서는 예외가 발생한 경우도 500 오류 화면으로 처리했다. (물론 따로 처리해도 된다)
+    - 오류 페이지는 예외를 다룰 때 해당 예외와 그 자식 타입의 오류를 함께 처리한다. 예를 들어서 위의 경우 RuntimeException 은 물론이고 RuntimeException 의 자식도 함께 처리한다.
+    - 오류가 발생했을 때 처리할 수 있는 컨트롤러가 필요하다. 예를 들어서 RuntimeException 예외가 발생하면 WAS까지 가서, 그 WAS가 errorPageEx 에서 지정한 /error-page/500 (경로)이 호출된다.(이걸 컨트롤러가 받아야 함)
+        - 즉 서블릿, 필터, 인터셉터 등을 거쳐서 다시 컨트롤러로 가서 /error-page/500 처리할 것을 찾는다.
+    - 
+    
+
+- 해당 오류를 처리할 컨트롤러가 필요하다.
+    ```
+    @Slf4j
+    @Controller
+    public class ErrorPageController {
+
+        @RequestMapping("/error-page/404")
+        public String errorPage404(HttpServletRequest request, HttpServletResponse response) {
+            log.info("errorPage 404");
+            return "error-page/404";
+        }
+
+        @RequestMapping("/error-page/500")
+        public String errorPage500(HttpServletRequest request, HttpServletResponse response) {
+            log.info("errorPage 500");
+            return "error-page/500";
+        }
+    }
+    ```
+    - 메서드에 HTTP 메서드를 명시하지 않은 이유는, GET이든 POST든 다 처리하려고 한 것.
+
+- 오류 처리 View (컨트롤러에서 리턴한 view)
+    - /templates/error-page/404.html
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+    <div class="container" style="max-width: 600px">
+        <div class="py-5 text-center">
+            <h2>404 오류 화면</h2> 
+        </div>
+        <div>
+            <p>오류 화면 입니다.</p>
+        </div>
+        <hr class="my-4">
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+    - /templates/error-page/500.html
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+    <div class="container" style="max-width: 600px">
+        <div class="py-5 text-center">
+            <h2>500 오류 화면</h2>
+        </div>
+        <div>
+            <p>오류 화면 입니다.</p>
+        </div>
+        <hr class="my-4">
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+
+- 테스트해 보자
+    - http://localhost:8080/error-ex
+    - http://localhost:8080/error-404
+    - http://localhost:8080/error-500
+    - 설정 오류 페이지가 정상 노출되는 것을 확인할 수 있다.
+
+
+## 서블릿 예외 처리 - 오류 페이지 작동 원리
+- 서블릿은 Exception (예외)가 발생해서 서블릿 밖으로 전달되거나(서블릿 컨테이너에 전달되거나) 또는 response.sendError() 가 호출되었을 때 설정된 오류 페이지를 찾는다.
+- 예외 발생 흐름
+```
+WAS(여기까지 전파) <- 필터 <- 서블릿 <- 인터셉터 <- 컨트롤러(예외발생)
+```
+- sendError 흐름
+```
+WAS(sendError 호출 기록 확인) <- 필터 <- 서블릿 <- 인터셉터 <- 컨트롤러 (response.sendError())
+```
+- WAS는 해당 예외를 처리하는 오류 페이지 정보를 확인한다.
+```
+new ErrorPage(RuntimeException.class, "/error-page/500")
+```
+- 예를 들어서 RuntimeException 예외가 WAS까지 전달되면, WAS는 오류 페이지 정보를 확인한다. 확인해보니 RuntimeException 의 오류 페이지로 /error-page/500 이 지정되어 있다. WAS는 오류 페이지를 출력하기 위해 /error-page/500 를 다시 요청한다. (물론 HTTP 요청이 다시 온 것은 아니다. 서버 내부에서 다시 이런 요청이 일어나는 것)
+- 오류 페이지 요청 흐름
+```
+WAS `/error-page/500` 다시 요청 -> 필터 -> 서블릿 -> 인터셉터 -> 컨트롤러(/error-page/ 500) -> View
+```
+- 예외 발생과 오류 페이지 요청 흐름
+```
+1. WAS(여기까지 전파) <- 필터 <- 서블릿 <- 인터셉터 <- 컨트롤러(예외발생)
+2. WAS `/error-page/500` 다시 요청 -> 필터 -> 서블릿 -> 인터셉터 -> 컨트롤러(/error- page/500) -> View
+```
+- `중요한 점은 웹 브라우저(클라이언트)는 서버 내부에서 이런 일이 일어나는지 전혀 모른다는 점이다. 오직 서버 내부에서 오류 페이지를 찾기 위해 추가적인 호출을 한다.`
+    - 클라이언트는 1번 요청을 했는데 컨트롤러는 총 2번 호출됨
+
+- 정리하면 다음과 같다.
+    1. 예외가 발생해서 WAS까지 전파된다.
+    2. WAS는 오류 페이지 경로를 찾아서 내부에서 오류 페이지를 호출한다. 이때 오류 페이지 경로로 필터, 서블릿, 인터셉터, 컨트롤러가 모두 다시 호출된다.
+    - 필터와 인터셉터가 다시 호출되는 부분은 조금 뒤에 자세히 설명하겠다.
+
+- 오류 정보 추가
+    - WAS는 오류 페이지를 단순히 다시 요청(위 과정 중 2번)만 하는 것이 아니라, 오류 정보를 request 의 attribute 에 추가해서 넘겨준다.
+    - 필요하면 오류 페이지에서 이렇게 전달된 오류 정보를 사용할 수 있다.
+
+- ErrorPageController - 오류 출력
+    ```
+    @Slf4j
+    @Controller
+    public class ErrorPageController {
+
+        //RequestDispatcher 클래스에 상수로 정의되어 있음
+        public static final String ERROR_EXCEPTION = "javax.servlet.error.exception";
+        public static final String ERROR_EXCEPTION_TYPE = "javax.servlet.error.exception_type";
+        public static final String ERROR_MESSAGE = "javax.servlet.error.message";
+        public static final String ERROR_REQUEST_URI = "javax.servlet.error.request_uri";
+        public static final String ERROR_SERVLET_NAME = "javax.servlet.error.servlet_name";
+        public static final String ERROR_STATUS_CODE = "javax.servlet.error.status_code";
+
+        @RequestMapping("/error-page/404")
+        public String errorPage404(HttpServletRequest request, HttpServletResponse response) {
+            log.info("errorPage 404");
+            printErrorInfo(request);
+            return "error-page/404";
+        }
+
+        @RequestMapping("/error-page/500")
+        public String errorPage500(HttpServletRequest request, HttpServletResponse response) {
+            log.info("errorPage 500");
+            printErrorInfo(request);
+            return "error-page/500";
+        }
+
+        private void printErrorInfo(HttpServletRequest request) {
+            log.info("ERROR_EXCEPTION: {}", request.getAttribute(ERROR_EXCEPTION));
+            log.info("ERROR_EXCEPTION_TYPE: {}", request.getAttribute(ERROR_EXCEPTION_TYPE));
+            log.info("ERROR_MESSAGE: {}", request.getAttribute(ERROR_MESSAGE)); // ex의 경우 NestedServletException 스프링이 한번 감싸서 반환
+            log.info("ERROR_REQUEST_URI: {}", request.getAttribute(ERROR_REQUEST_URI));
+            log.info("ERROR_SERVLET_NAME: {}", request.getAttribute(ERROR_SERVLET_NAME));
+            log.info("ERROR_STATUS_CODE: {}", request.getAttribute(ERROR_STATUS_CODE));
+            log.info("dispatchType={}", request.getDispatcherType());
+        }
+
+    }
+    ```
+    - request.attribute에 서버가 담아준 정보
+        - javax.servlet.error.exception : 예외
+        - javax.servlet.error.exception_type : 예외 타입
+        - javax.servlet.error.message : 오류 메시지
+        - javax.servlet.error.request_uri : 클라이언트 요청 URI
+        - javax.servlet.error.servlet_name : 오류가 발생한 서블릿 이름
+        - javax.servlet.error.status_code : HTTP 상태 코드
+
+## 서블릿 예외 처리 - 필터
+- 목표
+    - 예외 처리에 따른 필터와 인터셉터 그리고 서블릿이 제공하는 DispatchType 이해하기
+
+- 예외 발생과 오류 페이지 요청 흐름
+    ```
+    1. WAS(여기까지 전파) <- 필터 <- 서블릿 <- 인터셉터 <- 컨트롤러(예외발생)
+    2. WAS `/error-page/500` 다시 요청 -> 필터 -> 서블릿 -> 인터셉터 -> 컨트롤러(/error- page/500) -> View
+    ```
+    - 오류가 발생하면 오류 페이지를 출력하기 위해 WAS 내부에서 다시 한번 호출이 발생한다. 이때 필터, 서블릿, 인터셉터도 모두 다시 호출된다. 그런데 로그인 인증 체크 같은 경우를 생각해보면, 이미 한번 필터나, 인터셉터에서 로그인 체크를 완료했다. 따라서 서버 내부에서 오류 페이지를 호출한다고 해서 해당 필터나 인터셉트가 한번 더 호출되는 것(총 2번)은 매우 비효율적이다.
+    - 결국 클라이언트로 부터 발생한 정상 요청인지, 아니면 오류 페이지를 출력하기 위한 내부 요청인지 구분할 수 있어야 한다. 서블릿은 이런 문제를 해결하기 위해 DispatcherType 이라는 추가 정보를 제공한다.
+- DispatcherType
+    - 필터는 이런 경우를 위해서 dispatcherTypes 라는 옵션을 제공한다. 이전 강의의 마지막에 다음 로그를 추가했다.
+    ```
+    log.info("dispatchType={}", request.getDispatcherType())
+    ```
+    - 그리고 출력해보면 오류 페이지에서 dispatchType=ERROR 로 나오는 것을 확인할 수 있다.
+    - 고객이 처음 요청하면 dispatcherType=REQUEST 이다(위의 에외 발생과 오류 페이지 요청 흐름에서 첫 번째), 2번째는 ERROR
+- 이렇듯 서블릿 스펙은 실제 고객이 요청한 것인지, 서버가 내부에서 오류 페이지를 요청하는 것인지 DispatcherType 으로 구분할 수 있는 방법을 제공한다.
+- javax.servlet.DispatcherType
+    ```
+    public enum DispatcherType {
+        FORWARD,
+        INCLUDE,
+        REQUEST,
+        ASYNC,
+        ERROR
+    }
+    ```
+    - DispatcherType
+        - REQUEST : 클라이언트 요청
+        - ERROR : 오류 요청
+        - FORWARD : MVC에서 배웠던 서블릿에서 다른 서블릿이나 JSP를 호출할 떄. `RequestDispatcher.forward(request, response);`
+        - INCLUDE : 서블릿에서 다른 서블릿이나 JSP의 결과를 포함할 때. `RequestDispatcher.include(request, response);`
+        - ASYNC : 서블릿 비동기 호출
+
+- 필터와 DispatcherType
+    - 필터와 DispatcherType이 어떻게 사용되는지 알아보자.
+    - LogFilter - DispatcherType 로그 추가
+    ```
+    @Slf4j
+    public class LogFilter implements Filter {
+
+        @Override
+        public void init(FilterConfig filterConfig) throws ServletException {
+            log.info("log filter init");
+        }
+
+        @Override
+        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+            HttpServletRequest httpRequest = (HttpServletRequest) request;
+            String requestURI = httpRequest.getRequestURI();
+
+            String uuid = UUID.randomUUID().toString();
+
+            try {
+                log.info("REQUEST  [{}][{}][{}]", uuid, request.getDispatcherType(), requestURI);
+                chain.doFilter(request, response);
+            } catch (Exception e) {
+                log.info("EXCEPTION {}", e.getMessage());
+                throw e; // WAS 까지 예외가 올라감
+            } finally {
+                log.info("RESPONSE [{}][{}][{}]", uuid, request.getDispatcherType(), requestURI);
+            }
+        }
+
+        @Override
+        public void destroy() {
+            log.info("log filter destroy");
+        }
+    }
+    ```
+    - 로그를 출력하는 부분에 request.getDispatcherType() 을 추가해두었다.
+- WebConfig
+    ```
+    @Configuration
+    public class WebConfig implements WebMvcConfigurer {
+
+        @Bean
+        public FilterRegistrationBean logFilter() {
+            FilterRegistrationBean<Filter> filterFilterRegistrationBean = new FilterRegistrationBean<>();
+            filterFilterRegistrationBean.setFilter(new LogFilter());
+            filterFilterRegistrationBean.setOrder(1);
+            filterFilterRegistrationBean.addUrlPatterns("/*");
+            filterFilterRegistrationBean.setDispatcherTypes(DispatcherType.REQUEST, DispatcherType.ERROR);
+            return filterFilterRegistrationBean;
+        }
+    }
+    ```
+    - `filterRegistrationBean.setDispatcherTypes(DispatcherType.REQUEST, DispatcherType.ERROR);`
+        - 이렇게 두 가지를 모두 넣으면 클라이언트 요청은 물론이고, 오류 페이지 요청에서도 필터가 호출된다. 아무것도 넣지 않으면 기본 값이 DispatcherType.REQUEST 이다(애초에 이 코드 자체를 안 넣었을 경우) 즉 클라이언트의 요청이 있는 경우에만 필터가 적용된다. 특별히 오류 페이지 경로도 필터를 적용할 것이 아니면, 기본 값을 그대로 사용하면 된다.
+        - 물론 오류 페이지 요청 전용 필터를 적용하고 싶으면 DispatcherType.ERROR 만 지정하면 된다.
+
+- 필터는 그냥 어차피 DispatcherType.REQUEST 이 기본이므로 크게 문제가 없겠구나~ 하고 생각하면 된다.
+
+- 다음은 서블릿이 제공하는 필터 말고, 이제 스프링이 제공하는 인터셉터는 예외처리를 어떻게 할까? 중복호출을 어떻게 막을 것인가~.
+
+## 서블릿 예외 처리 - 인터셉터
+- 인터셉터 중복 호출 제거
+
+- LogInterceptor - DispatcherType 로그 추가

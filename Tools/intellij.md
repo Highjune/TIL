@@ -260,6 +260,19 @@ option + command + c
 ```
 control + o 
 ```
+- 
+
+- 여러 줄 한번에 선택하기
+  - option 한번 누른 후, 두번째 눌렀을 땐 누른 상태에서 위아래 화살표
+  ```
+  option, option + 위아래 화살표
+  ```
+  - column select mode 켜고 나서(shift + command + 8), shift 누른 상태에서 위아래 화살표로 해도 된다
+
+- 해당 코드 줄 위아래로 옮기기
+```
+shift + command + 위아래 화살표
+```
 
 - 단어, 문자 바꾸기 replacement (하나의 파일 안에서)
 ```
