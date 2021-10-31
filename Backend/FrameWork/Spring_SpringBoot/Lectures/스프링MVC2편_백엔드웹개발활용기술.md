@@ -7173,5 +7173,443 @@ WAS `/error-page/500` 다시 요청 -> 필터 -> 서블릿 -> 인터셉터 -> �
 
 ## 서블릿 예외 처리 - 인터셉터
 - 인터셉터 중복 호출 제거
-
 - LogInterceptor - DispatcherType 로그 추가
+    ```
+    @Slf4j
+    public class LogInterceptor implements HandlerInterceptor {
+        
+        public static final String LOG_ID = "logId";
+
+        @Override
+        public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+
+            String requestURI = request.getRequestURI();
+
+            String uuid = UUID.randomUUID().toString();
+            request.setAttribute(LOG_ID, uuid);
+
+            log.info("REQUEST  [{}][{}][{}][{}]", uuid, request.getDispatcherType(), requestURI, handler);
+            return true;
+        }
+
+        @Override
+        public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+            log.info("postHandle [{}]", modelAndView);
+        }
+
+        @Override
+        public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+
+            String requestURI = request.getRequestURI();
+            String logId = (String)request.getAttribute(LOG_ID);
+
+            log.info("RESPONSE [{}][{}][{}]", logId, request.getDispatcherType(), requestURI);
+
+            if (ex != null) {
+                log.error("afterCompletion error!!", ex);
+            }
+        }
+    }
+    ```
+    - 앞서 필터의 경우에는 필터를 등록할 때 어떤 DispatcherType 인 경우에 필터를 적용할 지 선택할 수 있었다. 그런데 인터셉터는 서블릿이 제공하는 기능이 아니라 스프링이 제공하는 기능이다. 따라서 DispatcherType 과 무관하게 항상 호출된다.
+- 대신에 인터셉터는 다음과 같이 요청 경로에 따라서 추가하거나 제외하기 쉽게 되어 있기 때문에, 이러한 설정을 사용해서 오류 페이지 경로를 excludePathPatterns 를 사용해서 빼주면 된다.
+    ```
+    @Configuration
+    public class WebConfig implements WebMvcConfigurer {
+
+        @Override
+        public void addInterceptors(InterceptorRegistry registry) {
+            registry.addInterceptor(new LogInterceptor())
+                    .order(1)
+                    .addPathPatterns("/**")
+                    .excludePathPatterns("/css/**", "*.ico", "/error", "/error-page/**"); // 오류 페이지 경로
+        }
+
+    //    @Bean // interceptor의 로그 출력과 겹쳐서 일단 제외
+        public FilterRegistrationBean logFilter() {
+            FilterRegistrationBean<Filter> filterFilterRegistrationBean = new FilterRegistrationBean<>();
+            filterFilterRegistrationBean.setFilter(new LogFilter());
+            filterFilterRegistrationBean.setOrder(1);
+            filterFilterRegistrationBean.addUrlPatterns("/*");
+            filterFilterRegistrationBean.setDispatcherTypes(DispatcherType.REQUEST, DispatcherType.ERROR);
+            return filterFilterRegistrationBean;
+        }
+    }
+    ```
+    - 인터셉터와 중복으로 처리되지 않기 위해 앞의 logFilter() 의 @Bean 에 주석을 달아두자. 
+    - addInterceptors 메서드의 excludePathPatterns에 등록한 /error-page/** 를 제거하면 error-page/500 같은 내부 호출의 경우에도 인터셉터가 호출된다.
+ 
+- 전체 흐름 정리
+    - /hello 정상 요청
+    ```
+    WAS(/hello, dispatchType=REQUEST) -> 필터 -> 서블릿 -> 인터셉터 -> 컨트롤러 -> View
+    ```
+    - /error-ex 오류 요청
+        - 필터는 DispatchType 으로 중복 호출 제거 ( dispatchType=REQUEST )
+        - 인터셉터는 경로 정보로 중복 호출 제거( excludePathPatterns("/error-page/**") )
+        - 필터(x) 는 dispatchType=REQUEST 라고 되어있으니 호출 안됨
+        - 디스패처 서블릿은 기본적으로 다 받도록 설계되어 있음
+        ```
+        1. WAS(/error-ex, dispatchType=REQUEST) -> 필터 -> 서블릿 -> 인터셉터 -> 컨트롤러
+        2. WAS(여기까지 전파) <- 필터 <- 서블릿 <- 인터셉터 <- 컨트롤러(예외발생)
+        3. WAS 오류 페이지 확인
+        4. WAS(/error-page/500, dispatchType=ERROR) -> 필터(x) -> 서블릿 -> 인터셉터(x) -> 컨트롤러(/error-page/500) -> Viewss
+        ```
+
+- 흐름을 제대로 이해하는 것이 제일 중요. 그런데 지금의 과정에서 조금 번거로운 것이 있다. 오류페이지 등록하는 등의 번거로움이 남아있음. 그래서 다음 강의부터는 서블릿이 제공하는 것을 넘어서서 스프링 부트가(자동화 해놨음) 오류 페이지를 어떤 식으로 편리하게 제공하는지 알아보는 수업
+
+## 스프링 부트 - 오류 페이지1
+- 지금까지 예외 처리 페이지를 만들기 위해서 다음과 같은 복잡한 과정을 거쳤다.
+    - WebServerCustomizer 를 만들고
+    - 예외 종류에 따라서 ErrorPage 를 추가하고
+    - 예외 처리용 컨트롤러 ErrorPageController 를 만듬
+
+- 스프링 부트는 이런 과정을 모두 기본으로 제공한다.
+    - ErrorPage 를 자동으로 등록한다. 이때 /error 라는 경로로 기본 오류 페이지를 설정한다.
+        - new ErrorPage("/error") , 상태코드와 예외를 설정하지 않으면 기본 오류 페이지로 사용된다.
+        - 서블릿 밖으로 예외가 발생하거나, response.sendError(...) 가 호출되었을 떄 다른 페이지들이 없으면 모든 오류는 /error 를 호출하게 된다.(default error page)
+    - BasicErrorController 라는 스프링 컨트롤러를 자동으로 등록한다.
+        - ErrorPage 에서 등록한 /error 를 매핑해서 처리하는 컨트롤러다.
+
+- 참고
+    - ErrorMvcAutoConfiguration 이라는 클래스가 오류 페이지를 자동으로 등록하는 역할을 한다.
+- 주의
+    - 스프링 부트가 제공하는 기본 오류 메커니즘을 사용하도록 WebServerCustomizer에 있는 @Component 를 주석 처리하자.
+    - 이제 오류가 발생했을 때 오류 페이지로 /error 를 기본 요청한다. 스프링 부트가 자동 등록한 BasicErrorController 는 이 경로를 기본으로 받는다.
+
+
+- 개발자는 오류 페이지만 등록
+    - =BasicErrorController 는 기본적인 로직이 모두 개발되어 있다.
+    - 개발자는 오류 페이지 화면만 BasicErrorController 가 제공하는 룰과 우선순위에 따라서 등록하면 된다. 정적 HTML이면 정적 리소스, 뷰 템플릿을 사용해서 동적으로 오류 화면을 만들고 싶으면 뷰 템플릿 경로에 오류 페이지 파일을 만들어서 넣어두기만 하면 된다.
+- 뷰 선택 우선순위(BasicErrorController 의 처리 순서)
+    1. 뷰 템플릿
+        - resources/templates/error/500.html
+        - resources/templates/error/5xx.html
+    2. 정적리소스(static,public)
+        - resources/static/error/400.html
+        - resources/static/error/404.html
+        - resources/static/error/4xx.html
+    3. 적용 대상이 없을 때 뷰 이름(error)
+        - resources/templates/error.html
+
+    - 해당 경로 위치에 HTTP 상태 코드 이름의 뷰 파일을 넣어두면 된다.
+    - 뷰 템플릿이 정적 리소스보다 우선순위가 높고, 404, 500처럼 구체적인 것이 5xx처럼 덜 구체적인 것 보다 우선순위가 높다.
+    - 5xx, 4xx 라고 하면 500대, 400대 오류를 처리해준다.
+
+
+- 오류 뷰 템플릿 추가
+- resources/templates/error/4xx.html
+```
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+</head>
+<body>
+<div class="container" style="max-width: 600px">
+    <div class="py-5 text-center">
+        <h2>4xx 오류 화면 스프링 부트 제공</h2> </div>
+    <div>
+        <p>오류 화면 입니다.</p>
+    </div>
+    <hr class="my-4">
+</div> <!-- /container -->
+</body>
+</html>
+```
+- resources/templates/error/404.html
+```
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+</head>
+<body>
+<div class="container" style="max-width: 600px">
+    <div class="py-5 text-center">
+        <h2>404 오류 화면 스프링 부트 제공</h2> </div>
+    <div>
+        <p>오류 화면 입니다.</p>
+    </div>
+    <hr class="my-4">
+</div> <!-- /container -->
+</body>
+</html>
+```
+- resources/templates/error/500.html
+```
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+</head>
+<body>
+<div class="container" style="max-width: 600px">
+    <div class="py-5 text-center">
+        <h2>500 오류 화면 스프링 부트 제공</h2>
+    </div>
+    <div>
+        <p>오류 화면 입니다.</p>
+    </div>
+    <hr class="my-4">
+</div> <!-- /container -->
+</body>
+</html>
+```
+
+- 등록한 오류 페이지
+    - resources/templates/error/4xx.html
+    - resources/templates/error/404.html
+    - resources/templates/error/500.html
+- 테스트
+    - http://localhost:8080/error-404 -> 404.html
+    - http://localhost:8080/error-400 -> 4xx.html (400 오류 페이지가 없지만 4xx가 있음)
+    - http://localhost:8080/error-500 -> 500.html
+    - http://localhost:8080/error-ex -> 500.html (예외는 500으로 처리)
+
+## 스프링 부트 - 오류 페이지2    
+- BasicErrorController가 제공하는 기본 정보들
+- BasicErrorController 컨트롤러는 다음 정보를 model에 담아서 뷰에 전달한다. 뷰 템플릿은 이 값을 활용해서 출력할 수 있다.
+```
+* timestamp: Fri Feb 05 00:00:00 KST 2021
+* status: 400
+* error: Bad Request
+* exception: org.springframework.validation.BindException * trace: 예외 trace
+* message: Validation failed for object='data'. Error count: 1 * errors: Errors(BindingResult)
+* path: 클라이언트 요청 경로 (`/hello`)
+```
+
+- 오류 정보 추가 - resources/templates/error/500.html
+```
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+</head>
+<body>
+<div class="container" style="max-width: 600px">
+
+    <div class="py-5 text-center">
+        <h2>500 오류 화면 스프링 부트 제공</h2>
+    </div>
+
+    <div>
+        <p>오류 화면 입니다.</p>
+    </div>
+
+    <ul>
+        <li>오류 정보</li>
+        <ul>
+        <li th:text="|timestamp: ${timestamp}|"></li>
+        <li th:text="|path: ${path}|"></li>
+        <li th:text="|status: ${status}|"></li>
+        <li th:text="|message: ${message}|"></li>
+        <li th:text="|error: ${error}|"></li>
+        <li th:text="|exception: ${exception}|"></li>
+        <li th:text="|errors: ${errors}|"></li>
+        <li th:text="|trace: ${trace}|"></li>
+        </ul>
+        </li>
+    </ul>
+
+    <hr class="my-4">
+
+</div> <!-- /container -->
+</body>
+</html>
+```
+- 실행
+    - localhost:8080/error-ex 
+
+- 오류 관련 내부 정보들을 고객에게 노출하는 것은 좋지 않다. 고객이 해당 정보를 읽어도 혼란만 더해지고, 보안상 문제가 될 수도 있다.
+- 그래서 BasicErrorController 오류 컨트롤러에서 다음 오류 정보를 model 에 포함할지 여부 선택할 수 있다.
+- application.properties
+    - server.error.include-exception=false : exception 포함 여부( true , false )
+    - server.error.include-message=never : message 포함 여부
+    - server.error.include-stacktrace=never : trace 포함 여부
+    - server.error.include-binding-errors=never : errors 포함여부
+
+
+- application.properties
+```
+server.error.include-exception=true
+server.error.include-message=on_param
+server.error.include-stacktrace=on_param
+server.error.include-binding-errors=on_param
+```
+- 기본 값이 naver인 부분은 다음 3가지 옵션을 사용할 수 있다.
+    - never : 사용하지 않음
+    - always : 항상 사용
+    - on_param : 파라미터가 있을 때 사용
+        - on_param 은 파라미터가 있으면 해당 정보를 노출한다. 디버그 시 문제를 확인하기 위해 사용할 수 있다. 그런데 이 부분도 개발 서버에서 사용할 수 있지만, 운영 서버에서는 권장하지 않는다.
+        - on_param 으로 설정하고 다음과 같이 HTTP 요청시 파라미터를 전달하면 해당 정보들이 model 에 담겨서 뷰 템플릿에서 출력된다.
+        ```
+        message=&errors=&trace=
+        ```
+        - 테스트
+        ```
+        http://localhost:8080/error-ex?message=&errors=&trace=
+        ```
+
+- 실무에서는 이것들을 노출하면 안된다! 사용자에게는 이쁜 오류 화면과 고객이 이해할 수 있는 간단한 오류 메시지를 보여주고 오류는 서버에 로그로 남겨서 로그로 확인해야 한다. 
+- 3가지 주석 처리하기
+    - 없으면 어차피 안 나옴
+    ```
+    #server.error.include-message=on_param
+    #server.error.include-stacktrace=on_param
+    #server.error.include-binding-errors=on_param
+    ```
+
+- 스프링 부트 오류 관련 옵션
+    - server.error.whitelabel.enabled=true : 오류 처리 화면을 못 찾을 시, 스프링 whitelabel 오류 페이지 적용
+    - server.error.path=/error : 오류 페이지 경로, 스프링이 자동 등록하는 서블릿 글로벌 오류 페이지 경로와 BasicErrorController 오류 컨트롤러 경로에 함께 사용된다.
+        - 보통 기본값을 사용하니 손댈일은 거의 없다
+
+- 확장 포인트
+    - 에러 공통 처리 컨트롤러의 기능을 변경하고 싶으면 ErrorController 인터페이스를 상속 받아서 구현하거나 BasicErrorController 상속 받아서 기능을 추가하면 된다.
+
+- 정리
+    - 스프링 부트가 기본으로 제공하는 오류 페이지를 활용하면 오류 페이지와 관련된 대부분의 문제는 손쉽게 해결할 수 있다.
+
+
+- 사실, 예외페이지를 처리하는 경우는 크게 2가지가 있다.
+    1. 이번강의까지 배웠던 웹 페이지를 처리해야 하는 경우 (고객에게 오류 페이지를 보여주면 되는 것, 그래서 단순)
+    2. API 처리 (상대적으로 보다 복잡)
+        - 기업끼리 API 통신을 한다고 가정했을 때 서로 약속을 한다. JSON 데이터의 스펙을 정한다. 정의하고 만드는 것
+
+# API 예외 처리
+- API 예외만 공부하는 것이 아니라, 스프링 프레임워크가 제공하는 예외처리 메커니즘도 동시에 좀 더 깊이 알아보자.
+## 시작
+- 목표
+    - API 예외 처리는 어떻게 해야할까? 
+    - HTML 페이지의 경우 지금까지 설명했던 것처럼 4xx, 5xx와 같은 오류 페이지만 있으면 대부분의 문제를 해결할 수 있다.
+    - 그런데 API의 경우에는 생각할 내용이 더 많다. 오류 페이지는 단순히 고객에게 오류 화면을 보여주고 끝이지만, API는 각 오류 상황에 맞는 오류 응답 스펙을 정하고, JSON으로 데이터를 내려주어야 한다.
+        - 안드로이드나 아이폰같은 앱에서 API를 호출할 수도 있고, 기업간 시스템 통신, 마이크로서비스에서 서로 각 시스템 서버들끼리 API를 주고받을 수도 있고 등 다양한 경우가 많다.
+        - 고객에게 화면을 보여주는 것이 아니라 정확한 데이터를 전송해줘야 한다. 
+    - 지금부터 API의 경우 어떻게 예외 처리를 하면 좋은지 알아보자.
+    - API도 오류 페이지에서 설명했던 것 처럼 처음으로 돌아가서 먼저 서블릿 오류 페이지로 방식을 사용해보자.
+
+
+- 먼저 서블릿으로 오류 페이지를 해결하는 방식!
+- WebServerCustomizer 다시 동작
+    ```
+    @Component
+    public class WebServerCustomizer implements WebServerFactoryCustomizer<ConfigurableWebServerFactory> {
+
+        @Override
+        public void customize(ConfigurableWebServerFactory factory) {
+
+            ErrorPage errorPage404 = new ErrorPage(HttpStatus.NOT_FOUND, "/error-page/404");
+            ErrorPage errorPage500 = new ErrorPage(HttpStatus.INTERNAL_SERVER_ERROR, "/error-page/500");
+
+            ErrorPage errorPageEx = new ErrorPage(RuntimeException.class, "/error-page/500");
+
+            factory.addErrorPages(errorPage404, errorPage500, errorPageEx); // 설정한 페이지들을 등록
+
+        }
+    }
+    ```
+    - WebServerCustomizer 가 다시 사용되도록 하기 위해 @Component 애노테이션에 있는 주석을 풀자 이제 WAS에 예외가 전달되거나, response.sendError() 가 호출되면 위에 등록한 예외 페이지 경로가 호출된다.
+
+- ApiExceptionController - API 예외 컨트롤러
+    ```
+    @Slf4j
+    @RestController
+    public class ApiExceptionController {
+
+        @GetMapping("/api/members/{id}")
+        public MemberDto getMember(@PathVariable("id") String id) {
+
+            if (id.equals("ex")) {
+                throw new RuntimeException("잘못된 사용자");
+            }
+
+            return new MemberDto(id, "hello " + id);
+        }
+
+        @Data
+        @AllArgsConstructor
+        static class MemberDto {
+            private String memberId;
+            private String name;
+        }
+    }
+
+    ```
+    - 단순히회원을조회하는기능을하나만들었다.예외테스트를위해URL에전달된 id의값이 ex이면 예외가 발생하도록 코드를 심어두었다.
+- Postman으로 테스트
+    - HTTP Header에 Accept 가 application/json 인 것을 꼭 확인하자.
+    - 정상 호출
+        - http://localhost:8080/api/members/spring
+        - 결과
+        ```
+        {
+            "memberId": "spring",
+            "name": "hello spring"
+        }
+        ```
+
+    - 예외 발생 호출
+        - http://localhost:8080/api/members/ex
+        ```
+        <!DOCTYPE HTML>
+        <html>
+
+        <head>
+            <meta charset="utf-8">
+        </head>
+
+        <body>
+            <div class="container" style="max-width: 600px">
+                <div class="py-5 text-center">
+                    <h2>500 오류 화면</h2>
+                </div>
+                <div>
+                    <p>오류 화면 입니다.</p>
+                </div>
+                <hr class="my-4">
+            </div> <!-- /container -->
+        </body>
+
+        </html>
+        ```    
+        - templates/error-page/500.html 의 코드가 나온다.
+            - RuntimeException이 발생되면 java/hello/exception/WebServerCustomizer 클래스에 등록한 페이지 호출(Runtime 에러가 나면 "/error-page/500" 호출). 그러면 java/hello/exception/servlet/ErrorPageController 클래스에서 "/error-page/500" 메서드가 실행이 되고 return 으로 "error-page/500"을 호출한다. 
+        -  API를 요청했는데, 정상의 경우 API로 JSON 형식으로 데이터가 정상 반환된다. 그런데 오류가 발생하면 우리가 미리 만들어둔 오류 페이지 HTML이 반환된다. 이것은 기대하는 바가 아니다. 클라이언트는 정상 요청이든, 오류 요청이든 JSON이 반환되기를 기대한다. 웹 브라우저가 아닌 이상 HTML을 직접 받아서 할 수 있는 것은 별로 없다. 데이터를 받는 입장에서는 HTML을 해석할 수가 없다. 
+        - 문제를 해결하려면 오류 페이지 컨트롤러도 JSON 응답을 할 수 있도록 수정해야 한다.
+
+- ErrorPageController - API 응답 추가
+    ```
+    @RequestMapping(value = "/error-page/500", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, Object>> errorPage500Api(HttpServletRequest request, HttpServletResponse response) {
+
+        log.info("API errorPage 500");
+
+        Map<String, Object> result = new HashMap<>();
+        Exception ex = (Exception) request.getAttribute(ERROR_EXCEPTION);
+        result.put("status", request.getAttribute(ERROR_STATUS_CODE));
+        result.put("message", ex.getMessage());
+
+        Integer statusCode = (Integer) request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
+        return new ResponseEntity<>(result, HttpStatus.valueOf(statusCode));
+    }
+    ```
+    - produces = MediaType.APPLICATION_JSON_VALUE 의 뜻은 클라이언트가 요청하는 HTTP Header의 Accept 의 값이 application/json 일 때 해당 메서드가 호출된다는 것이다. 결국 클라어인트가 받고 싶은 미디어타입이 json이면 이 컨트롤러의 메서드가 호출된다(그래서  ㅍ 경로에 맞는 컨트롤러 메서드가 2개 있는데 produces 속성이 우선순위를 가진다)
+    - 응답 데이터를 위해서 Map 을 만들고 status , message 키에 값을 할당했다. Jackson 라이브러리는 Map 을 JSON 구조로 변환할 수 있다.
+    -  ResponseEntity 를 사용해서 응답하기 때문에 메시지 컨버터가 동작하면서 클라이언트에 JSON이 반환된다.
+- 포스트맨을 통해서 다시 테스트 해보자.
+    - HTTP Header에 Accept 가 application/json 인 것을 꼭 확인하자.
+    - http://localhost:8080/api/members/ex
+    ```
+    {
+        "message": "잘못된 사용자",
+        "status": 500
+    }
+    ```
+    - HTTP Header에 Accept 가 application/json 이 아니면, 기존 오류 응답인 HTML 응답이 출력되는 것을 확인할 수 있다. (우선순위가 컨트롤러에서 produces속성 없는 RequestMapping(value = "error-page/500")가 호출된다. 즉 Accept 이 application/json이 아닌 경우에는 다 이것이 호출된다.
+
+- 이렇게 서블릿으로 api 오류 처리를 어떻게 할 수 있는지 알아보았는데 여전히 복잡하다. 다음 강의부터 더 나은 해결책들이 게속 나옴
+
+## API 예외 처리 - 스프링 부트 기본 오류 처리
+- API 예외 처리도 스프링 부트가 제공하는 기본 오류 방식을 사용할 수 있다.
+- 스프링 부트가 제공하는 BasicErrorController 코드를 보자.
