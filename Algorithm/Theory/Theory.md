@@ -3,6 +3,10 @@
     - https://sustainable-dev.tistory.com/23?category=809125
     - [연습문제](https://app.codility.com/programmers/lessons/9-maximum_slice_problem/max_slice_sum/)
 
+- external sort
+    - [연습문제](https://leetcode.com/problems/merge-k-sorted-lists/description/)
+    - 
+
 
 # 좋은 개념글 링크
 - [Big-O 노테이션 쉽게 이해하기](https://joshuajangblog.wordpress.com/2016/09/21/time_complexity_big_o_in_easy_explanation/)
