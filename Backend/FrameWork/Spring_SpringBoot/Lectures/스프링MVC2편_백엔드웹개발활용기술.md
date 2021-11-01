@@ -7612,4 +7612,369 @@ server.error.include-binding-errors=on_param
 
 ## API 예외 처리 - 스프링 부트 기본 오류 처리
 - API 예외 처리도 스프링 부트가 제공하는 기본 오류 방식을 사용할 수 있다.
-- 스프링 부트가 제공하는 BasicErrorController 코드를 보자.
+- 스프링 부트가 제공하는 BasicErrorController 코드를 보자. (기본을 사용하기 위해, 시작 전에 WebServerCustomizer 클래스에 @Component 주석 처리하기)
+
+- BasicErrorController 코드
+    ```
+    @RequestMapping(produces = MediaType.TEXT_HTML_VALUE)
+    public ModelAndView errorHtml(HttpServletRequest request, HttpServletResponse response) {}
+        
+    @RequestMapping
+    public ResponseEntity<Map<String, Object>> error(HttpServletRequest request) {}
+    ```
+    - 참고로 url 매핑은? 클래스 선언부에 `@RequestMapping("${server.error.path:${error.path:/error}}")` 에서 /error 로 매핑(기본값으로) 되어 있는 것을 알 수 있다. application.properties에서 server.error.path 값을 따로 설정할 수도 있다.
+    - /error 동일한 경로를 처리하는 errorHtml() , error() 두 메서드를 확인할 수 있다.
+    - errorHtml() : produces = MediaType.TEXT_HTML_VALUE : 클라이언트 요청의 Accept 해더 값이 text/html 인 경우에는 errorHtml() 을 호출해서 view를 제공한다. (4xx, 5xx 위에서 했던 것처럼 조건에 맞는 것을 반환)
+        - 실행 : http://localhost:8080/api/members/ex, Headers의 Accept에 text/html 해서 보내면 html(500 페이지) 가 나온다.
+    - error() : 그외 경우에 호출되고 ResponseEntity 로 HTTP Body에 JSON 데이터를 반환한다.(메시지 컨버터 동작해서)
+        - 실행 : http://localhost:8080/api/members/ex, Headers의 Accept에 application/json 해서 보내면 json으로 답이 온다.
+    - 이런식으로 미리 다 개발이 되어있음
+- 스프링 부트의 예외 처리
+    - 앞서 학습했듯이 스프링 부트의 기본 설정은 오류 발생시 /error 를 오류 페이지로 요청한다. BasicErrorController 는 이 경로를 기본으로 받는다. ( server.error.path 로 수정 가능, 기본 경로 / error)
+    - Postman으로 실행
+        - GET : http://localhost:8080/api/members/ex
+    - 주의 
+        - BasicErrorController 를 사용하도록 WebServerCustomizer 의 @Component 를 주석처리 하자.
+    ```
+    {
+        "timestamp": "2021-04-28T00:00:00.000+00:00", "status": 500,
+        "error": "Internal Server Error",
+        "exception": "java.lang.RuntimeException",
+        "trace": "java.lang.RuntimeException: 잘못된 사용자\n\tat
+        hello.exception.web.api.ApiExceptionController.getMember(ApiExceptionController
+        .java:19...,
+        "message": "잘못된 사용자",
+        "path": "/api/members/ex"
+    }
+    ```
+- 위처럼 스프링 부트는 BasicErrorController 가 제공하는 기본 정보들을 활용해서 오류 API를 생성해준다.   
+    - 다음 옵션들을 설정하면 더 자세한 오류 정보를 추가할 수 있다.
+        - server.error.include-binding-errors=always
+        - server.error.include-exception=true
+        - server.error.include-message=always
+        - server.error.include-stacktrace=always
+
+- 물론 오류 메시지는 이렇게 막 추가하면 보안상 위험할 수 있다. 간결한 메시지만 노출하고, 로그를 통해서 확인하자.
+    - 아래처럼 해서 에러 발생시키면 엄청난 양의 데이터를 보여준다
+    ```
+    server.error.whitelabel.enabled=false
+    server.error.include-exception=true
+    server.error.include-message=always
+    server.error.include-stacktrace=always
+    server.error.include-binding-errors=always
+    ```
+    - 그래서 가급적 쓰지 않도록!
+    ```
+    server.error.whitelabel.enabled=false
+    server.error.include-exception=true
+    server.error.include-message=on_param
+    server.error.include-stacktrace=on_param
+    server.error.include-binding-errors=on_param
+    ```
+
+- Html 페이지 vs API 오류
+    -  asicErrorController 를 확장하면 JSON 메시지도 변경할 수 있다(BasicController 클래스의 error 메서드 안에 getErrorAttributes 메서드 들어가보면 protected로 선언되어 있음). 그런데 API 오류는 조금 뒤에 설명할 `@ExceptionHandler(편한 것 끝판왕)` 가 제공하는 기능을 사용하는 것이 더 나은 방법이므로 지금은 BasicErrorController 를 확장해서 JSON 오류 메시지를 변경할 수 있다 정도로만 이해해두자.
+    - 스프링 부트가 제공하는 BasicErrorController 는 HTML 페이지를 제공하는 경우에는 매우 편리하다. 4xx, 5xx 등등 모두 잘 처리해준다. 그런데 API 오류 처리는 다른 차원의 이야기이다. API 마다, 각각의 컨트롤러나 예외마다 서로 다른 응답 결과를 출력해야 할 수도 있다. 예를 들어서 회원과 관련된 API에서 예외가 발생할 때 응답과, 상품과 관련된 API에서 발생하는 예외에 따라 그 결과가 달라질 수 있다. 결과적으로 매우 세밀하고 복잡하다. 따라서 이 방법은 HTML 화면을 처리할 때 사용하고, API는 오류 처리는 뒤에서 설명할 @ExceptionHandler 를 사용하자.
+- 그렇다면 복잡한 API는 오류는 어떻게 처리해야하는지 지금부터 하나씩 알아보자.
+
+## API 예외 처리 - HandlerExceptionResolver 시작
+- HandlerExceptionResolver는 스프링이 제공
+- 목표
+    - 예외가 발생해서 서블릿을 넘어 WAS까지 예외가 전달되면 HTTP 상태코드가 500으로 처리된다.(서버 내부에서 발생했으니까)
+    - 발생하는 예외에 따라서 400, 404 등등 다른 상태코드도 처리하고 싶다.
+    - 오류 메시지, 형식등을 API마다 다르게 처리하고 싶다.
+
+- 상태코드 변환
+    - 예를 들어서 IllegalArgumentException 을 처리하지 못해서 컨트롤러 밖으로 넘어가는 일이 발생하면 HTTP 상태코드를 400(Bad Request, 클라이언트 잘못) 으로 처리하고 싶다. 어떻게 해야할까?
+    - 즉, 사용자가 Argument를 잘못보낸 것
+
+- ApiExceptionController - 수정
+    ```
+    @GetMapping("/api/members/{id}")
+    public MemberDto getMember(@PathVariable("id") String id) {
+
+        if (id.equals("ex")) {
+            throw new RuntimeException("잘못된 사용자");
+        }
+        if (id.equals("bad")) {
+            throw new IllegalArgumentException("잘못된 입력 값");
+        }
+
+        return new MemberDto(id, "hello " + id);
+    }
+    ```
+    - http://localhost:8080/api/members/bad 라고 호출하면 IllegalArgumentException 이 발생하도록 했다. (Request Headers 의 Accept는 application/json)
+    - 그런데 실행해보면 상태 코드가 500인 것을 확인할 수 있다.
+    ```
+    {
+      "status": 500,
+      "error": "Internal Server Error",
+      "exception": "java.lang.IllegalArgumentException",
+      "path": "/api/members/bad"
+    }
+    ```
+
+- 나는 400에러를 보여주고 싶은데, 어떻게 해야 하나? 그러기 위해서는 HandlerExceptionResolver를 이해해야 한다.
+
+- HandlerExceptionResolver
+    - 스프링 MVC는 컨트롤러(핸들러) 밖으로 예외가 던져진 경우 예외를 해결하고, 동작을 새로 정의할 수 있는 방법을 제공한다. 컨트롤러 밖으로 던져진 예외를 해결하고, 동작 방식을 변경하고 싶으면 HandlerExceptionResolver 를 사용하면 된다. 줄여서 ExceptionResolver 라 한다.
+
+- ExceptionResolver 적용 전
+
+    ![image](https://user-images.githubusercontent.com/57219160/139666994-5fe9bc87-6162-4924-9c12-ec2c74438c2a.png)
+    - 순서
+        - WAS 에서 Dispatcher Servlet호출 -> preHandle 호출 -> 핸들러 어댑터 -> 핸들러 도착. 그런데 여기서 예외 발생 -> 예외 전달 -> postHandle은 호출 안됨 -> afterCompletion 호출되고 WAS에 예외가 전달이 되어버린다. -> WAS는 예외가 서버 내부에서 왔으니 500에러 만듬
+
+- ExceptionResolver 적용 후
+
+    ![image](https://user-images.githubusercontent.com/57219160/139667300-2058199e-2f04-47fd-84f9-274cdd2804c2.png)
+    - 순서
+        - WAS 요청 -> Dispatcher Servlet -> preHandle 호출 -> 핸들러 어댑터 -> 핸들러 도착. 그런데 여기서 예외 발생 -> 예외 전달 -> `ExceptionResolver 호출` 이 되어서 예외 해결을 시도한다. -> 해결이 되면 render 호출 -> afterCompletion 호출 -> 정상 응답으로 나감
+    - 즉 ExceptionResolver는 핸들러(컨트롤러)에서 발생한 예외를 잡아서 해결해줌으로써 정상 처리해주는 해결사
+    - 참고
+        - ExceptionResolver 로 예외를 해결해도 postHandle() 은 호출되지 않는다(핸들러에서 예외 터지면 그냥 호출안됨)
+
+- HandlerExceptionResolver - 인터페이스
+    ```
+    public interface HandlerExceptionResolver {
+
+        ModelAndView resolveException(
+        HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex);
+    }
+    ```
+    - handler : 핸들러(컨트롤러) 정보
+    - Exception ex : 핸들러(컨트롤러)에서 발생한 발생한 예외
+        - 즉 이 ex(예외)를 잡아서 해결한 후에 ModelAndView를 반환하면 된다.
+
+- MyHandlerExceptionResolver
+    ```
+    @Slf4j
+    public class MyHandlerExceptionResolver implements HandlerExceptionResolver {
+
+        @Override
+        public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+
+            try {
+                if (ex instanceof IllegalArgumentException) {
+                    log.info("IllegalArgumentException resolver to 400");
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage()); // 예외를 먹어버린 것!
+                    return new ModelAndView(); // 반환 값
+                }
+            } catch (IOException e) {
+                log.error("resolver ex", e);
+            }
+            return null;
+        }
+    }
+    ```
+    - IllegalArgumentException이 발생하면 400 에러를 보여준다고 그냥 약속하고 코딩하는 것임.
+    - ExceptionResolver 가 ModelAndView 를 반환하는 이유는 마치 try, catch를 하듯이, Exception 을 처리해서 정상 흐름 처럼 변경하는 것이 목적이다. 이름 그대로 Exception 을 Resolver(해결)하는 것이 목적이다. Dispatcher Servlet이 예외를 보고 ExceptionResolver에게 해결해보라고 함. 그래서 해결해서 ModelAndView 반환하면 정상 흐름으로 다시 변환.
+    - 즉, 여기서 예외를 먹어버린 것이다. 서블릿 컨테이너(WAS)에서는 이제 sendError를 통해서 받은 400에러를 인식함
+    - 여기서는 IllegalArgumentException 이 발생하면 response.sendError(400) 를 호출해서 HTTP 상태 코드를 400으로 지정하고, 빈 ModelAndView 를 반환한다.
+        - 빈 ModelAndView를 반환했으므로 렌더링 할 것이 없으므로 뷰 렌더링 안하고 WAS에게 정상 응답으로 돌아가 버린다. 
+        - 그런데 sendError를 보고 오류 페이지를 찾는다. 
+    - 이 클래스는 밑에서 WebConfig 클래스에 등록해야 한다.
+        
+    - 반환 값에 따른 동작 방식
+        - HandlerExceptionResolver 의 반환 값에 따른 DispatcherServlet 의 동작 방식은 다음과 같다.
+            - `빈 ModelAndView` : new ModelAndView() 처럼 빈 ModelAndView 를 반환하면 뷰를 렌더링 하지 않고, 정상 흐름으로 서블릿이 리턴된다. 서블릿 컨테이너까지 정상적으로 리턴이 계속 되어서 도착하는 것.
+            - `ModelAndView 지정` : ModelAndView 에 View , Model 등의 정보를 지정해서 반환하면 뷰를 렌더링 한다.
+            - `null` : null 을 반환하면, 다음 ExceptionResolver 를 찾아서 실행한다(여러 개 등록가능). 만약 처리할 수 있는 ExceptionResolver 가 없으면 예외 처리가 안되고, 기존에 발생한 예외를 서블릿 밖으로 던진다. 즉 Excdeption이 다시 WAS까지 날아감. 그럼 WAS는 500 에러로 처리한다.
+
+- ExceptionResolver 활용(Exception들을 처리하는 여러 방법들)
+    - 예외 상태 코드 변환
+        - 위에서 방금 했던 것처럼.
+        - 예외를 response.sendError(xxx) 호출로 변경해서 서블릿에서 상태 코드에 따른 오류를 처리하도록 위임
+        - 이후 WAS는 서블릿 오류 페이지를 찾아서 내부 호출, 예를 들어서 스프링 부트가 기본으로 설정한 /error 가 호출됨
+    - 뷰 템플릿 처리
+        - ModelAndView 에 값을 채워서 예외에 따른 새로운 오류 화면 뷰 렌더링 해서 고객에게 제공
+    - API 응답 처리
+        - response.getWriter().println("hello"); 처럼 HTTP 응답 바디에 직접 데이터를 넣어주는 것도 가능하다. 여기에 JSON 으로 응답하면 API 응답 처리를 할 수 있다. 
+            - ex) response.getWriter().println("{"name" : "june", "age" : 30, ...}")
+
+- WebConfig - 수정
+    - WebMvcConfigurer 를 통해 등록
+    ```
+    (...기본 설정을 유지하면서 추가...)
+    @Override
+    public void extendHandlerExceptionResolvers(List<HandlerExceptionResolver> resolvers) {
+        resolvers.add(new MyHandlerExceptionResolver());
+    }
+    ```
+    - configureHandlerExceptionResolvers(..) 를 사용하면 스프링이 기본으로 등록하는 ExceptionResolver 가 제거되므로 주의, extendHandlerExceptionResolvers 를 사용하자.
+- Postman으로 실행
+    - http://localhost:8080/api/members/ex -> HTTP 상태 코드 500
+    - http://localhost:8080/api/members/bad -> HTTP 상태 코드 400
+
+## API 예외 처리 - HandlerExceptionResolver 활용
+- 예외를 여기서 마무리하기
+    - 예외가 발생하면 WAS까지 예외가 던져지고, WAS에서 오류 페이지 정보를 찾아서 다시 /error 를 호출하는 과정은 생각해보면 너무 복잡하다. ExceptionResolver 를 활용하면 예외가 발생했을 때 이런 복잡한 과정 없이 여기에서 문제를 깔끔하게 해결할 수 있다. WAS까지 안 간다.
+
+- 예제로 알아보자.
+    - 먼저 사용자 정의 예외를 하나 추가하자.
+
+- UserException
+```
+
+public class UserException extends RuntimeException {
+
+    public UserException() {
+        super();
+    }
+
+    public UserException(String message) {
+        super(message);
+    }
+
+    public UserException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public UserException(Throwable cause) {
+        super(cause);
+    }
+
+    protected UserException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
+}
+
+```
+- ApiExceptionController - 예외 추가
+    ```
+    @Slf4j
+    @RestController
+    public class ApiExceptionController {
+
+        @GetMapping("/api/members/{id}")
+        public MemberDto getMember(@PathVariable("id") String id) {
+
+            if (id.equals("ex")) {
+                throw new RuntimeException("잘못된 사용자");
+            }
+            if (id.equals("bad")) {
+                throw new IllegalArgumentException("잘못된 입력 값");
+            }
+            if (id.equals("user-ex")) {
+                throw new UserException("사용자 오류");
+            }
+
+            return new MemberDto(id, "hello " + id);
+        }
+
+        @Data
+        @AllArgsConstructor
+        static class MemberDto {
+            private String memberId;
+            private String name;
+        }
+    }
+    ```
+    - http://localhost:8080/api/members/user-ex 호출시 UserException 이 발생하도록 해두었다.
+    - 여기서 포스트맨으로 http://localhost:8080/api/members/user-ex 호출하면 500에러가 나온다. 로그를 보면 얼마나 복잡한 과정으로 예외가 처리되고 있는지 알 수 있다.
+        - 에러(user-ex) 터진 것이 WAS까지 갔다가 /error 호출해서 다시 돌아온 후에 BasicErrorController 호출되고, 그 BasicErrorController 에서 아래 결과를 보여준 것
+        ```
+        {
+            "timestamp": "2021-11-01T16:18:21.997+00:00",
+            "status": 500,
+            "error": "Internal Server Error",
+            "exception": "hello.exception.exception.UserException",
+            "path": "/api/members/user-ex"
+        }
+        ```
+- 이제 이 예외를 처리하는 UserHandlerExceptionResolver 를 만들어보자.
+- UserHandlerExceptionResolver
+    ```
+
+    @Slf4j
+    public class UserHandlerExceptionResolver implements HandlerExceptionResolver {
+
+        private final ObjectMapper objectMapper = new ObjectMapper();
+
+        @Override
+        public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+            try {
+
+                if (ex instanceof UserException) {
+                    log.info("UserException resolver to 400");
+                    String acceptHeader = request.getHeader("accept");
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 응답이 나갈 때 400으로 나감
+
+                    // application/json 경
+                    if ("application/json".equals(acceptHeader)) {
+                        Map<String, Object> errorResult = new HashMap<>();
+                        errorResult.put("ex", ex.getClass()); // 에러가 어떤 클래스인지
+                        errorResult.put("message", ex.getMessage());
+
+                        String result = objectMapper.writeValueAsString(errorResult);// 객체(json) -> 문자
+
+                        response.setContentType("application/json");
+                        response.setCharacterEncoding("utf-8");
+                        response.getWriter().write(result);
+                        return new ModelAndView();
+                    } else {
+                        // text/html 경우
+                        return new ModelAndView("error/500"); // templates/error/500.html 호출
+                    }
+                }
+
+            } catch (IOException e) {
+                log.error("resolver ex", e);
+            }
+
+            return null;
+        }
+    }
+
+    ```
+    - HTTP 요청 해더의 ACCEPT 값이 application/json 이면 JSON으로 오류를 내려주고, 그 외 경우에는 error/500에 있는 HTML 오류 페이지를 보여준다.
+
+- WebConfig에 UserHandlerExceptionResolver 추가(등록)
+```
+@Override
+public void extendHandlerExceptionResolvers(List<HandlerExceptionResolver> resolvers) {
+    resolvers.add(new MyHandlerExceptionResolver());
+    resolvers.add(new UserHandlerExceptionResolver());
+}
+```
+
+- 실행
+    - POSTMAN 실행
+    ```
+    http://localhost:8080/api/members/user-ex
+    ```
+    1. ACCEPT : application/json 일 경우
+    ```
+    {
+        "ex": "hello.exception.exception.UserException",
+         "message": "사용자 오류"
+    }
+    ```
+    2. ACCEPT : text/html  (postman 에서 header값 바꿔도 되고, 브라우저에서 실행해도 된다. 브라우저는 기본이 text/html 이다)
+    ```
+    <!DOCTYPE HTML>
+    <html>
+    ...
+    </html>
+    ```
+
+- 정리
+    - ExceptionResolver 를 사용하면 컨트롤러에서 예외가 발생해도 ExceptionResolver 에서 예외를 처리해버린다.
+    - 따라서 예외가 발생해도 서블릿 컨테이너까지 예외가 전달되지 않고, 스프링 MVC에서 예외 처리는 끝이 난다.
+    - 결과적으로 WAS 입장에서는 정상 처리가 된 것이다. 이렇게 예외를 이곳에서 모두 처리할 수 있다는 것이 핵심이다.
+    - 서블릿 컨테이너까지 예외가 올라가면 복잡하고 지저분하게 추가 프로세스가 실행된다. 반면에 ExceptionResolver 를 사용하면 예외처리가 상당히 깔끔해진다.
+    - 그런데 직접 ExceptionResolver 를 직접 구현하려고 하니 상당히 복잡하다. 지금부터 스프링이 제공하는 ExceptionResolver 들을 알아보자.
+
+
+## API 예외 처리 - 스프링이 제공하는 ExceptionResolver1
+- 이전처럼 ExceptionResolver를 직접 구현하지 않고, 스프링 부트는 기본적으로 ExceptionResolver 몇 가지를 서버 띄울 때 등록하면서 제공해준다.
+- HandlerExceptionResolverComposite 에 다음 순서로 등록 (순서는 중요치 않고, 3가지 종류가 중요)
+    1. `ExceptionHandlerExceptionResolver`
+        - @ExceptionHandler 을 처리한다. API 예외 처리는 대부분 이 기능으로 해결한다. 조금 뒤에 자세히 설명한다. (제일 중요)
+    2. `ResponseStatusExceptionResolver`
+        - HTTP 상태 코드를 지정해준다. ex) @ResponseStatus(value = HttpStatus.NOT_FOUND).
+        - 원래 500에러 나가던 것을 response.sendError~ 이런식으로 바꿔줬던 코드를 여기서는 애노테이션 하나만 붙여주면 된다.
+    3. `DefaultHandlerExceptionResolver` -> 우선 순위가 가장 낮다.
+        - 스프링 내부 기본 예외를 처리한다.
+
+- 먼저 가장 쉬운 ResponseStatusExceptionResolver 부터 알아보자.
