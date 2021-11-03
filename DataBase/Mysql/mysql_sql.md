@@ -1,4 +1,4 @@
-## SQL 
+# SQL 
 > 유용하거나 생소한 SQL 기록
 
 - 기존에 존재하는 key값을 제외하고(중복제외) insert 하고 싶을 때
@@ -186,7 +186,7 @@ FROM (
 	FROM (
 		SELECT t1.member_id, t1.name, DATE_FORMAT(t1.insert_time, '%Y-%m') AS regMonth
 		FROM schema.event_entry AS t1
-		WHERE insert_time BETWEEN DATE_FORMAT(@stime, '%Y-%m-%d %H:%i:%s') AND DATE_FORMAT(@etime, '%Y-%m-%d %H:%i:%s')
+		WHERE insert_time BETWEEN DATE_FORMAT(@from_time, '%Y-%m-%d %H:%i:%s') AND DATE_FORMAT(@end_time, '%Y-%m-%d %H:%i:%s')
 	) AS T1
 	GROUP BY T1.regMonth, T1.member_id
 ) AS T1
@@ -211,4 +211,32 @@ ORDER BY T1.regMonth
 ;
 ```
 
+- 지금시간대가 특정 시간대(시작 ~ 끝) 에 있을 시 1 또는 0으로 표시
+```
+SELECT 
+        IF(NOW() BETWEEN DATE_FORMAT(STR_TO_DATE(begin_time, '%Y-%m-%d'), '%Y-%m-%d 00:00:00') AND DATE_FORMAT(STR_TO_DATE(end_time, '%Y-%m-%d'), '%Y-%m-%d 23:59:59'), 1, 0) AS is_game_active
 
+FROM table
+```
+
+- 총 3판 2선(3판 2선, 5판 3선 등) 인 게임에서 homeTeam, awayTeam 의 스코어 따라 이긴 팀, 그리고 각  이긴팀, home팀, away팀
+```
+SELECT 
+        t2.name AS home_team_name
+        , t2.id AS home_team_id
+        , t3.name AS away_team_name
+        , t3.id AS away_team_id
+        , CASE
+                WHEN t1.home_score = FLOOR(t1.number_of_games / 2) + 1
+                        THEN t2.name
+                WHEN t1.away_score = FLOOR(t1.number_of_Games / 2) + 1
+                        THEN t2.name
+                ELSE ''
+                END
+                AS winner_team_name
+        , t4.id AS winner_team_id
+FROM game_table t1
+LEFT OUTER JOIN game_team_table t2 ON t1.home_team_id = t2.id
+LEFT OUTER JOIN game_team_table t3 ON t1.away_team_id = t3.id
+LEFT OUTER JOIN game_team_table t4 ON t1.winner_team_id = t4.id
+```
