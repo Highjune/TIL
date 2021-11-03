@@ -7,7 +7,7 @@
 	- [검증](https://github.com/Highjune/Spring_MVC_Lecture2_Validation_Kim_Young_Han--)
 	- [로그인-쿠키, 세션](https://github.com/Highjune/Spring_MVC_Lecture2_login-Cookie-Session-_Kim_Young_Han--/tree/master)
 	- [예외처리](https://github.com/Highjune/Spring_MVC_Lecture2_login-Exception-_Kim_Young_Han--/tree/master)
-	- [타입컨버터(https://github.com/Highjune/Spring_MVC_Lecture2_Typeconverter_Kim_Young_Han/tree/master)
+	- [타입컨버터](https://github.com/Highjune/Spring_MVC_Lecture2_Typeconverter_Kim_Young_Han/tree/master)
 
 
 # 타임리프 - 기본 기능
