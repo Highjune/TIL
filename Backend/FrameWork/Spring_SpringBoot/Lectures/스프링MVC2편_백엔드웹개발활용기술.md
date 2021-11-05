@@ -8636,5 +8636,437 @@ test {
 
 ## 타입 컨버터 - Converter
 - 타입 컨버터를 어떻게 사용하는지 코드로 알아보자.
-- 타입 컨버터를 사용하려면 org.springframework.core.convert.converter.Converter 인터페이스를 구현하면 된다.
+- 타입 컨버터를 사용하려면 org.springframework.core.convert.converter.Converter 인터페이스를 구현하면 된다.\
+- 주의
+    - Converter 라는 이름의 인터페이스가 많으니 조심해야 한다.
+    - org.springframework.core.convert.converter.Converter 를 사용해야 한다.
+
+- 컨버터 인터페이스
+```
+package org.springframework.core.convert.converter;
+    public interface Converter<S, T> {
+    T convert(S source);
+}
+```
+
 - 먼저 가장 쉬운 ResponseStatusExceptionResolver 부터 알아보자.
+- StringToIntegerConverter - 문자를 숫자로 변환하는 타입 컨버터
+    ```
+    @Slf4j
+    public class StringToIntegerConverter implements Converter<String, Integer> {
+
+        @Override
+        public Integer convert(String source) {
+            log.info("convert source={}, source");
+            return Integer.valueOf(source);
+        }
+    }
+    ```
+    - String -> Integer 로 변환하기 때문에 소스가 String 이 된다. 이 문자를 Integer.valueOf(source) 를 사용해서 숫자로 변경한 다음에 변경된 숫자를 반환하면 된다.
+- IntegerToStringConverter - 숫자를 문자로 변환하는 타입 컨버터
+    ```
+    @Slf4j
+    public class IntegerToStringConverter implements Converter<Integer, String> {
+
+        @Override
+        public String convert(Integer source) {
+            log.info("convert source={}", source);
+            return String.valueOf(source);
+        }
+    }
+    ```
+    - 이번에는 숫자를 문자로 변환하는 타입 컨버터이다. 앞의 컨버터와 반대의 일을 한다. 이번에는 숫자가 입력되기 때문에 소스가 Integer 가 된다. String.valueOf(source) 를 사용해서 문자로 변경한 다음 변경된 문자를 반환하면 된다.
+
+- 테스트 코드를 통해서 타입 컨버터가 어떻게 동작하는지 확인해보자.
+- ConverterTest - 타입 컨버터 테스트 코드
+    ```
+    public class ConverterTest {
+
+        @Test
+        void stringToInteger() {
+            StringToIntegerConverter converter = new StringToIntegerConverter();
+            Integer result = converter.convert("10");
+            Assertions.assertThat(result).isEqualTo(10);
+        }
+
+        @Test
+        void IntegerToString() {
+            IntegerToStringConverter converter = new IntegerToStringConverter();
+            String result = converter.convert(10);
+            Assertions.assertThat(result).isEqualTo("10");
+        }
+    }
+    ```
+- 사용자 정의 타입 컨버터
+    - 타입 컨버터 이해를 돕기 위해 조금 다른 컨버터를 준비해보았다.
+    - 127.0.0.1:8080 과 같은 IP, PORT를 입력하면 IpPort 객체로 변환하는 컨버터를 만들어보자.
+
+- IpPort
+    ```
+    @Getter
+    @EqualsAndHashCode // A.equals(B) 라고 했을 때 ip, port가 같은 값이라면 true라고 나옴
+    public class IpPort {
+
+        private String ip;
+        private int port;
+
+        public IpPort(String ip, int port) {
+            this.ip = ip;
+            this.port = port;
+        }
+    }
+    ```
+    - 롬복의 @EqualsAndHashCode 를 넣으면 모든 필드를 사용해서 equals() , hashcode() 를 생성한다. 따라서 모든 필드의 값이 같다면 a.equals(b) 의 결과가 참이 된다.
+- StringToIpPortConverter - 컨버터
+    ```
+    @Slf4j
+    public class StringToIpPortConverter implements Converter<String, IpPort> {
+
+        @Override
+        public IpPort convert(String source) {
+            log.info("convert source={}", source);
+        // "127.0.0.1:8080" -> IpPort 객체
+            String[] split = source.split(":");
+            String ip = split[0];
+            int port = Integer.parseInt(split[1]);
+            return new IpPort(ip, port);
+        }
+    }
+    ```
+    - 127.0.0.1:8080 같은 문자를 입력하면 IpPort 객체를 만들어 반환한다.
+
+- IpPortToStringConverter
+    ```
+    @Slf4j
+    public class IpPortToStringConverter implements Converter<IpPort, String> {
+
+        @Override
+        public String convert(IpPort source) {
+            log.info("convert source={}", source);
+            //IpPort 객체 -> "127.0.0.1:8080"
+            return source.getIp() + ":" + source.getPort();
+        }
+    }
+    ```
+    - IpPort 객체를 입력하면 127.0.0.1:8080 같은 문자를 반환한다.
+
+- ConverterTest - IpPort 컨버터 테스트 추가
+    ```
+    @Test
+    void stringToIpPort() {
+        IpPortToStringConveter converter = new IpPortToStringConveter();
+        IpPort source = new IpPort("127.0.0.1", 8080);
+        String result = converter.convert(source);
+        Assertions.assertThat(result).isEqualTo("127.0.0.1:8080");
+    }
+
+    @Test
+    void IpPortToString() {
+        IpPortToStringConverter converter = new IpPortToStringConverter();
+        String source = "127.0.0.1:8080";
+        IpPort result = converter.convert(source);
+        Assertions.assertThat(result).isEqualTo(new IpPort("127.0.0.1", 8080)); // IpPort에 @EqualsAndHashCode 붙였기 때문에 같은 것으로 판정할 수 있다.
+    }
+    ```
+    - 타입 컨버터 인터페이스가 단순해서 이해하기 어렵지 않을 것이다.
+    - 그런데 이렇게 타입 컨버터를 하나하나 직접 사용하면, 개발자가 직접 컨버팅 하는 것과 큰 차이가 없다. 타입 컨버터를 등록하고 관리하면서 편리하게 변환 기능을 제공하는 역할을 하는 무언가가 필요하다.
+    - 그 무엇인가가 바로 ConversionService, 다음 강의에서 배울 것
+
+
+- 참고
+    - 스프링은 용도에 따라 다양한 방식의 타입 컨버터를 제공한다.
+        - Converter -> 기본 타입 컨버터
+        - ConverterFactory -> 전체 클래스 계층 구조가 필요할 때
+        - GenericConverter -> 정교한 구현, 대상 필드의 애노테이션 정보 사용 가능
+        - ConditionalGenericConverter -> 특정 조건이 참인 경우에만 실행
+    - 자세한 내용은 공식 문서를 참고하자.
+        - https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#core- convert
+
+- 참고
+    - 스프링은 문자, 숫자, 불린, Enum등 일반적인 타입에 대한 대부분의 컨버터를 기본으로 제공한다. IDE에서 Converter , ConverterFactory , GenericConverter 의 구현체를 찾아보면 수 많은 컨버터를 확인할 수 있다.
+
+
+## 컨버전 서비스 - ConversionService
+- 이렇게 타입 컨버터를 하나하나 직접 찾아서 타입 변환에 사용하는 것은 매우 불편하다. 그래서 스프링은 개별 컨버터를 모아두고 그것들을 묶어서 편리하게 사용할 수 있는 기능을 제공하는데, 이것이 바로 컨버전 서비스( ConversionService )이다.
+
+- ConversionService 인터페이스
+    ```
+    package org.springframework.core.convert;
+
+    import org.springframework.lang.Nullable;
+
+    public interface ConversionService {
+
+        boolean canConvert(@Nullable Class<?> sourceType, Class<?> targetType);
+        boolean canConvert(@Nullable TypeDescriptor sourceType, TypeDescriptor targetType);
+
+        <T> T convert(@Nullable Object source, Class<T> targetType);
+        Object convert(@Nullable Object source, @Nullable TypeDescriptor sourceType, TypeDescriptor targetType);
+    }
+    ```
+    - 컨버전 서비스 인터페이스는 단순히 컨버팅이 가능한가? 확인하는 기능과, 컨버팅 기능을 제공한다.
+
+- 사용 예를 확인해보자.
+- ConversionServiceTest - 컨버전 서비스 테스트 코드
+    ```
+    public class ConversionServiceTest {
+
+        @Test
+        void conversionService() {
+            // 등록
+            // DefaultConversionService는 ConversionService 인터페이스를 구현한 구현체
+            DefaultConversionService conversionService = new DefaultConversionService();
+            conversionService.addConverter(new StringToIntegerConverter());
+            conversionService.addConverter(new IntegerToStringConverter());
+            conversionService.addConverter(new StringToIpPortConverter());
+            conversionService.addConverter(new IpPortToStringConverter());
+
+            // 사용
+            assertThat(conversionService.convert("10", Integer.class)).isEqualTo(10);
+            assertThat(conversionService.convert(10, String.class)).isEqualTo("10");
+
+            IpPort ipPort = conversionService.convert("127.0.0.1:8080", IpPort.class);
+            assertThat(ipPort).isEqualTo(new IpPort("127.0.0.1", 8080));
+
+            String ipPortString = conversionService.convert(new IpPort("127.0.0.1", 8080), String.class);
+            assertThat(ipPortString).isEqualTo("127.0.0.1:8080");
+        }
+    }
+    ```
+    - DefaultConversionService 는 ConversionService 인터페이스를 구현했는데, 추가로 컨버터를 등록하는 기능도 제공한다.
+    - 실행 로그를 보면 내부적으로 위에서 등록한 컨버터들이 동작한 것을 알 수 있다.
+    ```
+    00:15:19.164 [Test worker] INFO hello.typeconverter.converter.StringToIntegerConverter - convert source=10
+    00:15:19.208 [Test worker] INFO hello.typeconverter.converter.IntegerToStringConverter - convert source=10
+    00:15:19.211 [Test worker] INFO hello.typeconverter.converter.StringToIpPortConverter - convert source=127.0.0.1:8080
+    00:15:19.211 [Test worker] INFO hello.typeconverter.converter.IpPortToStringConverter - convert source=hello.typeconverter.type.IpPort@59cb0946
+    ```
+    - 등록과 사용 분리
+        - 컨버터를 등록할 때는 StringToIntegerConverter 같은 타입 컨버터를 명확하게 알아야 한다. 반면에 컨버터를 사용하는 입장에서는 타입 컨버터를 전혀 몰라도 된다. 타입 컨버터들은 모두 컨버전 서비스 내부에 숨어서 제공된다. 따라서 타입을 변환을 원하는 사용자는 컨버전 서비스 인터페이스에만 의존하면 된다. 물론 컨버전 서비스를 등록하는 부분과 사용하는 부분을 분리하고 의존관계 주입을 사용해야 한다.
+
+    - 컨버전 서비스 사용
+    ```
+    Integer value = conversionService.convert("10", Integer.class)
+    ```
+- 인터페이스 분리 원칙 - ISP(Interface Segregation Principal)
+    - 인터페이스 분리 원칙은 클라이언트가 자신이 이용하지 않는 메서드에 의존하지 않아야 한다.
+    - DefaultConversionService 는 다음 두 인터페이스를 구현했다.
+        - ConversionService : 컨버터 사용에 초점
+        - ConverterRegistry : 컨버터 등록에 초점
+    - 이렇게 인터페이스를 분리하면 컨버터를 사용하는 클라이언트와 컨버터를 등록하고 관리하는 클라이언트의 관심사를 명확하게 분리할 수 있다. 특히 컨버터를 사용하는 클라이언트는 ConversionService 만 의존하면 되므로, 컨버터를 어떻게 등록하고 관리하는지는 전혀 몰라도 된다. 결과적으로 컨버터를 사용하는 클라이언트는 꼭 필요한 메서드만 알게된다. 이렇게 인터페이스를 분리하는 것을 ISP 라 한다.
+    - 또한, 만약 ConverterRegistry 인터페이스 자체가 변경이 되었을 때(메서드 추가되거나) ConversionService 자체는 전혀 손댈 필요가 없다. 그냥 계속 그대로 사용하면 됨
+    - ISP 참고: https://ko.wikipedia.org/wiki/ %EC%9D%B8%ED%84%B0%ED%8E%98%EC%9D%B4%EC%8A%A4_%EB%B6%84%EB% A6%AC_%EC%9B%90%EC%B9%99
+- 스프링은 내부에서 ConversionService 를 사용해서 타입을 변환한다. 예를 들어서 앞서 살펴본 @RequestParam 같은 곳에서 이 기능을 사용해서 타입을 변환한다.
+- 이제 컨버전 서비스를 스프링에 적용해보자.
+
+## 스프링에 Converter 적용하기
+- 웹 애플리케이션에 Converter 를 적용해보자.
+
+- WebConfig - 컨버터 등록
+    - 스프링 웹 MVC에 무엇인가를 등록할 때 항상 WebMvcConfigurer 를 implements 한다.
+    ```
+    @Configuration
+    public class WebConfig implements WebMvcConfigurer {
+
+        @Override
+        public void addFormatters(FormatterRegistry registry) { // addFormatters는 Converter의 좀 더 확장된 기능
+            registry.addConverter(new StringToIntegerConverter());
+            registry.addConverter(new IntegerToStringConverter());
+            registry.addConverter(new StringToIpPortConverter());
+            registry.addConverter(new IpPortToStringConverter());
+        }
+    }
+    ```
+    - 스프링은 내부에서 ConversionService 를 제공한다. 우리는 WebMvcConfigurer 가 제공하는 addFormatters() 를 사용해서 추가하고 싶은 컨버터를 등록하면 된다. 이렇게 하면 스프링은 내부에서 사용하는 ConversionService 에 컨버터를 추가해준다.
+    - 등록한 컨버터가 잘 동작하는지 확인해보자.
+- HelloController - 기존 코드
+```
+@GetMapping("/hello-v2")
+  public String helloV2(@RequestParam Integer data) {
+      System.out.println("data = " + data);
+      return "ok";
+  }
+
+```
+- 실행
+    - http://localhost:8080/hello-v2?data=10
+- 실행 로그
+    ```
+    StringToIntegerConverter   : convert source=10
+    data = 10
+    ```
+    - ?data=10 의 쿼리 파라미터는 문자이고 이것을 Integer data 로 변환하는 과정이 필요하다. 실행해보면 직접 등록한 StringToIntegerConverter 가 작동하는 로그를 확인할 수 있다.
+    - 스프링MVC가 파라미터로 들어가는 Integer data 를 만들기 전에(Controller가 호출되기 전에) StringToIntegerConverter를 호출해서 숫자 10으로 바꾼 후에 이 컨트롤러를 호출하면서 그 값을 넘겨준 것이다. 
+    - 그런데 생각해보면 StringToIntegerConverter 를 등록하기 전에도 이 코드는 잘 수행되었다. 그것은 스프링이 내부에서 수 많은 기본 컨버터들을 제공하기 때문이다(그래서 사실 StringToIntegerConverter 는 만들 필요 없지만 공부를 위해 만들어서 넣어본 것). 컨버터를 추가하면 추가한 컨버터가 기본 컨버터 보다 높은 우선순위를 가진다.
+
+
+- 이번에는 직접 정의한 타입인 IpPort 를 사용해보자.
+- HelloController - 추가
+    ```
+    @GetMapping("/ip-port")
+    public String ipPort(@RequestParam IpPort ipPort) {
+        System.out.println("ipPort IP = " + ipPort.getIp());
+        System.out.println("ipPort PORT = " + ipPort.getPort());
+        return "ok";
+    }
+    ```
+- 실행
+    - http://localhost:8080/ip-port?ipPort=127.0.0.1:8080
+- 실행 로그
+    ```
+    StringToIpPortConverter    : convert source=127.0.0.1:8080
+    ipPort IP = 127.0.0.1
+    ipPort PORT = 8080
+    ```
+    - ?ipPort=127.0.0.1:8080 쿼리 스트링이 @RequestParam IpPort ipPort 에서 객체 타입으로 잘 변환 된 것을 확인할 수 있다.
+
+- 처리 과정
+    - @RequestParam 은 @RequestParam 을 처리하는 ArgumentResolver 인 RequestParamMethodArgumentResolver 에서 ConversionService 를 사용해서 타입을 변환한다. 부모 클래스와 다양한 외부 클래스를 호출하는 등 복잡한 내부 과정을 거치기 때문에 대략 이렇게 처리되는 것으로 이해해도 충분하다. 만약 더 깊이있게 확인하고 싶으면 IpPortConverter 에 디버그 브레이크 포인트를 걸어서 확인해보자.
+    - 참고
+        - @ModelAttribute, @PathVariable 에도 동일하게 잘 작용한다.
+
+## 뷰 템플릿에 컨버터 적용하기
+- 이번에는 뷰 템플릿에 컨버터를 적용하는 방법을 알아보자.
+- 타임리프는 렌더링 시에 컨버터를 적용해서 렌더링 하는 방법을 편리하게 지원한다.
+- 이전까지는 HTTP 요청을 컨트롤러에서 받을 떄 컨버터를 통해 문자를 객체로 변환했다면, 이번에는 그 반대로 객체를 문자로 변환하는 작업을 확인할 수 있다. 왜냐하면 View 에 나타내기 위해서는 String 등으로 변환해야 하므로.
+
+- ConverterController
+    ```
+    @Controller
+    public class ConverterController {
+
+        @GetMapping("/converter-view")
+        public String converterView(Model model) {
+            model.addAttribute("number", 10000);
+            model.addAttribute("ipPort", new IpPort("127.0.0.1", 8080));
+            return "converter-view";
+        }
+    }
+    ```
+    - Model 에 숫자 10000 와 ipPort 객체를 담아서 뷰 템플릿에 전달한다.
+- resources/templates/converter-view.html
+    ```
+    <!DOCTYPE html>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+    </head>
+    <body>
+    <ul>
+        <li>${number}: <span th:text="${number}" ></span></li>
+        <li>${{number}}: <span th:text="${{number}}" ></span></li>
+        <li>${ipPort}: <span th:text="${ipPort}" ></span></li>
+        <li>${{ipPort}}: <span th:text="${{ipPort}}" ></span></li>
+    </ul>
+
+    </body>
+    </html>
+    ```
+    - 타임리프는 ${{...}} 를 사용하면 자동으로 컨버전 서비스를 사용해서 변환된 결과를 출력해준다. 물론 스프링과 통합 되어서 스프링이 제공하는 컨버전 서비스를 사용하므로, 우리가 등록한 컨버터들을 사용할 수 있다.
+
+- 변수 표현식 : `${...}`
+- 컨버전 서비스 적용 : `${{...}}`
+
+- 실행
+    - http://localhost:8080/converter-view
+
+
+- 실행 결과
+```
+${number}: 10000
+${{number}}: 10000
+${ipPort}: hello.typeconverter.type.IpPort@59cb0946
+${{ipPort}}: 127.0.0.1:8080
+```
+
+- 실행 결과 로그
+```
+IntegerToStringConverter   : convert source=10000
+IpPortToStringConverter    : convert
+source=hello.typeconverter.type.IpPort@59cb0946
+```
+
+- ${{number}} : 뷰 템플릿은 데이터를 문자로 출력한다(th:text). 따라서 컨버터를 적용하게 되면 Integer 타입인 10000 을 String 타입으로 변환하는 컨버터인 IntegerToStringConverter 를 실행하게 된다. 이 부분은 컨버터를 실행하지 않아도 타임리프가 숫자를 문자로 자동으로 변환히기 때문에 컨버터를 적용할 때와 하지 않을 때가 같다.
+- ${{ipPort}} : 뷰 템플릿은 데이터를 문자로 출력한다. 따라서 컨버터를 적용하게 되면 IpPort 타입을 String 타입으로 변환해야 하므로 IpPortToStringConverter 가 적용된다. 그 결과 127.0.0.1:8080 가 출력된다.
+- {ipPort}
+    - ipPort.toString()의 결과가 나온다.
+- 타임리프가 컨버터 호출해서 컨버팅 한 다음 출력해준다.
+
+
+- 이렇게 컨버터가 자동으로 적용되는 케이스가 1개 더 있다. 그것은 바로 폼!
+- 폼에 적용하기
+    - 이번에는 컨버터를 폼에 적용해보자.
+
+- ConverterController - 코드 추가
+    ```
+    @Controller
+    public class ConverterController {
+
+        @GetMapping("/converter-view")
+        public String converterView(Model model) {
+            model.addAttribute("number", 10000);
+            model.addAttribute("ipPort", new IpPort("127.0.0.1", 8080));
+            return "converter-view";
+        }
+
+        @GetMapping("/converter/edit")
+        public String converterForm(Model model) {
+            IpPort ipPort = new IpPort("127.0.0.1", 8080);
+            Form form = new Form(ipPort);
+            model.addAttribute("form", form);
+            return "converter-form";
+        }
+
+        @PostMapping("/converter/edit")
+        public String converterEdit(@ModelAttribute Form form, Model model) {
+            IpPort ipPort = form.getIpPort();
+            model.addAttribute("ipPort", ipPort);
+            return "converter-view";
+        }
+
+        @Data
+        static class Form {
+            private IpPort ipPort;
+
+            public Form(IpPort ipPort) {
+                this.ipPort = ipPort;
+            }
+        }
+    }
+    ```
+    - Form 객체를 데이터를 전달하는 폼 객체로 사용한다.
+    - GET /converter/edit : IpPort 를 뷰 템플릿 폼에 출력한다.
+    - POST /converter/edit : 뷰 템플릿 폼의 IpPort 정보를 받아서 출력한다.
+
+- resources/templates/converter-form.html
+    ```
+    <!DOCTYPE html>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+    </head>
+    <body>
+
+    <form th:object="${form}" th:method="post">
+        th:field <input type="text" th:field="*{ipPort}"><br/>
+        th:value <input type="text" th:value="*{ipPort}">(보여주기 용도)<br/>
+        <input type="submit"/>
+    </form>
+
+    </body>
+    </html>
+    ```
+    - 타임리프의 th:field 는 앞서 설명했듯이 id , name 를 출력하는 등 다양한 기능이 있는데, 여기에 컨버전 서비스도 함께 적용된다.
+
+- 실행
+    - http://localhost:8080/converter/edit
+
+- GET /converter/edit
+    - th:field 가 자동으로 컨버전 서비스를 적용해주어서 ${{ipPort}} 처럼 적용이 되었다. 따라서 IpPort -> String 으로 변환된다.
+- POST /coverter/edit
+    - @ModelAttribute 를 사용해서 String -> IpPort 로 변환된다.
+    - 내부적으로 ConversionService 를 사용하는 것
+
+=
