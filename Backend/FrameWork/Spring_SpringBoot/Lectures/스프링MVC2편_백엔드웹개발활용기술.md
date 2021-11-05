@@ -6,7 +6,8 @@
 	- [메시지, 국제화](https://github.com/Highjune/message/tree/master)
 	- [검증](https://github.com/Highjune/Spring_MVC_Lecture2_Validation_Kim_Young_Han--)
 	- [로그인-쿠키, 세션](https://github.com/Highjune/Spring_MVC_Lecture2_login-Cookie-Session-_Kim_Young_Han--/tree/master)
-    - [예외처리](https://github.com/Highjune/Spring_MVC_Lecture2_login-Exception-_Kim_Young_Han--/tree/master)
+	- [예외처리](https://github.com/Highjune/Spring_MVC_Lecture2_Exception_Kim_Young_Han/tree/master)
+	- [타입컨버터](https://github.com/Highjune/Spring_MVC_Lecture2_Typeconverter_Kim_Young_Han/tree/master)
 
 
 # 타임리프 - 기본 기능
@@ -8636,4 +8637,4 @@ test {
 ## 타입 컨버터 - Converter
 - 타입 컨버터를 어떻게 사용하는지 코드로 알아보자.
 - 타입 컨버터를 사용하려면 org.springframework.core.convert.converter.Converter 인터페이스를 구현하면 된다.
-
+- 먼저 가장 쉬운 ResponseStatusExceptionResolver 부터 알아보자.
