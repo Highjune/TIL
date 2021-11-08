@@ -9436,26 +9436,28 @@ test {
     - http://localhost:8080 호출해서 Whitelabel Error Page가 나오면 정상 동작
 - 편의상 index.html 을 추가해두자.
     - resources/static/index.html
-```
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+    ```
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+    </head>
+    <body>
 
-<ul>
-    <li>상품 관리
-        <ul>
-            <li><a href="/servlet/v1/upload">서블릿 파일 업로드1</a></li>
-            <li><a href="/servlet/v2/upload">서블릿 파일 업로드2</a></li>
-            <li><a href="/spring/upload">스프링 파일 업로드</a></li>
-            <li><a href="/items/new">상품 - 파일, 이미지 업로드</a></li>
-        </ul>
-    </li>
-</ul>
+    <ul>
+        <li>상품 관리
+            <ul>
+                <li><a href="/servlet/v1/upload">서블릿 파일 업로드1</a></li>
+                <li><a href="/servlet/v2/upload">서블릿 파일 업로드2</a></li>
+                <li><a href="/spring/upload">스프링 파일 업로드</a></li>
+                <li><a href="/items/new">상품 - 파일, 이미지 업로드</a></li>
+            </ul>
+        </li>
+    </ul>
 
-</body>
-</html>
-```
+    </body>
+    </html>
+    ```
+
+ 
