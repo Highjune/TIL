@@ -8779,6 +8779,7 @@ package org.springframework.core.convert.converter;
         - ConverterFactory -> 전체 클래스 계층 구조가 필요할 때
         - GenericConverter -> 정교한 구현, 대상 필드의 애노테이션 정보 사용 가능
         - ConditionalGenericConverter -> 특정 조건이 참인 경우에만 실행
+        - 기본적으로는 Converter만 알고 있으면 되지만 좀 더 정교하게 쓰려면 다른 것들 이용
     - 자세한 내용은 공식 문서를 참고하자.
         - https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#core- convert
 
@@ -9069,4 +9070,392 @@ source=hello.typeconverter.type.IpPort@59cb0946
     - @ModelAttribute 를 사용해서 String -> IpPort 로 변환된다.
     - 내부적으로 ConversionService 를 사용하는 것
 
-=
+
+## 포맷터 - Formatter
+- Converter 는 입력과 출력 타입에 제한이 없는, 범용 타입 변환 기능을 제공한다.이번에는 일반적인 웹 애플리케이션 환경을 생각해보자. 불린 타입을 숫자로 바꾸는 것 같은 범용 기능 보다는 개발자 입장에서는
+`문자`를 다른 타입으로 변환하거나, 다른 타입을`문자`로 변환하는 상황이 대부분이다. 
+- 앞서 살펴본 예제들을 떠올려 보면 `문자`를 다른 객체로 변환하거나 객체를 `문자`로 변환하는 일이 대부분이다.
+- 웹 애플리케이션에서 객체를 문자로, 문자를 객체로 변환하는 예
+    - 화면에 숫자를 출력해야 하는데, Integer String 출력 시점에 숫자 1000 문자 "1,000" 이렇게 1000 단위에 쉼표를 넣어서 출력하거나, 또는 "1,000" 라는 문자를 1000 이라는 숫자로 변경해야 한다.
+    - 날짜 객체를 문자인 "2021-01-01 10:50:11" 와 같이 출력하거나 또는 그 반대의 상황
+- Locale
+    - 여기에 추가로 날짜 숫자의 표현 방법은 Locale 현지화 정보가 사용될 수 있다.
+    - 이렇게 객체를 특정한 포멧에 맞추어 문자로 출력하거나 또는 그 반대의 역할을 하는 것에 특화된 기능이 바로 포맷터( Formatter )이다. 포맷터는 컨버터의 특별한 버전으로 이해하면 된다.
+
+- Converter vs Formatter
+    - Converter 는 범용(객체 -> 객체)
+    - Formatter 는 문자에 특화(객체 -> 문자, 문자 -> 객체) + 현지화(Locale)
+        - Converter 의 특별한 버전
+
+- 포맷터 - Formatter 만들기
+    - 포맷터( Formatter )는 객체를 문자로 변경하고, 문자를 객체로 변경하는 두 가지 기능을 모두 수행한다.
+
+- Formatter 인터페이스
+    ```
+    public interface Printer<T> {
+        String print(T object, Locale locale);
+    }
+    public interface Parser<T> {
+        T parse(String text, Locale locale) throws ParseException;
+    }
+    public interface Formatter<T> extends Printer<T>, Parser<T> {
+    }
+    ```
+    - String print(T object, Locale locale) : 객체를 문자로 변경한다.
+    - T parse(String text, Locale locale) : 문자를 객체로 변경한다.
+    - 숫자 1000 을 문자 "1,000" 으로 그러니까, 1000 단위로 쉼표가 들어가는 포맷을 적용해보자. 그리고 그 반대도 처리해주는 포맷터를 만들어보자.
+
+- MyNumberFormatter
+    ```
+    @Slf4j
+    public class MyNumberFormatter implements Formatter<Number> {
+
+        @Override
+        public Number parse(String text, Locale locale) throws ParseException {
+            log.info("text={}, locale={}", text, locale);
+            // "1,000" -> 1000 이 작업을 직접하면 너무 번거롭다. 자바에 이미 다 만들어져 있음
+            NumberFormat format = NumberFormat.getInstance(locale);
+            return format.parse(text);
+        }
+
+        @Override
+        public String print(Number object, Locale locale) {
+            log.info("object={}, locale={}", object, locale);
+            return NumberFormat.getInstance(locale).format(object);
+        } // String은 기본으로 변환이 되니까 String을 제외한 것을 넣으면 된다.
+
+    }
+    ```
+    - "1,000" 처럼 숫자 중간의 쉼표를 적용하려면 자바가 기본으로 제공하는 NumberFormat 객체를 사용하면 된다. 이 객체는 Locale 정보를 활용해서 나라별로 다른 숫자 포맷을 만들어준다.
+    - parse() 를 사용해서 문자를 숫자로 변환한다. 참고로 Number 타입은 Integer , Long 과 같은 숫자 타입의 부모 클래스이다.
+    - print() 를 사용해서 객체를 문자로 변환한다.
+    - 잘 동작하는지 테스트 코드를 만들어보자.
+
+- MyNumberFormatterTest
+    ```
+
+    class MyNumberFormatterTest {
+
+        MyNumberFormatter formatter = new MyNumberFormatter();
+
+        @Test
+        void parse() throws ParseException {
+            Number result = formatter.parse("1,000", Locale.KOREA); // Number이지만 구현체가 있어야 함.
+            Assertions.assertThat(result).isEqualTo(1000L); // Long 타입 주의. 구현체가 Long.
+        }
+
+        @Test
+        void print() {
+            String result = formatter.print(1000, Locale.KOREA);
+            Assertions.assertThat(result).isEqualTo("1,000");
+        }
+    }
+    ```
+    - parse() 의 결과가 Long 이기 때문에 isEqualTo(1000L) 을 통해 비교할 때 마지막에 L 을 넣어주어야 한다.
+    - 실행 결과 로그
+    ```
+    MyNumberFormatter - text=1,000, locale=ko_KR
+    MyNumberFormatter - object=1000, locale=ko_KR
+    ```
+- 참고
+    - 스프링은 용도에 따라 다양한 방식의 포맷터를 제공한다.
+    - Formatter 포맷터
+    - AnnotationFormatterFactory 필드의 타입이나 애노테이션 정보를 활용할 수 있는 포맷터
+    - 자세한 내용은 공식 문서를 참고하자.
+        - https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#format
+
+- 그런데 이런 formatter도 그냥 사용하면 안되고 등록해서 사용해야 한다.
+
+## 포맷터를 지원하는 컨버전 서비스
+- 컨버전 서비스에는 컨버터만 등록할 수 있고, 포맷터를 등록할 수 는 없다. 그런데 생각해보면 포맷터는 객체 -> 문자, 문자 -> 객체로 변환하는 특별한 컨버터일 뿐이다.
+- 포맷터를 지원하는 컨버전 서비스를 사용하면 컨버전 서비스에 포맷터를 추가할 수 있다. 내부에서 어댑터 패턴을 사용해서 Formatter 가 Converter 처럼 동작하도록 지원한다.
+- FormattingConversionService 는 포맷터를 지원하는 컨버전 서비스이다.
+- DefaultFormattingConversionService 는 FormattingConversionService 에 기본적인 통화, 숫자 관련 몇가지 기본 포맷터를 추가해서 제공한다.
+```
+public class FormattingConversionServiceTest {
+
+    @Test
+    void formattingConversionService() {
+        DefaultFormattingConversionService conversionService = new DefaultFormattingConversionService();
+        // 컨버터 등록
+        conversionService.addConverter(new StringToIpPortConverter());
+        conversionService.addConverter(new IpPortToStringConverter());
+        // 포맷터 등록
+        conversionService.addFormatter(new MyNumberFormatter());
+
+        // 컨버터 사용
+        IpPort ipPort = conversionService.convert("127.0.0.1:8080", IpPort.class);
+        Assertions.assertThat(ipPort).isEqualTo(new IpPort("127.0.0.1", 8080));
+        // 포맷터 사용1
+        String result1 = conversionService.convert(1000, String.class);
+        Assertions.assertThat(result1).isEqualTo("1,000");
+        // 포맷터 사용2
+        Long result2 = conversionService.convert("1,000", Long.class);
+        Assertions.assertThat(result2).isEqualTo(1000L);
+    }
+}
+```
+- DefaultFormattingConversionService 상속 관계
+    - FormattingConversionService 는 ConversionService 관련 기능을 상속받기 때문에 결과적으로 컨버터도 포맷터도 모두 등록할 수 있다. 그리고 사용할 때는 ConversionService 가 제공하는 convert 를 사용하면 된다.
+    - 추가로 스프링 부트는 DefaultFormattingConversionService 를 상속 받은 WebConversionService 를 내부에서 사용한다.
+
+## 포맷터 적용하기
+- 포맷터를 웹 애플리케이션에 적용해보자.
+- WebConfig 수정
+    ```
+    @Configuration
+    public class WebConfig implements WebMvcConfigurer {
+
+        @Override
+        public void addFormatters(FormatterRegistry registry) { // addFormatters는 Converter의 좀 더 확장된 기능
+            // 주석처리 우선순위
+    //        registry.addConverter(new StringToIntegerConverter());
+    //        registry.addConverter(new IntegerToStringConverter());
+            registry.addConverter(new StringToIpPortConverter());
+            registry.addConverter(new IpPortToStringConverter());
+
+            // 추가
+            registry.addFormatter(new MyNumberFormatter());
+        }
+    }
+    ```
+    - 주의 StringToIntegerConverter , IntegerToStringConverter 를 꼭 주석처리 하자. 
+    - MyNumberFormatter 도 숫자 -> 문자, 문자 -> 숫자로 변경하기 때문에 둘의 기능이 겹친다. 우선순위는 컨버터가 우선하므로 포맷터가 적용되지 않고, 컨버터가 적용된다.
+- 실행 - 객체 -> 문자
+    - http://localhost:8080/converter-view
+    ```
+    • ${number}: 10000
+    • ${{number}}: 10,000
+    ```
+    - 컨버전 서비스를 적용한 결과 MyNumberFormatter 가 적용되어서 10,000 문자가 출력된 것을 확인할 수 있다.
+
+- 실행 - 문자 -> 객체
+    ```
+    MyNumberFormatter : text=10,000, locale=ko_KR
+    data = 10000
+    ```
+    - "10,000" 이라는 포맷팅 된 문자가 Integer 타입의 숫자 10000으로 정상 변환 된 것을 확인할 수 있다.
+
+## 스프링이 제공하는 기본 포맷터
+- 스프링은 자바에서 기본으로 제공하는 타입들에 대해 수 많은 포맷터를 기본으로 제공한다.
+- IDE에서 Formatter 인터페이스의 구현 클래스를 찾아보면 수 많은 날짜나 시간 관련 포맷터가 제공되는 것을 확인할 수 있다.
+- 그런데 포맷터는 기본 형식이 지정되어 있기 때문에, 객체의 각 필드마다 다른 형식으로 포맷을 지정하기는 어렵다.
+- 스프링은 이런 문제를 해결하기 위해 애노테이션 기반으로 원하는 형식을 지정해서 사용할 수 있는 매우 유용한 포맷터 두 가지를 기본으로 제공한다.
+
+- @NumberFormat : 숫자 관련 형식 지정 포맷터 사용, NumberFormatAnnotationFormatterFactory
+- @DateTimeFormat : 날짜 관련 형식 지정 포맷터 사용, Jsr310DateTimeFormatAnnotationFormatterFactory
+
+- 예제를 통해서 알아보자.
+- FormatterController
+```
+@Controller
+public class FormatterController {
+
+    @GetMapping("/formatter/edit")
+    public String formatterForm(Model model) {
+        Form form = new Form();
+        form.setNumber(10000);
+        form.setLocalDateTime(LocalDateTime.now());
+        model.addAttribute("form", form);
+        return "formatter-form";
+    }
+
+    @PostMapping("formatter/edit")
+    public String formatterEdit(@ModelAttribute Form form) {
+        return "formatter-view";
+    }
+
+    @Data
+    static class Form {
+        @NumberFormat(pattern = "###,###")
+        private Integer number;
+
+        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime localDateTime;
+    }
+}
+```
+- templates/formatter-form.html
+```
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<form th:object="${form}" th:method="post">
+    number <input type="text" th:field="*{number}"><br/>
+    localDateTime <input type="text" th:field="*{localDateTime}"><br/>
+    <input type="submit"/>
+</form>
+
+</body>
+</html>
+```
+
+- templates/formatter-view.html
+```
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<ul>
+    <li>${form.number}: <span th:text="${form.number}" ></span></li>
+    <li>${{form.number}}: <span th:text="${{form.number}}" ></span></li>
+    <li>${form.localDateTime}: <span th:text="${form.localDateTime}" ></span></li>
+    <li>${{form.localDateTime}}: <span th:text="${{form.localDateTime}}" ></span></li>
+</ul>
+
+</body>
+</html>
+```
+
+- 실행
+    - http://localhost:8080/formatter/edit
+
+- 실행해보면 지정한 포맷으로 출력된 것을 확인할 수 있다.
+- 결과
+```
+• ${form.number}: 10000
+• ${{form.number}}: 10,000
+• ${form.localDateTime}: 2021-01-01T00:00:00
+• ${{form.localDateTime}}: 2021-01-01 00:00:00
+```
+- 참고
+    - @NumberFormat , @DateTimeFormat 의 자세한 사용법이 궁금한 분들은 다음 링크를 참고하거나 관련 애노테이션을 검색해보자.
+    - https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#format-CustomFormatAnnotations
+
+
+- 정리
+    - 메시지 컨버터( HttpMessageConverter )에는 컨버전 서비스가 적용되지 않는다.
+    - 특히 객체를 JSON으로 변환할 때 메시지 컨버터를 사용하면서 이 부분을 많이 오해하는데, HttpMessageConverter 의 역할은 HTTP 메시지 바디의 내용을 객체로 변환하거나 객체를 HTTP 메시지 바디에 입력하는 것이다. 예를 들어서 JSON을 객체로 변환하는 메시지 컨버터는 내부에서 Jackson 같은 라이브러리를 사용한다. 객체를 JSON으로 변환한다면 그 결과는 이 라이브러리에 달린 것이다. 따라서 JSON 결과로 만들어지는 숫자나 날짜 포맷을 변경하고 싶으면 해당 라이브러리가 제공하는 설정을 통해서 포맷을 지정해야 한다. 결과적으로 이것은 컨버전 서비스와 전혀 관계가 없다.
+
+    - 컨버전 서비스는 @RequestParam , @ModelAttribute , @PathVariable , 뷰 템플릿 등에서 사용할 수 있다.
+
+
+# 파일 업로드
+## 파일 업로드 소개
+- 일반적으로 사용하는 HTML Form을 통한 파일 업로드를 이해하려면 먼저 폼을 전송하는 다음 두 가지 방식의 차이를 이해해야 한다.
+- HTML 폼 전송 방식
+    - application/x-www-form-urlencoded
+    - multipart/form-data
+- application/x-www-form-urlencoded 방식
+    ![image](https://user-images.githubusercontent.com/57219160/140766522-4141e870-8e69-424e-a65f-1091d05092a5.png)
+
+    - application/x-www-form-urlencoded 방식은 HTML 폼 데이터를 서버로 전송하는 가장 기본적인 방법이다. Form 태그에 별도의 enctype 옵션이 없으면 웹 브라우저는 요청 HTTP 메시지의 헤더에 다음 내용을 추가한다.
+    ```
+    Content-Type: application/x-www-form-urlencoded
+    ```
+    - 그리고 폼에 입력한 전송할 항목을 HTTP Body에 문자로 username=kim&age=20 와 같이 & 로 구분해서 전송한다.
+    - 파일을 업로드 하려면 파일은 문자가 아니라 바이너리 데이터를 전송해야 한다. 문자를 전송하는 이 방식으로 파일을 전송하기는 어렵다. 그리고 또 한가지 문제가 더 있는데, 보통 폼을 전송할 때 파일만 전송하는 것이 아니라는 점이다. 
+- 다음 예를 보자.
+    ```
+    - 이름
+    - 나이
+    - 첨부파일
+    ```
+    - 여기에서 이름과 나이도 전송해야 하고, 첨부파일도 함께 전송해야 한다. 문제는 이름과 나이는 문자로 전송하고, 첨부파일은 바이너리로 전송해야 한다는 점이다. 여기에서 문제가 발생한다. `문자와 바이너리를 동시에 전송`해야 하는 상황이다.
+    - 이 문제를 해결하기 위해 HTTP는 multipart/form-data 라는 전송 방식을 제공한다.
+- multipart/form-data 방식
+    ![image](https://user-images.githubusercontent.com/57219160/140766826-e6d33332-07ce-4ab2-b490-9ed6625d0c10.png)
+
+    - 이 방식을 사용하려면 Form 태그에 별도의 enctype="multipart/form-data" 를 지정해야 한다.
+    - multipart/form-data 방식은 다른 종류(다양한 Content-Type)의 여러 파일과 폼의 내용 함께 전송할 수 있다. (그래서 이름이 multipart 이다.)
+    - `----XXX` 로 구분되어 있다(XXX는 랜덤).
+    - 폼의 입력 결과로 생성된 HTTP 메시지를 보면 각각의 전송 항목이 구분이 되어있다. Content- Disposition 이라는 항목별 헤더가 추가되어 있고 여기에 부가 정보가 있다. 예제에서는 username , age , file1 이 각각 분리되어 있고, 폼의 일반 데이터는 각 항목별로 문자가 전송되고, 파일의 경우 파일 이름과 Content-Type이 추가되고 바이너리 데이터가 전송된다.
+    - multipart/form-data 는 이렇게 각각의 항목을 구분해서, 한번에 전송하는 것이다.
+
+- Part
+    - multipart/form-data 는 application/x-www-form-urlencoded 와 비교해서 매우 복잡하고 각각의 부분( Part )로 나누어져 있다. 그렇다면 이렇게 복잡한 HTTP 메시지를 서버에서 어떻게 사용할 수 있을까?
+
+- 참고
+    - multipart/form-data 와 폼 데이터 전송에 대한 더 자세한 내용은 모든 개발자를 위한 HTTP 웹 기본 지식 강의를 참고하자.
+
+
+## 프로젝트 생성
+- 스프링 부트 스타터 사이트로 이동해서 스프링 프로젝트 생성
+    - https://start.spring.io
+
+- 프로젝트 선택
+    - Project: Gradle Project
+    - Language: Java 
+    - Spring Boot: 2.4.x
+- Project Metadata
+    - Group: hello
+    - Artifact: upload
+    - Name: upload
+    - Package name: hello.upload
+    - Packaging: Jar
+    - Java: 11
+- Dependencies: Spring Web, Lombok , Thymeleaf
+
+- build.gradle
+```
+plugins {
+	id 'org.springframework.boot' version '2.5.6'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'java'
+}
+
+group = 'hello'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+test {
+	useJUnitPlatform()
+}
+
+```
+
+- 동작 확인
+    - 기본 메인 클래스 실행( UploadApplication.main())
+    - http://localhost:8080 호출해서 Whitelabel Error Page가 나오면 정상 동작
+- 편의상 index.html 을 추가해두자.
+    - resources/static/index.html
+```
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<ul>
+    <li>상품 관리
+        <ul>
+            <li><a href="/servlet/v1/upload">서블릿 파일 업로드1</a></li>
+            <li><a href="/servlet/v2/upload">서블릿 파일 업로드2</a></li>
+            <li><a href="/spring/upload">스프링 파일 업로드</a></li>
+            <li><a href="/items/new">상품 - 파일, 이미지 업로드</a></li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>
+```
