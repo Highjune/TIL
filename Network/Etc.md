@@ -4,7 +4,7 @@
     - 외부ip = 공인ip
     - 유무선공유기의 외부ip
     - 집 안에 형성된 네트워크의 라우터 주소(통신사의 아주 큰 외부 네트워크 안에 있는 하나의 라우터 주소), 그래서 노트북이랑 스마트폰이 같은 네트워크 아래에 있을 시 네트워크의 주소가 동일할 것이다.
-    - 확인방법 : 네이버에서 '내 아이피' 검색 or 주소창에 [https://ipinfo.io/ip](https://ipinfo.io/ip) 검색 or cmd창에서 curl ipinfo.io/ip
+    - 확인방법 : 네이버에서 '내 아이피' 검색 or 주소창에 [https://ipinfo.io/ip](https://ipinfo.io/ip) 검색 or cmd창에서 curl `ipinfo.io/ip`
     - 고정ip가 아니다. 모뎀이 24시간 계속 사용 상태이다 보니, 기기의 전원을 off/on 하지 않는 이상 ip가 거의 변경되지 않으므로 고정ip처럼 보일 뿐.
     - 언제라도 바뀔 수 있는 유동 ip
 - 내부IP : 192.168.x.xx(cmd의 ip4 주소)
