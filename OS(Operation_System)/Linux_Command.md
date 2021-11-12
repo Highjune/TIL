@@ -75,6 +75,14 @@ pgrep 프로세스명
   ```
   pgrep -f "java.*admin-test"
   ```
+  - 또는 쉘 스크립트에서 변수를 사용한다면. ``로 구분
+  ```
+  CONFIG_TYPE=backend-test
+
+  getpid() {
+    pid=`pgrep -f "java.*$CONFIG_TYPE"`
+  }
+  ```
 
 ## 명령어 후방(밑 방향으로) 검색
 - 한번 입력한 명령어를 위아래 방향키로 하나하나 찾지 말고 바로 검색해서 사용할 수 있음
@@ -371,6 +379,7 @@ cat $log | grep -v "/live" | cut -d " " -f 7 | sort | uniq -c | sort -c | tail -
   ```
 
 ## 리다이렉트 >, >>
+- [표준입출력과 그 쓰임새](https://etloveguitar.tistory.com/m/20)
 
 - 명령어 실행 결과를 저장하는 기본 테크닉
 - `|`대신에 `>`를 사용하면 보통은 파이프라인으로 넘어가는 것과 같은 내용이 텍스트 파일로 출력된다.
@@ -406,3 +415,7 @@ head -n -5 // 앞에서 뒤에서 5개(v w x y z) 제외까지. a b c d e f g h 
 tail -n +6 // 뒤에서 앞에서 5개(a b c d e) 제외까지. f g h i j k l m n o p q r s t u v w x y z, 
 tail -n 5 // 뒤에서 5줄째까지. v w x y z
 ```
+
+## awk
+- 파일을 레코드 단위로 읽어 들여서 조건에 맞는 것 출력
+- [참고자료(https://recipes4dev.tistory.com/171#32-%ED%95%84%EB%93%9C-%EA%B0%92-%EC%B6%9C%EB%A0%A5)

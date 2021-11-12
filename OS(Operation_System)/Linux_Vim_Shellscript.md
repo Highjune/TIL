@@ -77,8 +77,8 @@ yum install vim
   ```
 
 
-# 쉘 스크립트(shell script)
-- 쉘 스크립트란
+# 셸 스크립트(shell script)
+- 셀 스크립트란
   - 단순한 텍스트 파일, 내부는 명령어 내부 실행 절차
   - 명령어를 직접 순서대로 실행하는 대신에 셸이 실행하도록 맡기는 것
   - 셸이라는 것은 bash나 zsh 같은 셸로 실행하는 스크립트의 총칭
@@ -205,6 +205,13 @@ chmod +x practice.sh
     latest=${base}/access.log
     prev=${base}/access.log.7.gz
     ```
+  - 변수 설정 해제
+    - unset
+    ```
+    water="삼다수" // ""없어도 됨
+    echo $water
+    unset water
+    ```
 
 - 환경변수
 
@@ -294,7 +301,7 @@ chmod +x practice.sh
 
       ```
       path=/data/2013-01-01/files/file.txt
-      parent=${dirname $path}
+      parent=${dirname $path} -> /data/2013-01-01/files
       grandparent=$(dirname $parent) -> /data/2013-01-01
       ```
       - 위의 grandparent를 아래처럼 변경가능
@@ -337,10 +344,14 @@ else
 fi
 ```
 - `$#` 스크립트에 지정한 인수 개수를 의미하는 특수한 변수
-  - script.sh first_param second_param
+  ```
+  script.sh first_param second_param
+  ```
     - 변수가 총 2개(first_param, second_param)
     - `#$ = 2`
-  - script.sh first_param second_param third_param
+  ```
+  script.sh first_param second_param third_param
+  ```
     - 변수가 총 3개((first_param, second_param, third_param)
     - `#$ = 3`
   - ex) 변수가 2개 들어오면 "Hello!" 출력
@@ -418,7 +429,7 @@ fi
     ./create-report.sh filename
   done
   ```
-  - redmine.lon kintai.log download.log notice.log 라는 4개의 값을 filename이라는 하나의 변수명으로 순서대로 참조하는 것. 
+  - redmine.lon, kintai.log, download.log, notice.log 라는 4개의 값을 filename이라는 하나의 변수명으로 순서대로 참조하는 것. 
   - do에서 done 사이에 적힌 내용은 리스트 값 각각에 대해 반복해서 실행
   - for ~ in 열은 아래같이 줄바꿈을 넣으면 안된다. 
   - ex1) vim practice.sh 만들어서 ./practice.sh 로 실행
@@ -440,7 +451,7 @@ fi
     echo "hi" + $param
   done
   ```
-  - 줄바꿈 하려면 앞에 `\`(백슬래쉬)를 넣어서 이스케이프해야 한다.
+  - 줄바꿈 하려면 앞에 `\`(백슬래쉬)를 넣어서 이스케이프해야 한다. (한글 폰트에서는 백슬래쉬가 원화 기호로 표시되기도 함)
   ```
   for filename in redmine.lon \
                   kintai.log  \
@@ -452,8 +463,11 @@ fi
   ```
   - 또는 변수로 만들어서 좀 더 가독성을 높일 수 있다.
   ```
-  file="redmine.lon kintai.log download.log notice.log"
+  files="redmine.lon kintai.log download.log notice.log"
   for filename in $files
+  do
+    ./create_report.sh $filename
+  done
   ```
 - for 문 안에서 명령어 치환을 사용할 수 있다.
   - 상황) /var/log/apache2/ 위치에 있는 확장자가 .log인 파일들을 다 실행. 그런데 그 중에서 error.log는 제외
