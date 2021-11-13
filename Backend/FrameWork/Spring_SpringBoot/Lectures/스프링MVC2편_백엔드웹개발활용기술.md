@@ -9599,3 +9599,172 @@ sdklajkljdf...
 - 주의
     1. 꼭해당경로에실제폴더를미리만들어두자.
     2. application.properties 에서 설정할 때 마지막에 / (슬래시)가 포함된 것에 주의하자.
+
+- ServletUploadControllerV2
+    ```
+    @Slf4j
+    @Controller
+    @RequestMapping("/servlet/v2")
+    public class ServletUploadControllerV2 {
+
+        @Value("${file.dir}")
+        private String fileDir;
+
+        @GetMapping("/upload")
+        public String newFile() {
+            return "upload-form";
+        }
+
+        @PostMapping("/upload")
+        public String saveFileV1(HttpServletRequest request) throws ServletException, IOException {
+            log.info("request={}", request);
+
+            String itemName = request.getParameter("itemName");
+            log.info("itemName={}", itemName);
+
+            Collection<Part> parts = request.getParts();
+            log.info("parts={}", parts);
+
+            for (Part part : parts) {
+                log.info("==== PART ====");
+                log.info("name={}", part.getName());
+                Collection<String> headerNames = part.getHeaderNames(); // part도 헤더랑 바디로 구분이 된다.
+                for (String headerName : headerNames) {
+                    log.info("header {}: {}", headerName, part.getHeader(headerName));
+                }
+                // 편의 메서드
+                // content-disposition; filename
+                log.info("submittedFilename={}", part.getSubmittedFileName());
+                log.info("size={}", part.getSize()); // part body size
+
+                // 데이터 읽기
+                InputStream inputStream = part.getInputStream();
+                String body = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);// binary -> String 으로 변환할 떄는 항상 캐릭터 셋을 정해줘야 한다.
+                log.info("body={}", body);
+
+                // 파일에 저장하기
+                if (StringUtils.hasText(part.getSubmittedFileName())) {
+                    String fullPath = fileDir + part.getSubmittedFileName();
+                    log.info("파일 저장 fullPath={}", fullPath);
+                    part.write(fullPath);
+                }
+            }
+
+            return "upload-form";
+        }
+    }
+    ```
+    - application.properties 에서 설정한 file.dir 의 값을 주입한다.
+    - 멀티파트 형식은 전송 데이터를 하나하나 각각 부분( Part )으로 나누어 전송한다. parts 에는 이렇게 나누어진 데이터가 각각 담긴다.
+    - 서블릿이 제공하는 Part 는 멀티파트 형식을 편리하게 읽을 수 있는 다양한 메서드를 제공한다.
+
+- Part 주요 메서드
+    - part.getSubmittedFileName() : 클라이언트가 전달한 파일명
+    - part.getInputStream(): Part의 전송 데이터를 읽을 수 있다.
+    - part.write(...): Part를 통해 전송된 데이터를 저장할 수 있다.
+- 실행
+    - http://localhost:8080/servlet/v2/upload
+
+
+- 다음 내용을 전송했다.
+    - itemName: 상품A
+    - file: 스크릿샷.png
+
+- 결과 로그
+    ```
+    ==== PART ====
+    name=itemName
+    header content-disposition: form-data; name="itemName" submittedFileName=null
+    size=7
+    body=상품A
+    ==== PART ====
+    name=file
+    header content-disposition: form-data; name="file"; filename="스크린샷.png" header content-type: image/png
+    submittedFileName=스크린샷.png
+    size=112384
+    body=qwlkjek2ljlese...
+    파일 저장 fullPath=/Users/kimyounghan/study/file/스크린샷.png
+    ```
+    - 파일 저장 경로에 가보면 실제 파일이 저장된 것을 확인할 수 있다. 만약 저장이 되지 않았다면 파일 저장 경로를 다시 확인하자.
+
+- 참고
+    -  큰 용량의 파일을 업로드를 테스트 할 때는 로그가 너무 많이 남아서 다음 옵션을 끄는 것이 좋다. > logging.level.org.apache.coyote.http11=debug
+    - 다음 부분도 파일의 바이너리 데이터를 모두 출력하므로 끄는 것이 좋다.
+    - log.info("body={}", body);
+
+- 서블릿이 제공하는 Part 는 편하기는 하지만, HttpServletRequest 를 사용해야 하고, 추가로 파일 부분만 구분하려면 여러가지 코드를 넣어야 한다. 이번에는 스프링이 이 부분을 얼마나 편리하게 제공하는지 확인해보자.
+
+
+
+## 스프링과 파일 업로드
+- 스프링은 MultipartFile 이라는 인터페이스로 멀티파트 파일을 매우 편리하게 지원한다.
+- SpringUploadController
+    ```
+    @Slf4j
+    @Controller
+    @RequestMapping("/spring")
+    public class SpringUploadController {
+
+        @Value("${file.dir}")
+        private String fileDir;
+
+        @GetMapping("/upload")
+        public String newFile() {
+            return "upload-form";
+        }
+
+        @PostMapping("/upload")
+        public String saveFile(@RequestParam String itemName,
+                            @RequestParam MultipartFile file, HttpServletRequest request) throws IOException {
+
+            log.info("request={}", request);
+            log.info("itemName={}", itemName);
+            log.info("multipartFile={}", file);
+
+            if (!file.isEmpty()) {
+                String fullPath = fileDir + file.getOriginalFilename();
+                log.info("파일 저장 fullPath={}", fullPath);
+                file.transferTo(new File(fullPath));
+            }
+
+            return "upload-form";
+        }
+    }
+    ```
+    - 코드를 보면 스프링 답게 딱 필요한 부분의 코드만 작성하면 된다.
+    - @RequestParam MultipartFile file 
+        - 업로드하는 HTML Form의 name에 맞추어 @RequestParam 을 적용하면 된다. 추가로 @ModelAttribute 에서도 MultipartFile 을 동일하게 사용할 수 있다.
+
+    - MultipartFile 주요 메서드
+        - file.getOriginalFilename() : 업로드 파일 명
+        - file.transferTo(...) : 파일 저장
+
+
+- 실행
+    - http://localhost:8080/spring/upload
+
+
+- 실행 로그
+    ```
+    request=org.springframework.web.multipart.support.StandardMultipartHttpServletR equest@5c022dc6
+    itemName=상품A multipartFile=org.springframework.web.multipart.support.StandardMultipartHttpSe rvletRequest$StandardMultipartFile@274ba730
+    파일 저장 fullPath=/Users/kimyounghan/study/file/스크린샷.png
+    ```
+
+
+## 예제로 구현하는 파일 업로드, 다운로드
+- 실제 파일이나 이미지를 업로드, 다운로드 할 때는 몇가지 고려할 점이 있는데, 구체적인 예제로 알아보자.
+
+
+
+
+
+
+
+
+
+- 원래 파일은 데이터베이스에 저장하는 것이 아니다. 파일은 보통 스토리지에 저장한다. 만약 AWS를 쓴다면 S3에 저장을 한다던지. 데이터베이스에는 파일이 저장된 경로를 저장한다. 즉. 데이터베이스에 파일 자체를 저장하지는 않는다. 경로도 FullPath를 다 저장하는 것이 아니라 공통인 부분 앞쪽은 고정해두고 그 이후의 상대적인 경로부분만 저장한다.
+
+
+- UrlResource같은 경우에는 앞에 `file:` 이라고 하면 내부 파일에 접근한다. 접근한 후 파일을 가져오고 스트림으로 반환한다.
+
