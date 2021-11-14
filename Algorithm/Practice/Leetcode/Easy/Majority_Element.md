@@ -1,6 +1,8 @@
 # Majority Element
 - [문제](https://leetcode.com/problems/majority-element/)
-
+- 풀이
+    1. 2021.05.31(성공) - Codility에서도 Boyer-Moore 알고리즘 봤었는데도 생각 못함
+    2. 2021.11.14(성공) - 또 Boyer-Moore 알고리즘 생각못함.
 
 # 내 풀이
 - 속도가 늦음. 비효율
