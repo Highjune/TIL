@@ -6718,11 +6718,11 @@ session.setMaxInactiveInterval(1800); //1800초
 - `필터 흐름`
 
   ```
-  HTTP 요청 ->WAS-> 필터 -> 서블릿 -> 컨트롤러
+  HTTP 요청 -> WAS-> 필터 -> 서블릿 -> 컨트롤러
   ```
 
   - 필터를 적용하면 필터가 호출 된 다음에 서블릿이 호출된다. 그래서 모든 고객의 요청 로그를 남기는 요구사항이 있다면 필터를 사용하면 된다. 참고로 필터는 특정 URL 패턴에 적용할 수 있다. /\* 이라고 하면 모든 요청에 필터가 적용된다(WAS에 등록).
-  - 참고로 스프링을 사용하는 경우 여기서 말하는 서블릿은 스프링의 디스패처 서블릿으로 생각하면 된다.
+  - (참고로) 여기서 말하는 서블릿은 스프링의 디스패처 서블릿으로 생각하면 된다.(스프링을 사용하는 경우)
 
 - `필터 제한`
 
@@ -6738,7 +6738,7 @@ session.setMaxInactiveInterval(1800); //1800초
 - `필터 체인`
 
   ```
-  HTTP 요청 ->WAS-> 필터1-> 필터2-> 필터3-> 서블릿 -> 컨트롤러
+  HTTP 요청 -> WAS-> 필터1 -> 필터2 -> 필터3 -> 서블릿 -> 컨트롤러
   ```
 
   - 필터는 체인으로 구성되는데, 중간에 필터를 자유롭게 추가할 수 있다. 예를 들어서 로그를 남기는 필터를 먼저 적용하고, 그 다음에 로그인 여부를 체크하는 필터를 만들 수 있다.
@@ -6746,10 +6746,10 @@ session.setMaxInactiveInterval(1800); //1800초
 - `필터 인터페이스`
   ```
   public interface Filter {
-      public default void init(FilterConfig filterConfig) throws ServletException
-  {}
-      public void doFilter(ServletRequest request, ServletResponse response,
-              FilterChain chain) throws IOException, ServletException;
+      public default void init(FilterConfig filterConfig) throws ServletException{}
+      
+      public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException;
+
       public default void destroy() {}
   }
   ```
@@ -6847,12 +6847,12 @@ session.setMaxInactiveInterval(1800); //1800초
 - 참고
 
   - URL 패턴에 대한 룰은 필터도 서블릿과 동일하다. 자세한 내용은 서블릿 URL 패턴으로 검색해보자.
-  - @ServletComponentScan @WebFilter(filterName = "logFilter", urlPatterns = "/\*") 로 필터 등록이 가능하지만 필터 순서 조절이 안된다. 따라서 FilterRegistrationBean 을 사용하자.
+  - @ServletComponentScan, @WebFilter(filterName = "logFilter", urlPatterns = "/\*") 로 필터 등록이 가능하지만 필터 순서 조절이 안된다. 따라서 FilterRegistrationBean 을 사용하자.
 
 - 서버를 띄우면?
 
   - 서버를 띄우기만 했는데도 `log filter init` 로그가 찍힌다. 즉 filter가 init() 초기화되었다는 것
-  - 서버 띄우고 상품리스트 클릭 시 로그'
+  - 서버 띄우고 상품리스트 클릭 시 로그
 
   ```
   REQUEST [875d4677-e468-4381-b368-113661e40928][/items]
@@ -6874,7 +6874,7 @@ session.setMaxInactiveInterval(1800); //1800초
   RESPONSE [bed3518a-dba9-45f9-98bc-3f9c3c51e069][/items/add] // response
   ```
 
-  - 위에서 중간에 에러터진 부분에서도 `bed3518a-dba9-45f9-98bc-3f9c3c51e0691` 를 남기고 싶다는 의미이다. 중간의 에러 로그가 사실 `bed3518a-dba9-45f9-98bc-3f9c3c51e06` 과 관련이 있는지 헷갈릴 수도 있다(수많은 요청이 있는 경우)
+  - 위에서 중간에 에러터진 부분에서도 `bed3518a-dba9-45f9-98bc-3f9c3c51e0691` 를 남기고 싶다는 의미이다. 중간의 에러 로그가 사실 `bed3518a-dba9-45f9-98bc-3f9c3c51e0691` 과 관련이 있는지 헷갈릴 수도 있다(수많은 요청이 있는 경우)
 
 ## 서블릿 필터 - 인증 체크
 
@@ -7021,7 +7021,7 @@ session.setMaxInactiveInterval(1800); //1800초
 - `스프링 인터셉터 흐름`
 
   ```
-  HTTP 요청 ->WAS-> 필터 -> 서블릿 -> 스프링 인터셉터 -> 컨트롤러
+  HTTP 요청 -> WAS-> 필터 -> 서블릿 -> 스프링 인터셉터 -> 컨트롤러
   ```
 
   - 스프링 인터셉터는 디스패처 서블릿과 컨트롤러 사이에서 컨트롤러 호출 직전에 호출 된다.
@@ -7035,7 +7035,7 @@ session.setMaxInactiveInterval(1800); //1800초
   HTTP 요청 -> WAS -> 필터 -> 서블릿 -> 스프링 인터셉터(적절하지 않은 요청이라 판단, 컨트롤러 호출 X) // 비 로그인 사용자
   ```
 
-  - 인터셉터에서 적절하지 않은 요청이라고 판단하면 거기에서 끝을 낼 수도 있다. 그래 로그인 여부를 체크하기에 딱 좋다.
+  - 인터셉터에서 적절하지 않은 요청이라고 판단하면 거기에서 끝을 낼 수도 있다. 그래서 로그인 여부를 체크하기에 딱 좋다.
 
 - `스프링 인터셉터 체인`
   ```
@@ -7051,31 +7051,30 @@ session.setMaxInactiveInterval(1800); //1800초
   ```
   public interface HandlerInterceptor {
 
-      default boolean preHandle(HttpServletRequest request, HttpServletResponse
-  response, Object handler) throws Exception {}
+      default boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {}
 
-      default void postHandle(HttpServletRequest request, HttpServletResponse
-  response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {}
+      default void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {}
 
-      default void afterCompletion(HttpServletRequest request, HttpServletResponse
-  response,Object handler, @Nullable Exception ex) throws Exception {}
+      default void afterCompletion(HttpServletRequest request, HttpServletResponse response,Object handler, @Nullable Exception ex) throws Exception {}
 
   }
   ```
 
-  - 서블릿 필터의 경우 단순하게 doFilter() 하나만 제공된다. 인터셉터는 컨트롤러 호출 전( preHandle ), 호출 후( postHandle ), 요청 완료 이후( afterCompletion )와 같이 단계적으로 잘 세분화 되어 있다.
-  - 서블릿 필터의 경우 단순히 request , response 만 제공했지만, 인터셉터는 어떤 컨트롤러( handler )가 호출되는지 호출 정보도 받을 수 있다. 그리고 어떤 modelAndView 가 반환되는지 응답 정보도 받을 수 있다.
+  - 서블릿 필터의 경우 단순하게 doFilter() 하나만 제공된다. 인터셉터는 컨트롤러 호출 전(preHandle), 호출 후(postHandle), 요청 완료 이후(afterCompletion)와 같이 단계적으로 잘 세분화 되어 있다.
+  - 서블릿 필터의 경우 단순히 request, response 만 제공했지만, 인터셉터는 어떤 컨트롤러(handler)가 호출되는지 호출 정보도 받을 수 있다. 그리고 어떤 modelAndView 가 반환되는지 응답 정보도 받을 수 있다.
 
 - 스프링 인터셉터 호출 흐름
+
   ![image](https://user-images.githubusercontent.com/57219160/139265182-7aa8ce6a-d59c-4c67-b099-46d178f410c1.png)
 
   - 정상 흐름
     - preHandle : 컨트롤러 호출 전에 호출된다. (더 정확히는 핸들러 어댑터 호출 전에 호출된다.)
-      - preHandle 의 응답값이 true 이면 다음으로 진행하고(다음 인터셉터 있으면 인터셉터로, 없으면 그 다음으로), false 이면 더는 진행하지 않는다. false인 경우 나머지 인터셉터는 물론이고, 핸들러 어댑터도 호출되지 않는다. 그림에서 1번에서 끝이나버린다.
+      - preHandle 의 응답값이 true 이면 다음으로 진행하고(다음 인터셉터 있으면 인터셉터로, 없으면 그 다음으로), false 이면 더는 진행하지 않는다. false인 경우 나머지 인터셉터는 물론이고, 핸들러 어댑터도 호출되지 않는다. 그림에서 1번에서 끝이 나버린다.
     - postHandle : 컨트롤러 호출 후에 호출된다. (더 정확히는 핸들러 어댑터 호출 후에 호출된다.)
     - afterCompletion : 뷰가 렌더링 된 이후에 호출된다.
 
 - 스프링 인터셉터 예외 상황
+
   ![image](https://user-images.githubusercontent.com/57219160/139265578-389f23fb-1064-4733-b03a-0e62d1cd88e6.png)
 
   - 예외가 발생시
@@ -7091,7 +7090,7 @@ session.setMaxInactiveInterval(1800); //1800초
 
 - 정리
 
-  - 인터셉터는 스프링 MVC 구조에 특화된 필터 기능을 제공한다고 이해하면 된다. 스프링 MVC를 사용하고, 특별히 필터를 꼭 사용해야 하는 상황이 아니라면 인터셉터를 사용하는 것이 더 편리하다.
+  - 인터셉터는 스프링 MVC 구조에 특화된 필터 기능을 제공한다고 이해하면 된다. `스프링 MVC를 사용하고, 특별히 필터를 꼭 사용해야 하는 상황이 아니라면 인터셉터를 사용하는 것이 더 편리하다.`
   - 훨씬 더 편리함.
 
 - 필터로 만들었던 것을 똑같이, 인터셉터로 만들어보자!
@@ -7113,8 +7112,8 @@ session.setMaxInactiveInterval(1800); //1800초
 
           request.setAttribute(LOG_ID, uuid); // afterCompletion 에서 꺼내서 사용하려고 넣어둠. 이 request는 하나의 사용자에 대해서 요청->응답까지 하나의 객체로 보장을 받으니.
 
-          //@RequestMapping : HandlerMethod
-          //정적 리소스 : ResourceHttpRequestHandler
+          // @RequestMapping : HandlerMethod
+          // 정적 리소스 : ResourceHttpRequestHandler
           if (handler instanceof HandlerMethod) {
               HandlerMethod hm = (HandlerMethod)handler; // 호출할 컨트롤러 메서드의 모든 정보가 포함되어 있다.
           }
@@ -7183,8 +7182,8 @@ session.setMaxInactiveInterval(1800); //1800초
   - WebMvcConfigurer 가 제공하는 addInterceptors() 를 사용해서 인터셉터를 등록할 수 있다.
   - registry.addInterceptor(new LogInterceptor()) : 인터셉터를 등록한다.
   - order(1) : 인터셉터의 호출 순서를 지정한다. 낮을 수록 먼저 호출된다.
-  - addPathPatterns("/\*\*") : 인터셉터를 적용할 URL 패턴을 지정한다. 의미는 / 하위에 있는 모든 것 다
-  - excludePathPatterns("/css/\*_", "/_.ico", "/error") : 인터셉터에서 제외할 패턴을 지정한다.
+  - addPathPatterns`("/\*\*")` : 인터셉터를 적용할 URL 패턴을 지정한다. 의미는 / 하위에 있는 모든 것 다
+  - excludePathPatterns`("/css/\*_", "/_.ico", "/error")` : 인터셉터에서 제외할 패턴을 지정한다.
 - 필터와 비교해보면 인터셉터는 addPathPatterns , excludePathPatterns 로 매우 정밀하게 URL 패턴을 지정할 수 있다.
 
 - 실행 로그
@@ -7208,23 +7207,20 @@ RESPONSE [6234a913-f24f-461f-a9e1-85f153b3c8b2][/members/add]
   {spring} 경로(/)와 일치하고 spring이라는 변수로 캡처
   {spring:[a-z]+} matches the regexp [a-z]+ as a path variable named "spring" {spring:[a-z]+} regexp [a-z]+ 와 일치하고, "spring" 경로 변수로 캡처
   {*spring} 경로가 끝날 때 까지 0개 이상의 경로(/)와 일치하고 spring이라는 변수로 캡처
-  /pages/t?st.html — matches /pages/test.html, /pages/tXst.html but not /pages/
-  toast.html
+
+  /pages/t?st.html — matches /pages/test.html, /pages/tXst.html but not /pages/toast.html
   /resources/*.png — matches all .png files in the resources directory
   /resources/** — matches all files underneath the /resources/ path, including /
   resources/image.png and /resources/css/spring.css
   /resources/{*path} — matches all files underneath the /resources/ path and
-  captures their relative path in a variable named "path"; /resources/image.png
-  will match with "path" → "/image.png", and /resources/css/spring.css will match
-  with "path" → "/css/spring.css"
-  /resources/{filename:\\w+}.dat will match /resources/spring.dat and assign the
-  value "spring" to the filename variable
+  captures their relative path in a variable named "path"; /resources/image.png will match with "path" → "/image.png", and /resources/css/spring.css will match with "path" → "/css/spring.css"
+  /resources/{filename:\\w+}.dat will match /resources/spring.dat and assign the value "spring" to the filename variable
   ```
   - https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/ springframework/web/util/pattern/PathPattern.html
 
 ## 스프링 인터셉터 - 인증 체크
 
-- 서블릿 필터에서 사용했던 인증 체크 기능을 스프링 인터셉터로 개발해보자.(인증 체크시 필터 말고 인터셉터를 써야 하는 이유!)
+- 서블릿 필터에서 사용했던 인증 체크 기능을 스프링 인터셉터로 개발해보자.`(인증 체크시 필터 말고 인터셉터를 써야 하는 이유!)`
 - LoginCheckInterceptor
 
   ```
@@ -7277,12 +7273,12 @@ RESPONSE [6234a913-f24f-461f-a9e1-85f153b3c8b2][/members/add]
   - 인터셉터를 적용하거나 하지 않을 부분은 addPathPatterns 와 excludePathPatterns 에 작성하면 된다. 기본적으로 모든 경로에 해당 인터셉터를 적용하되 ( /** ), 홈( / ), 회원가입( /members/add ), 로그인( /login ), 리소스 조회( /css/** ), 오류( /error )와 같은 부분은 로그인 체크 인터셉터를 적용하지 않는다. 서블릿 필터와 비교해보면 매우 편리한 것을 알 수 있다.
 
 - 정리
-  - 서블릿 필터와 스프링 인터셉터는 웹과 관련된 공통 관심사를 해결하기 위한 기술이다. 서블릿 필터와 비교해서 스프링 인터셉터가 개발자 입장에서 훨씬 편리하다는 것을 코드로 이해했을 것이다. 특별한 문제가 없다면 인터셉터를 사용하는 것이 좋다.
+  - 서블릿 필터와 스프링 인터셉터는 웹과 관련된 공통 관심사를 해결하기 위한 기술이다. `서블릿 필터와 비교해서 스프링 인터셉터가 개발자 입장에서 훨씬 편리하다는 것을 코드로 이해했을 것이다. 특별한 문제가 없다면 인터셉터를 사용하는 것이 좋다.`
 
 ## ArgumentResolver 활용
 
 - MVC1편 6. 스프링 MVC - 기본 기능 요청 매핑 헨들러 어뎁터 구조에서 ArgumentResolver 를 학습했다.
-- 이번 시간에는 해당 기능을 사용해서 로그인 회원을 조금 편리하게 찾아보자. (실제로 많이 사용함)
+- 이번 시간에는 해당 기능을 사용해서 로그인 회원을 조금 편리하게 찾아보자. `(실제로 많이 사용함)`
 - HomeController - 추가
 
   ```
@@ -7361,8 +7357,7 @@ RESPONSE [6234a913-f24f-461f-a9e1-85f153b3c8b2][/members/add]
   @Configuration
   public class WebConfig implements WebMvcConfigurer {
   @Override
-      public void addArgumentResolvers(List<HandlerMethodArgumentResolver>
-  resolvers) {
+      public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
           resolvers.add(new LoginMemberArgumentResolver());
       }
   //...
@@ -7370,7 +7365,7 @@ RESPONSE [6234a913-f24f-461f-a9e1-85f153b3c8b2][/members/add]
   ```
   - 앞서 개발한 LoginMemberArgumentResolver 를 등록하자.
   - resolvers.add(new LoginMemberArgumentResolver());
-    - 꼭 new LoginMemberArgumentResolver() 로 등록 안해도 되고 LoginMemberArgumentResolver클래슬르 @Comopnent 붙여서 스프링 빈으로 등록한 후에, 이곳에서 주입받아(@Autowired든지, 생성자든지) 대입해도 된다. `resolvers.add(loginMemberArgumentResolver);` 처럼.
+    - 꼭 new LoginMemberArgumentResolver() 로 등록 안해도 되고 LoginMemberArgumentResolver클래스를 @Comopnent 붙여서 스프링 빈으로 등록한 후에, 이곳에서 주입받아(@Autowired든지, 생성자든지) 대입해도 된다. `resolvers.add(loginMemberArgumentResolver);` 처럼.
 
 # 예외 처리와 오류 페이지
 
