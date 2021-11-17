@@ -7427,7 +7427,8 @@ public class ServletExController {
 
       @GetMapping("/error-ex")
       public void errorEx() {
-        throw new RuntimeException("예외 발생!"); }
+          throw new RuntimeException("예외 발생!"); 
+      }
 }
 ```
 
@@ -7454,7 +7455,7 @@ public class ServletExController {
 - response.sendError(HTTP 상태 코드, 오류 메시지)
 
   - WAS(톰캣) 에게 문제가 있다고 알려주는 2번째 방법
-  - 오류가 발생했을 때 HttpServletResponse 가 제공하는 sendError 라는 메서드를 사용해도 된다. 이것을 호출한다고 당장 예외가 발생하는 것은 아니지만, 서블릿 컨테이너에게 오류가 발생했다는 점을 전달할 수 있다.(response는 들어왔다가 서블릿 컨테이너까지 전달이 되므로))
+  - 오류가 발생했을 때 HttpServletResponse 가 제공하는 sendError 라는 메서드를 사용해도 된다. 이것을 호출한다고 당장 예외가 발생하는 것은 아니지만, 서블릿 컨테이너에게 오류가 발생했다는 점을 전달할 수 있다.(요청이 들어왔다가 서블릿 컨테이너까지 response가 전달이 되므로)
   - 이 메서드를 사용하면 HTTP 상태 코드와 오류 메시지도 추가할 수 있다.
     - response.sendError(HTTP 상태 코드)
     - response.sendError(HTTP 상태 코드, 오류 메시지)
@@ -7473,7 +7474,7 @@ public class ServletExController {
   }
   ```
 
-  - throws IOException 는 실제 Exception이 발생하는 것은 아니고, sendError메서드 자체가 checkedException 이므로 할 수 없이 적어줘야 한다.
+  - throws IOException 는 실제 Exception이 발생하는 것은 아니고, sendError메서드 자체가 checkedException 이므로 try-catch 로 처리하든 throws로 처리하든, 무조건 적어줘야(checked) 한다. 
   - "404 오류!" 와 같은 메시지는 지금 화면에서는 안 보인다. 기본적으로는 안 보이게 되어있다. 옵션 바꾸면 보일 수 있게 할 수 있는데 뒤에서 설명~.
 
 - sendError 흐름
@@ -7534,7 +7535,6 @@ public class ServletExController {
 
           ErrorPage errorPage404 = new ErrorPage(HttpStatus.NOT_FOUND, "/error-page/404");
           ErrorPage errorPage500 = new ErrorPage(HttpStatus.INTERNAL_SERVER_ERROR, "/error-page/500");
-
           ErrorPage errorPageEx = new ErrorPage(RuntimeException.class, "/error-page/500");
 
           factory.addErrorPages(errorPage404, errorPage500, errorPageEx); // 설정한 페이지들을 등록
@@ -7552,7 +7552,7 @@ public class ServletExController {
   - 오류 페이지는 예외를 다룰 때 해당 예외와 그 자식 타입의 오류를 함께 처리한다. 예를 들어서 위의 경우 RuntimeException 은 물론이고 RuntimeException 의 자식도 함께 처리한다.
   - 오류가 발생했을 때 처리할 수 있는 컨트롤러가 필요하다. 예를 들어서 RuntimeException 예외가 발생하면 WAS까지 가서, 그 WAS가 errorPageEx 에서 지정한 /error-page/500 (경로)이 호출된다.(이걸 컨트롤러가 받아야 함)
     - 즉 서블릿, 필터, 인터셉터 등을 거쳐서 다시 컨트롤러로 가서 /error-page/500 처리할 것을 찾는다.
-  -
+  
 
 - 해당 오류를 처리할 컨트롤러가 필요하다.
 
@@ -7928,7 +7928,7 @@ WAS `/error-page/500` 다시 요청 -> 필터 -> 서블릿 -> 인터셉터 -> �
     1. WAS(/error-ex, dispatchType=REQUEST) -> 필터 -> 서블릿 -> 인터셉터 -> 컨트롤러
     2. WAS(여기까지 전파) <- 필터 <- 서블릿 <- 인터셉터 <- 컨트롤러(예외발생)
     3. WAS 오류 페이지 확인
-    4. WAS(/error-page/500, dispatchType=ERROR) -> 필터(x) -> 서블릿 -> 인터셉터(x) -> 컨트롤러(/error-page/500) -> Viewss
+    4. WAS(/error-page/500, dispatchType=ERROR) -> 필터(x) -> 서블릿 -> 인터셉터(x) -> 컨트롤러(/error-page/500) -> View
     ```
 
 - 흐름을 제대로 이해하는 것이 제일 중요. 그런데 지금의 과정에서 조금 번거로운 것이 있다. 오류페이지 등록하는 등의 번거로움이 남아있음. 그래서 다음 강의부터는 서블릿이 제공하는 것을 넘어서서 스프링 부트가(자동화 해놨음) 오류 페이지를 어떤 식으로 편리하게 제공하는지 알아보는 수업
@@ -7941,7 +7941,7 @@ WAS `/error-page/500` 다시 요청 -> 필터 -> 서블릿 -> 인터셉터 -> �
   - 예외 종류에 따라서 ErrorPage 를 추가하고
   - 예외 처리용 컨트롤러 ErrorPageController 를 만듬
 
-- 스프링 부트는 이런 과정을 모두 기본으로 제공한다.
+- `스프링 부트는 이런 과정을 모두 기본으로 제공한다.`
 
   - ErrorPage 를 자동으로 등록한다. 이때 /error 라는 경로로 기본 오류 페이지를 설정한다.
     - new ErrorPage("/error") , 상태코드와 예외를 설정하지 않으면 기본 오류 페이지로 사용된다.
@@ -7951,20 +7951,21 @@ WAS `/error-page/500` 다시 요청 -> 필터 -> 서블릿 -> 인터셉터 -> �
 
 - 참고
   - ErrorMvcAutoConfiguration 이라는 클래스가 오류 페이지를 자동으로 등록하는 역할을 한다.
+
 - 주의
-
   - 스프링 부트가 제공하는 기본 오류 메커니즘을 사용하도록 WebServerCustomizer에 있는 @Component 를 주석 처리하자.
-  - 이제 오류가 발생했을 때 오류 페이지로 /error 를 기본 요청한다. 스프링 부트가 자동 등록한 BasicErrorController 는 이 경로를 기본으로 받는다.
 
-- 개발자는 오류 페이지만 등록
-  - =BasicErrorController 는 기본적인 로직이 모두 개발되어 있다.
+- 이제 오류가 발생했을 때 오류 페이지로 /error 를 기본 요청한다. 스프링 부트가 자동 등록한 BasicErrorController 는 이 경로를 기본으로 받는다.
+
+- `개발자는 오류 페이지만 등록`
+  - BasicErrorController 는 기본적인 로직이 모두 개발되어 있다.
   - 개발자는 오류 페이지 화면만 BasicErrorController 가 제공하는 룰과 우선순위에 따라서 등록하면 된다. 정적 HTML이면 정적 리소스, 뷰 템플릿을 사용해서 동적으로 오류 화면을 만들고 싶으면 뷰 템플릿 경로에 오류 페이지 파일을 만들어서 넣어두기만 하면 된다.
 - 뷰 선택 우선순위(BasicErrorController 의 처리 순서)
 
   1. 뷰 템플릿
      - resources/templates/error/500.html
      - resources/templates/error/5xx.html
-  2. 정적리소스(static,public)
+  2. 정적리소스(static, public)
      - resources/static/error/400.html
      - resources/static/error/404.html
      - resources/static/error/4xx.html
@@ -7973,11 +7974,10 @@ WAS `/error-page/500` 다시 요청 -> 필터 -> 서블릿 -> 인터셉터 -> �
 
   - 해당 경로 위치에 HTTP 상태 코드 이름의 뷰 파일을 넣어두면 된다.
   - 뷰 템플릿이 정적 리소스보다 우선순위가 높고, 404, 500처럼 구체적인 것이 5xx처럼 덜 구체적인 것 보다 우선순위가 높다.
-  - 5xx, 4xx 라고 하면 500대, 400대 오류를 처리해준다.
+  - 5xx, 4xx 라고 하면 각각 500대, 400대 오류를 처리해준다.
 
 - 오류 뷰 템플릿 추가
 - resources/templates/error/4xx.html
-
 ```
 <!DOCTYPE HTML>
 <html xmlns:th="http://www.thymeleaf.org">
@@ -8086,14 +8086,14 @@ WAS `/error-page/500` 다시 요청 -> 필터 -> 서블릿 -> 인터셉터 -> �
     <ul>
         <li>오류 정보</li>
         <ul>
-        <li th:text="|timestamp: ${timestamp}|"></li>
-        <li th:text="|path: ${path}|"></li>
-        <li th:text="|status: ${status}|"></li>
-        <li th:text="|message: ${message}|"></li>
-        <li th:text="|error: ${error}|"></li>
-        <li th:text="|exception: ${exception}|"></li>
-        <li th:text="|errors: ${errors}|"></li>
-        <li th:text="|trace: ${trace}|"></li>
+          <li th:text="|timestamp: ${timestamp}|"></li>
+          <li th:text="|path: ${path}|"></li>
+          <li th:text="|status: ${status}|"></li>
+          <li th:text="|message: ${message}|"></li>
+          <li th:text="|error: ${error}|"></li>
+          <li th:text="|exception: ${exception}|"></li>
+          <li th:text="|errors: ${errors}|"></li>
+          <li th:text="|trace: ${trace}|"></li>
         </ul>
         </li>
     </ul>
@@ -8142,7 +8142,7 @@ server.error.include-binding-errors=on_param
     http://localhost:8080/error-ex?message=&errors=&trace=
     ```
 
-- 실무에서는 이것들을 노출하면 안된다! 사용자에게는 이쁜 오류 화면과 고객이 이해할 수 있는 간단한 오류 메시지를 보여주고 오류는 서버에 로그로 남겨서 로그로 확인해야 한다.
+- 실무에서는 이것들을 노출하면 안된다! 사용자에게는 이쁜 오류 화면과 고객이 이해할 수 있는 간단한 오류 메시지를 보여주고, 오류는 서버에 로그로 남겨서 로그로 확인해야 한다.
 - 3가지 주석 처리하기
 
   - 없으면 어차피 안 나옴
