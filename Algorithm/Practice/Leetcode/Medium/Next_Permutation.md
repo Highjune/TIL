@@ -13,6 +13,11 @@
 
 # 타인 풀이
 - https://www.youtube.com/watch?v=mbOl9qPedDo&list=PL2mzT_U4XxDl8PP-jMk4rt6BPzBtS__pQ&index=25
+- 순서
+```
+
+```
+- 예시
 ```
 1 3(a) 5 4 4(b)
 -> a와 b를 swap
@@ -20,7 +25,7 @@
 -> a+1의 위치부터 끝까지를 오름차순 정렬
 1 4 3 4 5 
 ```
-
+- 풀이
 ```
 
 ```
