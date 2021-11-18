@@ -1307,7 +1307,7 @@ var user = {"username":"userA","age":10};
 
 - 자바스크립트 내추럴 템플릿
   - 타임리프는 HTML 파일을 직접 열어도 동작하는 내추럴 템플릿 기능을 제공한다. 자바스크립트 인라인 기능을 사용하면 주석을 활용해서 이 기능을 사용할 수 있다.
-  - var username2 = /_[[${user.username}]]_/ "test username";
+  - var username2 = /*[[${user.username}]]*/ "test username";
     - 인라인 사용 전 -> var username2 = /_userA_/ "test username";
     - 인라인 사용 후 -> var username2 = "userA";
   - 인라인 사용 전 결과를 보면 정말 순수하게 그대로 해석을 해버렸다. 따라서 내추럴 템플릿 기능이 동작하지 않고, 심지어 렌더링 내용이 주석처리 되어 버린다.
