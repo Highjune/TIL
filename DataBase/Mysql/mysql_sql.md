@@ -151,8 +151,8 @@ ORDER BY t1.ordinal_position;
 
 - 여러 query에 하나의 변수 값으로 세팅해서 넣고자 할 때 `SET @변수 = ''`
 ```
-SET @specific_day_from = '2021-03-01 00:00:00:'
-SET @specific_day_to = '2021-04-01 00:00:00:'
+SET @specific_day_from = '2021-03-01 00:00:00';
+SET @specific_day_to = '2021-04-01 00:00:00';
 
 SELECT * 
 FROM db_schema.ex_table
