@@ -289,7 +289,7 @@ public class BasicController {
     - 타임리프가 `<b>` 태그를 출력할 때 그대로 출력하지 않고 `HTML 엔티티`로 변경해서 출력한다.
     - `<` -> `&lt;`
     - `>` -> `&gt;`
-    - 기타 수 많은 HTML 엔티티가 있따.
+    - 기타 수 많은 HTML 엔티티가 있다.
   - 참고
     - HTML 엔티티와 관련해서 더 자세한 내용은 HTML 엔티티로 검색해보자.
 
@@ -478,7 +478,7 @@ public String textUnescaped(Model model) {
 - 이런 점을 해결하기 위해 편의 객체도 제공한다.
   - HTTP 요청 파라미터 접근: param
     - 예) ${param.paramData}
-    - 그러면 쿼리 파라미터 형식. 즉 ~(url)~?paramData=100 처럼 데이터가 들어올 때 간단하게 param.paramData 로서 10의 값을 얻을 수 있다.
+    - 그러면 쿼리 파라미터 형식. 즉 ~(url)?paramData=100 처럼 데이터가 들어올 때 간단하게 param.paramData 로서 10의 값을 얻을 수 있다.
   - HTTP 세션 접근: session
     - 예) ${session.sessionData}
   - 스프링 빈 접근: @
