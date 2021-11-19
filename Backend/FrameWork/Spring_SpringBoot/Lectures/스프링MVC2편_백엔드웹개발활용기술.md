@@ -289,7 +289,7 @@ public class BasicController {
     - 타임리프가 `<b>` 태그를 출력할 때 그대로 출력하지 않고 `HTML 엔티티`로 변경해서 출력한다.
     - `<` -> `&lt;`
     - `>` -> `&gt;`
-    - 기타 수 많은 HTML 엔티티가 있따.
+    - 기타 수 많은 HTML 엔티티가 있다.
   - 참고
     - HTML 엔티티와 관련해서 더 자세한 내용은 HTML 엔티티로 검색해보자.
 
@@ -478,7 +478,7 @@ public String textUnescaped(Model model) {
 - 이런 점을 해결하기 위해 편의 객체도 제공한다.
   - HTTP 요청 파라미터 접근: param
     - 예) ${param.paramData}
-    - 그러면 쿼리 파라미터 형식. 즉 ~(url)~?paramData=100 처럼 데이터가 들어올 때 간단하게 param.paramData 로서 10의 값을 얻을 수 있다.
+    - 그러면 쿼리 파라미터 형식. 즉 ~(url)?paramData=100 처럼 데이터가 들어올 때 간단하게 param.paramData 로서 10의 값을 얻을 수 있다.
   - HTTP 세션 접근: session
     - 예) ${session.sessionData}
   - 스프링 빈 접근: @
@@ -1282,8 +1282,7 @@ var user = BasicController.User(username=userA, age=10);
 - 자바스크립트 인라인 사용 후 - 결과
 
 ```
-자바스크립트 인라인 사용 후
-  <script>
+<script>
   var username = "userA";
   var age = 10;
 
@@ -1304,11 +1303,11 @@ var user = {"username":"userA","age":10};
     - 인라인 사용 후 -> var username = "userA";
 
   - 인라인 사용 전 렌더링 결과를 보면 userA 라는 변수 이름이 그대로 남아있다. 타임리프 입장에서는 정확하게 렌더링 한 것이지만 아마 개발자가 기대한 것은 다음과 같은 "userA"라는 문자일 것이다. 결과적으로 userA가 변수명으로 사용되어서 자바스크립트 오류가 발생한다.(개발자도구로 확인하면 에러 확인 가능) 다음으로 나오는 숫자 age의 경우에는 " 가 필요 없기 때문에 정상 렌더링 된다.
-  - 인라인사용후렌더링결과를보면문자타입인경우 "를포함해준다.추가로자바스크립트에서문제가될 수 있는 문자가 포함되어 있으면 이스케이프 처리도 해준다. 예) " \"
+  - 인라인사용후렌더링결과를보면문자타입인경우 "를포함해준다.추가로자바스크립트에서문제가될 수 있는 문자가 포함되어 있으면 이스케이프 처리도 해준다. 예) `" -> \"`
 
 - 자바스크립트 내추럴 템플릿
   - 타임리프는 HTML 파일을 직접 열어도 동작하는 내추럴 템플릿 기능을 제공한다. 자바스크립트 인라인 기능을 사용하면 주석을 활용해서 이 기능을 사용할 수 있다.
-  - var username2 = /_[[${user.username}]]_/ "test username";
+  - var username2 = /*[[${user.username}]]*/ "test username";
     - 인라인 사용 전 -> var username2 = /_userA_/ "test username";
     - 인라인 사용 후 -> var username2 = "userA";
   - 인라인 사용 전 결과를 보면 정말 순수하게 그대로 해석을 해버렸다. 따라서 내추럴 템플릿 기능이 동작하지 않고, 심지어 렌더링 내용이 주석처리 되어 버린다.
@@ -10660,6 +10659,19 @@ sdklajkljdf...
           log.info("itemName={}", itemName);
           log.info("multipartFile={}", file);
 
+<<<<<<< HEAD
+            return "upload-form";
+        }
+    }
+    ```
+    - 코드를 보면 스프링 답게 딱 필요한 부분의 코드만 작성하면 된다.
+    - @RequestParam MultipartFile file 
+        - 업로드하는 HTML Form의 name에 맞추어 @RequestParam 을 적용하면 된다. 추가로 @ModelAttribute 에서도 MultipartFile 을 동일하게 사용할 수 있다.
+        - MultipartFile 이란 것을 Argument Resolve 해주는 것이 존재.
+    - MultipartFile 주요 메서드
+        - file.getOriginalFilename() : 업로드 파일 명
+        - file.transferTo(...) : 파일 저장
+=======
           if (!file.isEmpty()) {
               String fullPath = fileDir + file.getOriginalFilename();
               log.info("파일 저장 fullPath={}", fullPath);
@@ -10675,6 +10687,7 @@ sdklajkljdf...
   - @RequestParam MultipartFile file
 
     - 업로드하는 HTML Form의 name에 맞추어 @RequestParam 을 적용하면 된다. 추가로 @ModelAttribute 에서도 MultipartFile 을 동일하게 사용할 수 있다.
+>>>>>>> 2e15783a90fbca382dd6f1806ae4ecdda321d997
 
   - MultipartFile 주요 메서드
     - file.getOriginalFilename() : 업로드 파일 명
@@ -10692,9 +10705,265 @@ sdklajkljdf...
   ```
 
 ## 예제로 구현하는 파일 업로드, 다운로드
-
+<<<<<<< HEAD
 - 실제 파일이나 이미지를 업로드, 다운로드 할 때는 몇가지 고려할 점이 있는데, 구체적인 예제로 알아보자.
 
-- 원래 파일은 데이터베이스에 저장하는 것이 아니다. 파일은 보통 스토리지에 저장한다. 만약 AWS를 쓴다면 S3에 저장을 한다던지. 데이터베이스에는 파일이 저장된 경로를 저장한다. 즉. 데이터베이스에 파일 자체를 저장하지는 않는다. 경로도 FullPath를 다 저장하는 것이 아니라 공통인 부분 앞쪽은 고정해두고 그 이후의 상대적인 경로부분만 저장한다.
+- 요구사항
+    - 상품을 관리
+        - 상품 이름
+        - 첨부파일 하나
+        - 이미지 파일 여러개
+    - 첨부파일을 업로드 다운로드 할 수 있다.
+    - 업로드한 이미지를 웹 브라우저에서 확인할 수 있다.
 
+- Item - 상품 도메인
+```
+@Data
+  public class Item {
+      private Long id;
+      private String itemName;
+      private UploadFile attachFile;
+      private List<UploadFile> imageFiles;
+}
+```
+- ItemRepository - 상품 리포지토리
+```
+@Repository
+  public class ItemRepository {
+      private final Map<Long, Item> store = new HashMap<>();
+      private long sequence = 0L;
+      public Item save(Item item) {
+          item.setId(++sequence);
+          store.put(item.getId(), item);
+          return item;
+}
+      public Item findById(Long id) {
+          return store.get(id);
+}
+}
+```
+
+- UploadFile - 업로드 파일 정보 보관
+    ```
+    @Data
+    public class UploadFile {
+
+        private String uploadFileName;
+        private String storeFileName;
+        
+        public UploadFile(String uploadFileName, String storeFileName) {
+            this.uploadFileName = uploadFileName;
+            this.storeFileName = storeFileName;
+    } 
+    }
+
+    ```
+    - uploadFileName : 고객이 업로드한 파일명
+    - storeFileName : 서버 내부에서 관리하는 파일명
+    - 고객이 업로드한 파일명으로 서버 내부에 파일을 저장하면 안된다. 왜냐하면 서로 다른 고객이 같은 파일이름을 업로드 하는 경우 기존 파일 이름과 충돌이 날 수 있다. 서버에서는 저장할 파일명이 겹치지 않도록 내부에서 관리하는 별도의 파일명이 필요하다.
+
+- FileStore - 파일 저장과 관련된 업무 처리
+    ```
+    @Component
+    public class FileStore {
+
+        @Value("${file.dir}")
+        private String fileDir;
+        
+        public String getFullPath(String filename) {
+            return fileDir + filename;
+        }
+        public List<UploadFile> storeFiles(List<MultipartFile> multipartFiles) throws IOException {
+            List<UploadFile> storeFileResult = new ArrayList<>();
+            for (MultipartFile multipartFile : imageFiles) {
+                if (!imageFile.isEmpty()) {
+                    storeFileResult.add(storeFile(multipartFile));
+                } 
+            }
+            return storeFileResult;
+        }
+
+        public UploadFile storeFile(MultipartFile multipartFile) throws IOException {
+            if (multipartFile.isEmpty()) {
+                return null;
+            }
+            String originalFilename = multipartFile.getOriginalFilename();
+            String storeFileName = createStoreFileName(originalFilename);
+            multipartFile.transferTo(new File(getFullPath(storeFileName)));
+            
+            return new UploadFile(originalFilename, storeFileName);
+        }
+
+        private String createStoreFileName(String originalFilename) {
+            String ext = extractExt(originalFilename);
+            String uuid = UUID.randomUUID().toString();
+            return uuid + "." + ext;
+        }
+
+        private String extractExt(String originalFilename) {
+            int pos = originalFilename.lastIndexOf(".");
+            return originalFilename.substring(pos + 1);
+        } 
+    }
+    ```
+    - 멀티파트 파일을 서버에 저장하는 역할을 담당한다. 
+        - createStoreFileName() : 서버 내부에서 관리하는 파일명은 유일한 이름을 생성하는 UUID 를 사용해서 충돌하지 않도록 한다.
+        - extractExt() : 확장자를 별도로 추출해서 서버 내부에서 관리하는 파일명에도 붙여준다. 예를 들어서 고객이 a.png 라는 이름으로 업로드 하면 51041c62-86e4-4274-801d-614a7d994edb.png 와 같이 저장한다.
+
+- ItemForm
+    ```
+    @Data
+    public class ItemForm {
+        private Long itemId;
+        private String itemName;
+        private List<MultipartFile> imageFiles;
+        private MultipartFile attachFile;
+    }
+    ```
+    - 상품 저장용 폼이다.
+    - `List<MultipartFile> imageFiles` : 이미지를 다중 업로드 하기 위해 MultipartFile 를 사용했다.
+    - MultipartFile attachFile : 멀티파트는 @ModelAttribute 에서 사용할 수 있다.
+
+- ItemController
+    ```
+    @Slf4j
+    @Controller
+    @RequiredArgsConstructor
+    public class ItemController {
+
+        private final ItemRepository itemRepository;
+        private final FileStore fileStore;
+
+        @GetMapping("/items/new")
+        public String newItem(@ModelAttribute ItemForm form) {
+            return "item-form";
+        }
+=======
+
+- 실제 파일이나 이미지를 업로드, 다운로드 할 때는 몇가지 고려할 점이 있는데, 구체적인 예제로 알아보자.
+>>>>>>> 2e15783a90fbca382dd6f1806ae4ecdda321d997
+
+        @PostMapping("/items/new")
+        public String saveItem(@ModelAttribute ItemForm form, RedirectAttributes redirectAttributes) throws IOException {
+            UploadFile attachFile = fileStore.storeFile(form.getAttachFile());
+            List<UploadFile> storeImageFiles = fileStore.storeFiles(form.getImageFiles());
+        
+            //데이터베이스에 저장
+            Item item = new Item(); 
+            item.setItemName(form.getItemName()); 
+            item.setAttachFile(attachFile); 
+            item.setImageFiles(storeImageFiles); 
+            itemRepository.save(item);
+
+<<<<<<< HEAD
+            redirectAttributes.addAttribute("itemId", item.getId());
+            return "redirect:/items/{itemId}";
+        }
+
+        @GetMapping("/items/{id}")
+        public String items(@PathVariable Long id, Model model) {
+            Item item = itemRepository.findById(id);
+            model.addAttribute("item", item);
+            return "item-view";
+        }
+
+        // 이미지 보여줌
+        @ResponseBody
+        @GetMapping("/images/{filename}")
+        public Resource downloadImage(@PathVariable String filename) throws MalformedURLException {
+            // file:/User/.../file/2f2e434e-1d00-4229-95f5-5f3591058dcd.png
+            return new UrlResource("file:" + fileStore.getFullPath(filename)); // UrlResource같은 경우에는 앞에 `file:` 이라고 하면 내부 파일에 접근한다.
+        }
+
+        // 다운로드
+        @GetMapping("/attach/{itemId}")
+        public ResponseEntity<Resource> downloadAttach(@PathVariable Long itemId) throws MalformedURLException {
+            
+            Item item = itemRepository.findById(itemId); // 아이템에 접근할 수 있는 사용자만 이 파일을 다운로드 할 수 있도록 itemId를 받은 것(받아서 권한 확인). 아무나 링크로 다운로드 하면 안되므로. item에 접근할 수 있는 권한이나 사용자의 정보가 추가로 개발이 되어있다고 가정.
+            
+            String storeFileName = item.getAttachFile().getStoreFileName();
+            String uploadFileName = item.getAttachFile().getUploadFileName(); // 사용자가 다운로드시 업로드한 파일명이 나와야 하므로 필요.
+            
+            UrlResource resource = new UrlResource("file:" + fileStore.getFullPath(storeFileName));
+            
+            log.info("uploadFileName={}", uploadFileName);
+            
+            String encodedUploadFileName = UriUtils.encode(uploadFileName, StandardCharsets.UTF_8);
+            String contentDisposition = "attachment; filename=\"" + encodedUploadFileName + "\"";
+            
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition) // 이걸 넣어줘야(규약) 다운로드가 된다. 안 넣으면 단순 파일 읽기가 되어버림.
+                    .body(resource);
+        }
+    }
+    ```
+    - @GetMapping("/items/new") : 등록 폼을 보여준다.
+    - @PostMapping("/items/new") : 폼의 데이터를 저장하고 보여주는 화면으로 리다이렉트 한다.
+    - @GetMapping("/items/{id}") : 상품을 보여준다.
+    - @GetMapping("/images/{filename}") : `<img>` 태그로 이미지를 조회할 때 사용한다. UrlResource로 이미지 파일을 읽어서 @ResponseBody 로 이미지 바이너리를 반환한다.
+    - @GetMapping("/attach/{itemId}") : 파일을 다운로드 할 때 실행한다. 예제를 더 단순화 할 수 있지만, 파일 다운로드 시 권한 체크같은 복잡한 상황까지 가정한다 생각하고 이미지 id 를 요청하도록 했다. 파일 다운로드시에는 고객이 업로드한 파일 이름으로 다운로드 하는게 좋다. 이때는 Content-Disposition 해더에 attachment; filename="업로드 파일명" 값을 주면 된다.
+    - 원래 파일은 데이터베이스에 저장하는 것이 아니다. 파일은 보통 스토리지에 저장한다. 만약 AWS를 쓴다면 S3에 저장을 한다던지, NAS에 저장, 서버의 특정 디렉토리 등에 저장한다던지 한다. 데이터베이스에는 파일이 저장된 경로를 저장한다. 즉. 데이터베이스에 파일 자체를 저장하지는 않는다. 경로도 FullPath를 다 저장하는 것이 아니라 공통인 부분 앞쪽은 고정해두고 그 이후의 상대적인 경로부분만 저장한다.
+    - UrlResource같은 경우에는 앞에 `file:` 이라고 하면 내부 파일에 접근한다. 접근한 후 파일을 가져오고 스트림으로 반환한다.
+
+
+- 등록 폼 뷰
+    - resources/templates/item-form.html
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+       <div class="container">
+      <div class="py-5 text-center">
+    <h2>상품 등록</h2> </div>
+        <form th:action method="post" enctype="multipart/form-data">
+            <ul>
+    <li>상품명 <input type="text" name="itemName"></li> <li>첨부파일<input type="file" name="attachFile" ></li> <li>이미지 파일들<input type="file" multiple="multiple"
+    name="imageFiles" ></li>
+            </ul>
+            <input type="submit"/>
+        </form>
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+    - 다중 파일 업로드를 하려면 multiple="multiple" 옵션을 주면 된다.
+    - ItemForm 의 다음 코드에서 여러 이미지 파일을 받을 수 있다.
+    - private List`<MultipartFile>` imageFiles;
+
+
+- 조회 뷰
+    - resources/templates/item-view.html
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+    <div class="container">
+        <div class="py-5 text-center">
+         <h2>상품 조회</h2> 
+         </div>
+        
+        상품명: <span th:text="${item.itemName}">상품명</span><br/>
+        첨부파일: <a th:if="${item.attachFile}" th:href="|/attach/${item.id}|" th:text="${item.getAttachFile().getUploadFileName()}" /><br/>
+            <img th:each="imageFile : ${item.imageFiles}" th:src="|/images/$
+        {imageFile.getStoreFileName()}|" width="300" height="300"/>
+
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+    - 첨부 파일은 링크로 걸어두고, 이미지는 `<img>` 태그를 반복해서 출력한다.
+
+- 실행
+    - http://localhost:8080/items/new
+
+- 실행해보면 하나의 첨부파일을 다운로드 업로드 하고, 여러 이미지 파일을 한번에 업로드 할 수 있다.
+
+=======
 - UrlResource같은 경우에는 앞에 `file:` 이라고 하면 내부 파일에 접근한다. 접근한 후 파일을 가져오고 스트림으로 반환한다.
+>>>>>>> 2e15783a90fbca382dd6f1806ae4ecdda321d997
