@@ -28,5 +28,32 @@
 ```
 - 풀이
 ```
-
+class Solution {
+    public void nextPermutation(int[] nums) {
+        
+        // 뒤에서부터 처음으로 오름차순 깨지는 인덱스(a) 찾기
+        int a = nums.length - 2;
+        while (a >= 0 && nums[a] >= nums[a+1]) a--; // 부등호 계속 실수하는 부분
+    
+        if (a != -1) {
+           // 다시 뒤에서부터 a보다 큰 첫번째 인덱스(b) 찾기
+            int b = nums.length - 1;
+            while (nums[a] >= nums[b]) b--; // 부등호 계속 실수하는 부부
+            
+            // a와 b를 스왑
+            swap(nums, a, b);
+        }
+        
+        // a+1 부터 끝까지 오름차순 정렬
+        int start = a+1;
+        int end = nums.length - 1;
+        while (start < end) swap(nums, start++, end--);
+    }
+    
+    public void swap(int[] nums, int a, int b) {
+        int tmp = nums[a];
+        nums[a] = nums[b];
+        nums[b] = tmp;
+    }
+}
 ```

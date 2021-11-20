@@ -94,6 +94,54 @@ public class MinStack {
 }
 ```
 
+# 내 풀이3
+- 21.11.20
+- 타인 풀이1 보고 따라 풀어봤음
+- 대신 MinStack() {} 초기화 메서드에도 초기화 기능 넣었음
+```
+class MinStack {
+    
+    Node head;
+
+    public MinStack() {
+        head = null;
+    }
+    
+    public void push(int val) {
+        if (head == null) {
+            head = new Node(val, val, null);
+        } else {
+            head = new Node(val, Math.min(head.min, val), head);
+        }
+    }
+    
+    public void pop() {
+        head = head.next;
+    }
+    
+    public int top() {
+        return head.val;
+    }
+    
+    public int getMin() {
+        return head.min;
+    }
+    
+    private class Node {
+        int min;
+        int val;
+        Node next;
+        
+        private Node(int val, int min, Node next) {
+            this.val = val;
+            this.min = min;
+            this.next = next;
+        }
+        
+    }
+}
+
+```
 
 
 # 타인 풀이1
@@ -122,7 +170,7 @@ class MinStack {
     
     public int getMin() {
         return head.min;
-    }
+    }   
         
     private class Node {
         int val;
@@ -135,5 +183,52 @@ class MinStack {
             this.next = next;
         }
     }
+}
+```
+
+## 타인 풀이2
+- https://www.youtube.com/watch?v=5MnhCfeLyhg&list=PL2mzT_U4XxDl8PP-jMk4rt6BPzBtS__pQ&index=27
+```
+class MinStack {
+    
+    Stack<Node> s = new Stack<>();
+    
+    class Node {
+        int val;
+        int min;
+        
+        Node (int val, int min) {
+            this.val = val;
+            this.min = min;
+        }
+    }
+
+    public MinStack() {
+        
+    }
+    
+    public void push(int val) {
+        Node node = null;
+        if (s.isEmpty()) {
+            node = new Node(val, val);
+        } else{
+            node = new Node(val, val > s.peek().val ? s.peek().val : val);
+        }
+        
+        s.push(node);
+    }
+    
+    public void pop() {
+        s.pop();
+    }
+    
+    public int top() {
+        return s.peek().val;
+    }
+    
+    public int getMin() {
+        return s.peek().min;
+    }
+    
 }
 ```
