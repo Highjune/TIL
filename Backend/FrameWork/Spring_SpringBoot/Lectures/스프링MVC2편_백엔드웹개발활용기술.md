@@ -10660,19 +10660,6 @@ sdklajkljdf...
           log.info("itemName={}", itemName);
           log.info("multipartFile={}", file);
 
-<<<<<<< HEAD
-            return "upload-form";
-        }
-    }
-    ```
-    - 코드를 보면 스프링 답게 딱 필요한 부분의 코드만 작성하면 된다.
-    - @RequestParam MultipartFile file 
-        - 업로드하는 HTML Form의 name에 맞추어 @RequestParam 을 적용하면 된다. 추가로 @ModelAttribute 에서도 MultipartFile 을 동일하게 사용할 수 있다.
-        - MultipartFile 이란 것을 Argument Resolve 해주는 것이 존재.
-    - MultipartFile 주요 메서드
-        - file.getOriginalFilename() : 업로드 파일 명
-        - file.transferTo(...) : 파일 저장
-=======
           if (!file.isEmpty()) {
               String fullPath = fileDir + file.getOriginalFilename();
               log.info("파일 저장 fullPath={}", fullPath);
@@ -10686,10 +10673,7 @@ sdklajkljdf...
 
   - 코드를 보면 스프링 답게 딱 필요한 부분의 코드만 작성하면 된다.
   - @RequestParam MultipartFile file
-
     - 업로드하는 HTML Form의 name에 맞추어 @RequestParam 을 적용하면 된다. 추가로 @ModelAttribute 에서도 MultipartFile 을 동일하게 사용할 수 있다.
->>>>>>> 2e15783a90fbca382dd6f1806ae4ecdda321d997
-
   - MultipartFile 주요 메서드
     - file.getOriginalFilename() : 업로드 파일 명
     - file.transferTo(...) : 파일 저장
