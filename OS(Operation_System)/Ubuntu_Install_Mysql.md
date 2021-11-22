@@ -91,15 +91,15 @@ SELECT User, Host, Authentication_string FROM mysql.user;
 - 이제 생성한 'tucker' 계정에 'practice_DB'를 사용할 수 있도록 권한 부여
     - localhost 에서 tucker로 접속했을 때 practice_DB에 대한 모든 권한 부여
     ```
-    GARNT ALL PRIVILEGES ON practice_DB.* TO tucker@'localhost';
+    GRANT ALL PRIVILEGES ON practice_DB.* TO tucker@'localhost';
     ```
     - 외부 모든 곳(%) 에서 tucker로 접속했을 때 practice_DB에 대한 모든 권한 부여
     ```
-    GARNT ALL PRIVILEGES ON practice_DB.* TO tucker@'%';
+    GRANT ALL PRIVILEGES ON practice_DB.* TO tucker@'%';
     ```
     - ex) 만약 위에서 해당 계정(baronic이라면) 에 대해서 모든 host에 대한 권한을 부여 하려면 `'%'` (''넣기)
     ```
-    GARNT ALL PRIVILEGES ON practice_DB.* TO baronic@'%';
+    GRANT ALL PRIVILEGES ON practice_DB.* TO baronic@'%';
     ```
 
 - DB의 권한을 변경했으니 다시 FLUSH PRIVILEGES;
