@@ -3907,7 +3907,7 @@ spring.mvc.view.suffix=.jsp
     @RestController
     public class LogTestController {
 
-        private final Logger log = LoggerFactory.getLogger(getClass()); // same as `LoggerFactory.getLogger(LogTestController.class);
+        private final Logger log = LoggerFactory.getLogger(getClass()); // same as LoggerFactory.getLogger(LogTestController.class);
 
         @RequestMapping("/log-test")
         public String logTest() {
@@ -3933,7 +3933,7 @@ spring.mvc.view.suffix=.jsp
 
 - 테스트
     - 로그가 출력되는 포멧 확인
-        - 시간, 로그 레벨, 프로세스 ID, 쓰레드 명, 클래스명, 로그 메시 => 매우 많은 정보를 얻을 수 있다. s
+        - 시간, 로그 레벨, 프로세스 ID, 쓰레드 명, 클래스명, 로그 메시 => 매우 많은 정보를 얻을 수 있다. 
         ```
         2021-09-21 20:28:31.729  INFO 11643 --- [nio-8080-exec-1] hello.springmvc.basic.LogTestController  :  info log=Spring
         ```
@@ -4015,7 +4015,7 @@ public class LogTestController {
         - SLF4J - http://www.slf4j.org
         - Logback - http://logback.qos.ch
     - 스프링 부트가 제공하는 로그 기능은 다음을 참고하자.
-        - https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot- features.html#boot-features-logging
+        - https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot-features.html#boot-features-logging
 
 
 ## 요청 매핑
