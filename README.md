@@ -1,6 +1,9 @@
 ## 💻Today I Learned
 - 매일 공부하는 것을 잊어버리지 않기 위해 기록으로 남기는 목적
-- 좋은 TIL 저장소([예시1](https://github.com/Integerous/TIL), [예시2](https://github.com/namjunemy/TIL), [예시3](https://github.com/Integerous/TIL-1), [예시4]() 들을 참조
+- 좋은 TIL 저장소 예시
+    - [예시1](https://github.com/Integerous/TIL)
+    - [예시2](https://github.com/namjunemy/TIL)
+    - [예시3](https://github.com/Integerous/TIL-1)
 - [구상해놓은 TIL목록정리서 를 보면서 계속 깔끔하게 정리](https://www.notion.so/TIL-aa2e36d166f94254b43159f1bf756fda)
 - 링크는 미루지 말고 생성시마다 걸어두기
 
@@ -30,7 +33,6 @@
 - FrameWork
     - [Spring_SpringBoot](https://github.com/Highjune/TIL/tree/main/Backend/FrameWork/Spring_SpringBoot)
         - [Lectures](https://github.com/Highjune/TIL/tree/main/Backend/FrameWork/Spring_SpringBoot/Lectures)
-            - [모든 개발자를 위한 HTTP 웹 기본지식](https://github.com/Highjune/TIL/blob/main/Backend/FrameWork/Spring_SpringBoot/Lectures/%EB%AA%A8%EB%93%A0%20%EA%B0%9C%EB%B0%9C%EC%9E%90%EB%A5%BC%20%EC%9C%84%ED%95%9C%20HTTP%20%EC%9B%B9%20%EA%B8%B0%EB%B3%B8%20%EC%A7%80%EC%8B%9D.md)
             - [스프링 입문 - 코드로 배우는 스프링 부트, 웹 MVC, DB 접근 기술](https://github.com/Highjune/TIL/blob/main/Backend/FrameWork/Spring_SpringBoot/Lectures/%EC%8A%A4%ED%94%84%EB%A7%81%20%EC%9E%85%EB%AC%B8%20-%20%EC%BD%94%EB%93%9C%EB%A1%9C%20%EB%B0%B0%EC%9A%B0%EB%8A%94%20%EC%8A%A4%ED%94%84%EB%A7%81%20%EB%B6%80%ED%8A%B8%2C%20%EC%9B%B9%20MVC%2C%20DB%20%EC%A0%91%EA%B7%BC%20%EA%B8%B0%EC%88%A0.md)
             - [스프링 핵심 원리 - 기본편](https://github.com/Highjune/TIL/blob/main/Backend/FrameWork/Spring_SpringBoot/Lectures/%EC%8A%A4%ED%94%84%EB%A7%81%20%ED%95%B5%EC%8B%AC%20%EC%9B%90%EB%A6%AC%20-%20%EA%B8%B0%EB%B3%B8%ED%8E%B8.md)
             - [스프링MVC 1편 - 백엔드 웹 개발핵심기술](https://github.com/Highjune/TIL/blob/main/Backend/FrameWork/Spring_SpringBoot/Lectures/%EC%8A%A4%ED%94%84%EB%A7%81MVC1%ED%8E%B8_%EB%B0%B1%EC%97%94%EB%93%9C%EC%9B%B9%EA%B0%9C%EB%B0%9C%ED%95%B5%EC%8B%AC%EA%B8%B0%EC%88%A0.md)
