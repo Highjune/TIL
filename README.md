@@ -110,15 +110,13 @@
 
 ### [Seminars & Conference](https://github.com/Highjune/TIL/tree/main/Seminars%26Conference)
 - [etc](https://github.com/Highjune/TIL/blob/main/Seminars%26Conference/etc.md)
-- 
 
-### [Theory](https://github.com/Highjune/TIL/tree/main/Theory)
 
 
 ### [Tools](https://github.com/Highjune/TIL/tree/main/Tools)
 - [Eclipse](https://github.com/Highjune/TIL/blob/master/Tools/eclipse.md)
 - [VSCode](https://github.com/Highjune/TIL/blob/master/Tools/vscode.md)
-
+- [IntelliJ](https://github.com/Highjune/TIL/blob/main/Tools/intellij.md)
 
 
 ### [Etc](https://github.com/Highjune/TIL/tree/main/Etc)
