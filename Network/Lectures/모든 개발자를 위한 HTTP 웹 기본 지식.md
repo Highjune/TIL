@@ -10,24 +10,28 @@
 
 # 인터넷 네트워크 
 ## 인터넷 통신
-## IP(인터넷 프로토콜) 
+## IP(인터넷 프로토콜)
 - 인터넷 프로토콜의 역할
     - 지정한 IP 주소(IP Address)에 데이터 전달
     - 패킷(packet)이라는 통신 단위로 데이터 전달 
         - 데이터를 패킷(출발IP, 목적지 IP, 기타 등) 으로 감싸서 보냄
         - 패킷이 인터넷망의 수많은 노드들을 거쳐서 최종 서버에 도착
+        - 응답(OK)도 패킷으로 서버 -> 클라이언트로 전달
 
 
 - IP 프로토콜의 한계
     - 비연결성
         - 패킷을 받을 대상이 없거나 서비스 불능 상태여도 패킷 전송
+        - 클라이언트가 패킷으로 감싼 데이터를 서버로 보낼 떄, 대상 서버가 패킷을 받을 수 있는 상태인지 모름.
     - 비신뢰성
         - 중간에 패킷이 사라지면? (소실)
+            - 인터넷 망에 있는 수많은 노드들을 거치다가 갑자기 소실되는 문제가 생길 수 있다.
         - 패킷이 순서대로 안오면?
             - 출발 : 1. hello / 2. world!
             - 도착 : 2. world! / hello 라고 올 수도 있다.
     - 프로그램 구분
         - 같은 IP를 사용하는 서버에서 통신하는 애플리케이션이 둘 이상이면?
+
 
 - 이런 문제들을 해결하는 것이 바로 TCP
 
@@ -42,7 +46,7 @@
     - 네트워크 인터페이스 계층(LAN 드라이버, LAN 장비 등)
 
 
-- HTTP를 TCP가 감싸고 있고 그 위를 다시 IP가 감싸고 있고 마지막으로 Ethernet frame이 감싸고 있다고 생각하면 된다. (pdf 참조)
+- HTTP를 TCP가 감싸고 있고 그 위를 다시 IP가 감싸고 있고 마지막으로 Ethernet frame이 감싸고 있다고 생각하면 된다. (pdf 꼭 참조하기)
     ![프로토콜 계층 사진](https://user-images.githubusercontent.com/57219160/129349501-d684ddea-4f3a-4f9e-8849-c60c63f456c5.PNG)
     ![IP패킷](https://user-images.githubusercontent.com/57219160/129349868-141ee885-7dde-4386-8dc8-38f3fe5a0f8b.PNG)
     ![TCP IP 패킷 정보](https://user-images.githubusercontent.com/57219160/129349877-098c2b38-03fb-4c1f-aed4-dcfc193d9aff.PNG)
@@ -109,6 +113,7 @@
 - 보통 TCP/IP를 같이 묶어서 얘기한다.
 
 ## PORT
+- 한 번에 둘 이상 연결해야 하면?
 ![port](https://user-images.githubusercontent.com/57219160/129350848-25eec158-3daa-4ad6-9ac4-257fa2fad89e.PNG)
 - 배가 도착하는 항구
 - IP는 목적지의 서버를 찾는 것이고, 그 서버 안에서 돌아가는 application 을 구분하는 것이 PORT
@@ -172,18 +177,18 @@
             - `foo`
         - authority
             - `example.com:8042`
-        - /over/there
-            - `path`
-        - name=ferret
-            - `query`
-        - nose
-            - `fragment`
+        - path
+            - `/over/there`
+        - query
+            - `name=ferret`
+        - fragment
+            - `nose`
 
 - URN
     - ex) urn:example:animal:ferret:nose
         - scheme
             - `urn`
-        - `path`
+        - path
             - `example:animal:ferret:nose`
 
 
@@ -195,10 +200,11 @@
 
 - 앞으로 URI와 URL과 같은 의미로 이야기하겠음
 
+## URL 분석
 
 - URL 전체 문법
-    - scheme://[userinfo@]host[:port][/path][?query][#fragment]
-    - https://www.google.com:443/search?q=hello&hl=ko
+    - `scheme://[userinfo@]host[:port][/path][?query][#fragment]`
+    - `https://www.google.com:443/search?q=hello&hl=ko`
     - 프로토콜(https)
     - 호스트명(www.google.com)
     - 포트번호(443)
@@ -264,7 +270,7 @@
 
 
 ## 웹 브라우저 요청 흐름
-- pdf 꼭 보기(강의 4분짜리)
+- pdf64 꼭 보기(강의 4분짜리)
 - 클라이언트(IP: 100.100.100.1) 웹브라우저가 구글 서버(IP: 200.200.200.2)에 요청
     - `www.google.com:443` -> DNS 조회 (IP:200.200.200.2), HTTPS PORT 생략(443)
     ```
@@ -343,7 +349,7 @@ Content-Length: 3423
     - 양쪽이 독립적으로 개발을 진행할 수 있음.
 
 ## Stateful, Stateless
-- pdf참고하기(고객이 점원에게 주문하는 스토리)
+- pdf84 참고하기(고객이 점원에게 주문하는 스토리)
 
 - 무상태 프로토콜이다.
 
@@ -366,7 +372,7 @@ Content-Length: 3423
     - 그러다가 만약 서버 1번이 뻗어버리면, 클라이언트A는 노트북 -> 2개 주문 -> 결제 이 과정을 처음부터 다 다시 해야 한다.
 - 무상태(Stateless)
     - 아무 서버나 호출해도 된다.
-    - 클라이언트가 요청을 할 때부터 필요한 데이터를 다 담아서 보낸다(노트북, 2개, 구매하려고 함)
+    - 클라이언트가 요청을 할 때부터 필요한 데이터를 다 담아서 보낸다(노트북, 2개, 신용 카드 결제)
     - `스케일 아웃(서버를 막 늘리는 것, 수평 확장)` 에 유리하다.
 
 - Stateless 실무 한계
@@ -404,7 +410,7 @@ Content-Length: 3423
         - TCP/IP 연결을 새로 맺어야 함 - 3 way handshake 시간 추가(검색해서 무엇을 보다가 다른 것을 클릭해서 들어갈 때 TCP/IP를 새로 맺어야 함)
         - 웹 브라우저로 사이트를 요청하면 HTML 뿐만 아니라 자바스크립트, css, 추가 이미지 등 수 많은 자원이 함께 다운로드
         - 지금은 HTTP 지속 연결(Persistent Connections)로 문제 해결
-            - 기본적으로 HTTP는 지속 연결을 쓴다. 예전에는 keep-alive 
+            - 기본적으로 HTTP는 지속 연결(Persistent Connections)을 쓴다. 예전에는 keep-alive 
         - HTTP/2, HTTP/3에서 더 많은 최적화
 
 
@@ -428,7 +434,7 @@ Content-Length: 3423
         - 예) 선착순 이벤트, 명절 KTX 예약, 학과 수업 등록
         - 예) 저녁 6:00 선착순 1000명 치킨 할인 이벤트 -> 수만명 동시 요청
 
-- 매우중요) 최대한 스테이스리스로 설계하는 것이 중요하다. 어떻게든!!!!!!!!!!!!!
+- 매우중요) `최대한 스테이스리스로 설계하는 것이 중요`하다. 어떻게든!!!!!!!!!!!!!
     - 그러면 대용량의 트래픽이 오더라도 서버를 확 늘려서 대응할 수 있는 방법이 많아진다. 어쩔 수 없는 부분만 상태 유지를 하도록 잘 분리해서 설계하는 것이 중요하다.
     - 그래서 보통 이렇게 많이 한다. 첫 페이지는 로그인이 필요 없는 정적 페이지를 하나 뿌린다. 그래서 아무 상태 없는 HTML 하나만 두는 것이다. 이 페이지에서 사람들이 좀 들여다보게 하고 놀게 한 다음에 이벤트에 참여하게 한다. 그러면 지연이 조금 생기니까!
 
@@ -443,7 +449,6 @@ Content-Length: 3423
     - `지금은 HTTP 시대!`
 
 - HTTP 는 요청메지와 응답메시지의 구조가 다르다.
-- pdf 보기
 
 ![메시지 구조](https://user-images.githubusercontent.com/57219160/129676172-3d2d7d1f-f43c-4356-9caa-7de0fa1f1cb9.PNG)
 
@@ -459,7 +464,7 @@ Content-Length: 3423
     - CRLF 
     - [ message-body ] - 없어도 됨
 
-- 시작 라인(요청 메시지), request
+- 시작 라인(요청 메시지), `request`
     ```
     GET /search?q=hello&hl=ko HTTP.1.1
     Host: www.google.com
@@ -483,7 +488,7 @@ Content-Length: 3423
         - 참고: *, http://...?x=y 와 같이 다른 유형의 경로지정 방법도 있다.
     3. HTTP 버전
         
-- 시작 라인(응답 메시지), response
+- 시작 라인(응답 메시지), `response`
     ```
     HTTP/1.1 200 OK
     Content-Type: text/html;charset=UTF-8
@@ -573,7 +578,7 @@ Content-Length: 3423
     - `회원` 수정
     - `회원` 삭제
 
-- API URI 설계 - URI(Uniform Resource Identifier
+- API URI 설계 - URI(Uniform Resource Identifier)
     - `회원` 목록 조회 /members
     - `회원` 조회 /members/{id} `-> 어떻게 구분하지?`
     - `회원` 등록 /members/{id} `-> 어떻게 구분하지?`
@@ -658,7 +663,7 @@ Content-Length: 3423
     - 서버는 요청 데이터를 `처리`
         - 메시지 바디를 통해 들어온 데이터를 처리하는 모든 기능을 수행한다.(물론 서로 약속을 해놓은 상태)
     - 주로 전달된 데이터로 신규 리소스 등록, 프로세스 처리에 사용
-        - 미리 약속된 상태 : 서버는 "클라이언트야, 너가 데이터를 /members에 POST로 보내면 그 데이터를 난 저장할거야, 또는 그 데이터를 내부적인 프로세스에 쓰는데 사용할거야" 라고 미리 서로 약속. 여기서는 신규로 등록으로 약속.
+        - 미리 약속된 상태 : 서버는 "클라이언트야, 너가 데이터를 /members에 POST로 보내면 그 데이터를 난 저장할거야, 또는 그 데이터를 내부적인 프로세스에 쓰는데 사용할거야" 라고 미리 서로 약속. 여기서는 신규로 등록하는 것으로 약속했다고 가정
     - 리소스 등록
         1. 클라이언트가 아래의 메시지를 `/members`라는 곳에 전달
         ```
@@ -666,7 +671,7 @@ Content-Length: 3423
         Content-type: application/json
 
         {
-            "username": "hello",
+            "username": "young",
             "age": 20
         }
         ```
@@ -675,7 +680,7 @@ Content-Length: 3423
         - /members/100
         ```
          {
-            "username": "hello",
+            "username": "young",
             "age": 20
         }
         ```
@@ -718,7 +723,7 @@ Content-Length: 3423
             - 주문번호(orderId)로 배달을 시작해라.(start-delivery)
             - 원래는 URI 설계를 리소스 단위로 해야하는데 어쩔 수 없이 리소스 단위로 설계가 안될 때가 있다.
             - 동사의 의미가 담긴 URI -> `컨트롤 URI` 라고 부른다.
-            - 실무에서는 리소스 단위로만 URI 를 다 설계할 수는 없다. 최대한 리소스 단위로 설계하고 난 후 어쩔 수 없는 부분들은 컨트롤 URI로 설계
+            - 실무에서는 사실 리소스 단위로만 URI 를 다 설계할 수는 없다. 최대한 리소스 단위로 설계하고 난 후 어쩔 수 없는 부분들은 컨트롤 URI로 설계
     3. 다른 메서드로 처리하기 애매한 경우
         - 예) JSON으로 조회 데이터를 넘겨야 하는데, GET 메서드를 사용하기 어려운 경우(메세지 바디를 넣을 수 있긴 한데 허용 안하는 서버들이 많아서 아예 체크를 안함)
         - 이럴 경우 조회이지만 POST를 사용, 애매한 POST
@@ -741,13 +746,13 @@ Content-Length: 3423
         - 리소스가 있으면 대체(완전히). 수정이 아니고 아예 갈아치움. 수정은 PATCH 메서드.
         - 리소스가 없으면 생성
         - 위 코드에서 /members/100 이 있다면 완전히 대체함(덮어버림), 없으면 생성
-    2. 중요! 클라이언트가 리소스를 식별
+    2. `중요!` 클라이언트가 리소스를 식별
         - 클라이언트가 리소스 위치를 알고 URI 지정
             - 위의 코드에서 /members/100 의 위치를 정확하게 알고 있음. 100번의 위치에 넣을 것이라고 지정함.
         - POST와 차이점임
             - POST는 /members 까지만 안다. 100번의 위치에 만들어질지 200번의 위치에 만들어질지 모른다.
 
-    - 주의! 리소스를 완전히 대체한다
+    - 주의! 리소스를 `완전히 대체`한다
         - 클라이언트가 아래처럼 요청메시지를 보낸다. (username 필드가 없다.)
         ```
         PUT /members/100 HTTP/1.1
@@ -817,12 +822,13 @@ Content-Length: 3423
 
 ## HTTP 메서드의 속성(안전, 멱등, 캐시가능)
 - [표로 정리](https://ko.wikipedia.org/wiki/HTTP)
+![image](https://user-images.githubusercontent.com/57219160/143879353-c8054f34-fc68-4e83-891c-555d9fa4da07.png)
 
 - 안전(Safe Methods)
     - 호출해도 리소스를 변경하지 않는다.
     - GET은 안전
     - PATCH, POST, DELETE, PUT은 안전X
-    - Q) 그래도 계속 호출해서, 로그 같은게 쌓여서 장애가 발생하면?
+    - 만약) 그래도 계속 호출해서, 로그 같은게 쌓여서 장애가 발생하면?
         - 안전은 해당 리소스만 고려한다. 그런 부분까지는 고려X
 
 - 멱등(Idempotent)
@@ -838,7 +844,7 @@ Content-Length: 3423
         - 자동 복구 메커니즘
         - 서버가 TIMEOUT 등으로 정상 응답을 못주었을 때, 클라이언트가 같은 요청을 다시 해도 되는가? 판단 근거
             - 예를 들어 DELETE요청을 했는데 정상 응답 없었을 경우, 클라이언트가 자동으로 다시 재시도.
-    - Q) 재요청 중간에 다른 곳에서 리소스를 변경해버리면?
+    - 만약) 재요청 중간에 다른 곳에서 리소스를 변경해버리면?
         - 사용자1 : GET -> username:A, age:20
         - 사용자2 : PUT -> usrename:A, age:30
         - 사용자1 : GET -> username:A, age:30 -> 사용자2의 영향으로 바뀐 데이터 조회
