@@ -877,7 +877,7 @@ Content-Length: 3423
         - 회원 가입, 상품 주문, 데이터 변경
         - 서버 to 서버, 앱 클라이언트, 웹 클라이언트(Ajax)
     
-- 정적 데이터 조회(pdf 174 보기)
+- 정적 데이터 조회
     - 쿼리 파라미터 미사용
     - 클라이언트 요청메시지
     ```
@@ -931,7 +931,7 @@ Content-Length: 3423
         ```
         - 전송버튼을 누르면 `웹 브라우저가 Form의 데이터를 읽어서 HTTP 메시지를 생성해준다.`
         - 웹 브라우저가 생성한 요청 HTTP 메시지
-            - 쿼리 파라미터 같은 Content-Type을 application/x-www-form-urlencoded 라고 한다.(서버간에 다 약속이 되어있다. 웬만한 웹 서버들은 이런것들을 다 파싱해서 사용할 수 있도록 구현이 되어있다)
+            - 메시지바디 부분에 쿼리 파라미터 형식이 들어가면 Content-Type을 application/x-www-form-urlencoded 라고 한다.(서버간에 다 약속이 되어있다. 웬만한 웹 서버들은 이런것들을 다 파싱해서 사용할 수 있도록 구현이 되어있다)
         - 폼으로 보내면 아래와 같이 데이터 부분에 쿼리파라미터 형태로 데이터가 넘어간다.
         ```
         POST /save HTTP/1.1
@@ -978,7 +978,7 @@ Content-Length: 3423
         Host: localhost:8080
         
         ```
-    - muiltipart/form-data (pdf181 참조), 파일 전송시 사용(binary 데이터 전송시 사용)
+    - muiltipart/form-data, 파일 전송시 사용(binary 데이터 전송시 사용)
         - 화면
             - username : `kim`
             - age : `20`
@@ -986,7 +986,7 @@ Content-Length: 3423
             - 전송(버튼)
         - HTML 코드
         ```
-        <form action="/members" method="post" enctype="multipart/form-data">   //   enctype="multipart/form-data" 
+        <form action="/members" method="post" enctype="multipart/form-data">
             <input type = "text" name = "username" />
             <input type = "text" name = "age" />
             <input type = "file" name = "file1" />
@@ -1085,7 +1085,7 @@ Content-Length: 3423
     - POST - 신규 자원 등록 특징
         - 클라이언트는 등록될 리소스의 URI를 모른다. (100번인지 등). -> PUT이랑 다름
             - 회원 등록 /members -> POST
-            - POST /members -> 클라이언트는 정확한 URI를 모른다.
+            - POST /members -> 클라이언트는 정확한 URI를 모른다. 즉 등록될 리소스가 어느 위치에 (ex. 100번) 생성될지 모른다.
         - 서버가 새로 등록된 리소스 URI를 생성해준다. 
             ```
             HTTP/1.1 201 Created
@@ -1126,8 +1126,9 @@ Content-Length: 3423
             - 둘 중 선택 가능. 김영한 선생님은 회원 등록하는 폼을 불러올 때의 (/members/new -> GET)와 등록을 할 때(/members/new -> POST)의 URI(/members/new)를 통일 (그러면 나중에 작업할 때 수월)
         - 회원 조회 /members/{id} -> `GET`
         - 회원 수정 폼 /members/{id}/edit -> `GET`
+            - edit 같이 동사의 의미가 들어간 것을 컨트롤 URI 라고 한다.
         - 회원 수정 /members/{id}/edit, /members/{id} -> `POST` 
-            - 역시 둘 다 사용가능. 그런데 회원 수정 폼을 들고 오는 것과 동일한 URI가 더 나을 듯
+            - 역시 둘 다 사용가능. 그런데 회원 수정 폼을 들고 오는 것과 동일한 URI가 더 나을 듯(/members/{id}/edit)
         - 회원 삭제 /members/{id}/delete -> `POST`
             - DELETE 메서드를 못 사용하므로 컨트롤 URI 사용
     - 컨트롤 URI
@@ -1164,7 +1165,7 @@ Content-Length: 3423
             - 문서, 컬렉션, 스토어로 해결하기 어려운 추가 프로세스 실행
             - 동사를 직접 사용
             - 예) /members/{id}/delete
-    - API 설계 요령
+    - `API 설계 요령(중요)`
         - 기준) 문서, 컬렉션, 스토어 + HTTP메서드(GE, POST, DELETE, PUT)으로 최대한 해결이 안되면 컨트롤 URI로 해결.
 
 
@@ -1236,7 +1237,7 @@ Content-Length: 3423
     }
     ```
     - 응답 메시지
-        - PUT이므로 서버에서 리소스 URI 생성
+        - POST이므로 서버에서 리소스 URI 생성
         - 생성된 리소스는 응답의 `Location 헤더 필드로 식별`
         ```
         HTTP/1.1 201 Created
@@ -1267,7 +1268,9 @@ Content-Length: 3423
     - 유저 에이전트 : 클라이언트 프로그램(웹 브라우저)
 - 리다이렉션 이해
     - 웹 브라우저는 3xx 응답의 결과에 Location 헤더가 있으면, Location 위치로 자동 이동(리다이렉트)
-- 자동 리다이렉트 흐름(pdf 208)
+- 자동 리다이렉트 흐름
+    ![image](https://user-images.githubusercontent.com/57219160/144052495-51d99a32-3768-4817-912b-e4c7019b602c.png)
+
     - 이벤트 페이지 들어갔는데, 행사 종료된 이벤트 페이지에서 현재 진행중인 이벤트 페이지로 안내하는 것.
     1. URL: /event 로 요청
     ```
@@ -1307,7 +1310,8 @@ Content-Length: 3423
     - 원래의 URL을 사용X, 검색 엔진(ex. 구글) 등에서도 변경 인지
     - 301 Moved Permanently
         - 리다이렉트시 요청 메서드가 GET으로 변하고, 본문이 제거될 수 있음(MAY. 100%는 아님) -> 대부분의 브라우저가 이렇게 구현이 되어있다.
-        - 301 리다이렉션 과정(pdf 211)
+        - 301 리다이렉션 과정
+        ![image](https://user-images.githubusercontent.com/57219160/144052900-28da5ffc-fc74-4d85-8775-17718e7e3fb1.png)
             1. 요청
             ```
             POST /event HTTP/1.1
@@ -1335,7 +1339,8 @@ Content-Length: 3423
     - 308 Permanent Redirect
         - 301과 기능은 같음
         - 리다이렉트시 요청 메서드와 본문 유지(처음 POST를 보내면 리다이렉트도 POST 유지됨. 301처럼 GET으로 변경 되고 메시지가 제거되지 않는다)
-        - 308 리다이렉션 과정(pdf 212)
+        - 308 리다이렉션 과정
+        ![image](https://user-images.githubusercontent.com/57219160/144053066-fd6cdb81-6218-4c2b-9760-e26e5faef4cd.png)
             1. 요청
             ```
             POST /event HTTP/1.1
@@ -1387,6 +1392,7 @@ Content-Length: 3423
         - 중복 주문이 될 수 있다. (물론 서버쪽에서도 따로 막아야 한다)
 
 - PRG 사용전 과정
+    ![image](https://user-images.githubusercontent.com/57219160/144054039-c8c41023-5fdb-40ba-b56d-309cb912473d.png)
     1. URL: /order에 요청
     ```
     POST /order HTTP/1.1
@@ -1424,6 +1430,7 @@ Content-Length: 3423
     - 중복 주문 대신에 결과 화면만 GET으로 다시 요청
 
 - PRG 적용후 과정
+    ![image](https://user-images.githubusercontent.com/57219160/144054294-36dabec1-3259-4b29-93ea-66ce10db5138.png)
     1. URL: /order에 요청
     ```
     POST /order HTTP/1.1
@@ -1561,8 +1568,8 @@ Content-Length: 3423
     - HTTP 헤더
     <img width="681" alt="스크린샷 2021-08-18 오전 12 33 19" src="https://user-images.githubusercontent.com/57219160/129756430-aa7b940f-e3f3-4119-8048-cb30096b6030.png">
     
-    - 헤더 분류(pdf 234)
-        - General 헤더 : 메시시 전체에 적용되는 정보. ex) Connection: close
+    - 헤더 분류
+        - General 헤더 : 메시지 전체에 적용되는 정보. ex) Connection: close
         - Request 헤더 : 요청 정보, 예) User-Agent: Mozila/5.0 (Machintosh; ...)
         - Response 헤더 : 응답 정보, 예) Server: Apache
         - Entity 헤더 : 엔티티 바디 정보, 예) Content-Type: text/html, Content-Length:3423
@@ -1619,8 +1626,8 @@ Content-Length: 3423
     - 미디어 타입, 문자 인코딩
     - 컨텐트 바디에 들어가는 종류가 뭐니? 를 말해준 것
     - 예) 
-        - text/html;charset=utf-8
-        - application/json (기본이 utf-8)
+        - text/html;charset=utf-8 (기본이 utf-8)
+        - application/json 
         - image/png
     ```
     HTTP/1.1 200 OK
