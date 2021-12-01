@@ -1820,14 +1820,14 @@ Content-Length: 3423
         1. text/plain;format=flowed
         2. text/plain
         3. text/*
-        4. */*
+        4. `*/*`
         
         
 - 협상과 우선순위3
+    - Q) 강의다시보기(이해안됨)
     - 구체적인 것을 기준으로 미디어 타입을 맞춘다.
     ```
-    Accept: text/*;q=0.3, text/html;q=0.7, text/html;level=1,
-    text/html;level=2;q=0.4, */*;q=0.5
+    Accept: text/*;q=0.3, text/html;q=0.7, text/html;level=1, text/html;level=2;q=0.4, */*;q=0.5
     ```
     |Media Type | Quality |
     |--|--|
@@ -1843,6 +1843,8 @@ Content-Length: 3423
 ## 전송 방식
 - Transfer-Encoding
 - Range, Content-Range
+- 전송 방식 설명
+    - 단순 전송, 압축 전송, 분할 전송, 범위 전송
 - 단순 전송
     - Content-Length
     - /event로 요청 메시지. 
@@ -1898,6 +1900,7 @@ Content-Length: 3423
     0
     \r\n
     ```
+    - Hello world를 보내려고 함
     - 먼저 Hello(5바이트)를 먼저 보내고, 다음 World(5바이트)를 보낸 후 끝나면 엔터(\r\n)
     - 그러면 클라이언트 입장에서는 먼저 World가 오기 전에 먼저 Hello를 받아 볼 수 있다.
     - 끝났으면 마지막에는 0, 엔터(\r\n)를 보내면 된다.
@@ -1932,7 +1935,7 @@ Content-Length: 3423
     - 이전 웹 페이지 주소
     - 엄청 자주 사용함
     - 현재 요청된 페이지의 이전 웹 페이지 주소
-    - A -> B로 이동하는 경우 B를 요청할 때 Referer: A를 포함해서 요청
+    - A -> B로 이동하는 경우 B를 요청할 때 `Referer: A`를 포함해서 요청
     - Referer를 사용해서 유입 경로 분석 가능
     - 요청에서 사용
     - 참고: referer는 단어 referrer의 오타
@@ -1970,8 +1973,8 @@ Content-Length: 3423
     - 요청한 호스트 정보(도메인)
     - 요청에서 사용
     - `필수` 헤더임
-    - 하나의 서버(IP)가 여러 도메인을 처리해야 할 때 구분해줌
-    - 예시 상황(pdf 269)
+    - 하나의 서버(IP)가 여러 도메인을 처리해야 할 때 구분해줌(여러 개의 도메인이 하나의 IP를 바라보게 한 상황)
+    - 예시 상황
         
         ![캡처](https://user-images.githubusercontent.com/57219160/129822487-14bb97ef-584f-4be6-bedd-b49c6ef87171.PNG)
         - 클라이언트(IP:100.100.100.1) 의 요청 메시지(만약 Host 헤더 필더가 없다면)
@@ -1980,13 +1983,18 @@ Content-Length: 3423
         ```
         - 하나의 서버 안(IP: 200.200.200.2)에 여러 개의 애플리케이션이 다른 도메인(aaa.com, bbb.com, ccc.com)으로 구동이 되어 있는 경우
         - 클라이언트는 /hello가 서버 안의 3가지 도메인 중 어느 애플리케이션과 관련이 있는지 알지 못한다(aaa.com)과 관련이 있는 애플리케이션일 수도 있고 bbb.com, ccc.com 도 마찬가지). 구분할 방법이 없다.
-        - 구분할 방법이 없다. 왜냐하면 IP로만 통신을 하기 때문에. IP(200.200.200.2)로만 TCP/IP 연결해서 요청 메시지를 보내는 것이므로. 
+        - 왜냐하면 IP로만 통신을 하기 때문에. IP(200.200.200.2)로만 TCP/IP 연결해서 요청 메시지를 보내는 것이므로. 
         - 그래서 Host 헤더를 무조건 넣어야 하는 스펙 개정이 이루어졌다.
         ```
         GET /hello HTTP/1.1
         Host: aaa.com
         ```
-        - TCP/IP는 아이피로만 통신을 하는데 다행히 서버는 메시지를 받자마자 Host를 확인해서 aaa.com 으로 가상호스팅을 해준다. 서버 안에서 다 설정을 해둘 수 있다. 
+        - `TCP/IP는 아이피로만 통신을 하는데` 다행히 서버는 메시지를 받자마자 Host를 확인해서 aaa.com 으로 가상호스팅을 해준다. 서버 안에서 다 설정을 해둘 수 있다. 
+        - 참고
+            - 도메인을 찾고 나서 그 안에서 다시 port로 구분
+            - 서버에서는 접속한 도메인을 기준으로 분기처리할 수 있는 기능이 있다. 
+            - 아래 아파치 웹서버의 가상호스트 기능을 참고하시면 더욱 이해가 잘 될 것
+            - http://httpd.apache.org/docs/2.4/ko/vhosts/examples.html
 
 - Location
     - 페이지 리다이렉션
@@ -2068,7 +2076,7 @@ Content-Length: 3423
 
         안녕하세요. 손님 
         ```
-        - 로그인 후 내가 기대한 것은 '안녕하세요, 홍길동님' 인데 '안녕하세요, 손님' 이라고 뜬다.
+        - 문제점!) 로그인 후 내가 기대한 것은 `안녕하세요, 홍길동님` 인데 `안녕하세요, 손님` 이라고 뜬다.
     - 왜 그럴까?
         - 서버입장에서는 /welcome 요청만 받았기에, 로그인한 사용자인지 아닌지 서버입장에서는 구분할 수가 없다. (HTTP통신은 전송만 되고 나면 연결을 다 끊어버리므로)
         - 서버가 Stateless이므로
@@ -2104,7 +2112,9 @@ Content-Length: 3423
         - 모든 요청에 사용자 정보가 포함되도록 개발해야한다.
         - 그리고 또 문제는.. 만약 브라우저를 완전히 종료하고 다시 연다면? 
             - 물론 이것은 요즘에 웹 스토리지라는 곳에 저장을 하면 되긴 한다.
-- 쿠키 도입!! (pdf 285그림 참조)
+- 쿠키 도입!!
+    ![image](https://user-images.githubusercontent.com/57219160/144176225-e319deb5-5598-4214-adb3-6adb1cc67519.png)
+
     - 로그인 시
         - 웹 브라우저에 요청메시지
         ```
@@ -2124,9 +2134,10 @@ Content-Length: 3423
         user=홍길동
         ```
     - 로그인 이후 welcome페이지 접근
+        ![image](https://user-images.githubusercontent.com/57219160/144176268-63bf9ab9-4657-44f0-8e7d-50a38ad0fd0e.png)
         - 웹 브라우저에 요청 메시지
             - `웹 브라우저는 자동으로 서버에 요청할 때마다 무조건 쿠키 저장소를 조회한다.`
-            - 쿠키 저장소에서 조회한 후 `user=홍길동` 을 들고옴
+            - 쿠키 저장소에서 조회한 후 `user=홍길동` 을 들고 옴
             - 그러면 매번 지저분하게 URL에 정보를 넣거나 하지 않아도 된다.
         ```
         GET /welcome HTTP/1.1
@@ -2140,7 +2151,8 @@ Content-Length: 3423
         안녕하세요 홍길동님
         ```
     - 모든 요청에 쿠키 정보 자동 포함
-        - 웹 브라우저는 어떤 url이든간에 지정한 서버에 대해서는 쿠키의 데이터를 자동으로 다 추출해서 보내준다.
+        ![image](https://user-images.githubusercontent.com/57219160/144176773-e477a5ae-2cef-4793-86f3-c26f4b94abd6.png)
+        - `웹 브라우저는 어떤 url이든간에 지정한 서버에 대해서는 쿠키의 데이터를 자동으로 다 추출해서 보내준다.`
         ```
         GET /welcome HTTP/1.1
         Cookie: user=홍길동
@@ -2164,7 +2176,7 @@ Content-Length: 3423
         - Secure : 쿠키의 보안정보 담기는 곳
 - 쿠키의 주 사용처
     - 사용자 로그인 세션 관리
-        - 사실 홍길동이라는 정보를 그대로 내보내는 건 보안상 위험. 로그인이 성공되면 서버에서 세션값를 만들어서 DB에 저장 후, 클라이언트에(쿠키에) 세션값을 반환해줌. 그러면 클라이언트는 매번 서버에 요청할 때마다 그 세션값을 보낸다. 그러면 서버는 그 세션값을 받으면 DB에 있는 세션값과 비교해서 '아~홍길동이구나'라고 판단.
+        - 사실 홍길동이라는 정보를 그대로 내보내는 건 보안상 위험. 로그인이 성공되면 서버에서 세션값(ex. UUID)를 만들어서 DB에 저장 후, 클라이언트에(쿠키에) 세션값을 반환해줌. 그러면 클라이언트는 매번 서버에 요청할 때마다 그 세션값을 보낸다. 그러면 서버는 그 세션값을 받으면 DB에 있는 세션값과 비교해서 '아~홍길동이구나'라고 판단.
     - 광고 정보 트래킹
         - 웹 브라우저를 사용하는 사람이 어떤 광고를 보는지.
 - 쿠키 정보는 항상 서버에 전송됨(세팅이 되면 무조건 다 전송이 됨)
@@ -2191,11 +2203,11 @@ Content-Length: 3423
     - 명시: 명시한 문서 기준 도메인 + 서브 도메인 포함
         - domain=example.org를 지정해서 쿠키 생성
             - example.org는 물론이고
-            - dev.example.org도 쿠키접근
+            - dev.example.org도 쿠키접근 (서브도메인)
     - 생략: 현재 문서 기준 도메인만 적용
         - example.org에서 쿠키를 생성하고 domain 지정을 생략
-            - example.org는 물론이고
-            - dev.example.org도 쿠키접근
+            - example.org에서만 쿠키 접근
+            - dev.example.org는 쿠키 미접근
      
 - 쿠키 - 경로(Path)
     - 예) path=/home
@@ -2247,17 +2259,18 @@ Content-Length: 3423
         - 또 똑같이 1.1M 전송을 하게 된다. 2번째.
 
     - 이렇게 캐시가 없다면?
-        - 데이터가 변경되지 않아도 계속 네트워크를 통해서 데이터를 다운로드 받아야 한다.
+        - 데이터가 변경되지 않아도(똑같은 /star.jpg 요청) 계속 네트워크를 통해서 데이터를 다운로드 받아야 한다.
         - 인터넷 네트워크는 매우 느리고 비싸다.(pc의 메모리, 하드디스크에 비해)
         - 브라우저 로딩 속도가 느리다.
         - 느린 사용자 경험
         
-- 캐시 적용했을 때(pdf 300)
+- 캐시 적용했을 때
+    ![image](https://user-images.githubusercontent.com/57219160/144181733-94a2d927-3e7d-4832-a665-93b0a0cffa01.png)
     - 첫 번째 요청(웹브라우저가)
     ```
     GET /star.jpg
     ```
-    - 서버 응답 메시지(서버에서 )
+    - 서버 응답 메시지(서버에서)
     ```
     HTTP/1.1 200 OK
     Content-Type: image/jpeg
@@ -2268,9 +2281,10 @@ Content-Length: 3423
     safkdlsafkdljskdjskdafjkdjskdfjskdaflakjsfd 
     ```
     - 웹 브라우저에는 내부에 캐시를 저장하는 `브라우저 캐시`가 존재.
+        ![image](https://user-images.githubusercontent.com/57219160/144181835-2f7d01d8-6984-40d7-b1a7-91558b609f45.png)
         - 응답 결과를 이 브라우저 캐시에 저장한다. (60초 동안 유효)
-
     - 두 번째 요청
+        ![image](https://user-images.githubusercontent.com/57219160/144181910-845215ec-8574-49e5-b105-76cd5fbed7e6.png)
         - 우선 브라우저 캐시에서 검색한다.
         - 만약 아직 60초 제한시간 이내라면 캐시에서 바로 조회해서 star.jpg를 들고온다. 
         - 즉, 네트워크를 톨할 필요가 없다는 것(서버를 안 거쳐도 됨)
@@ -2292,12 +2306,12 @@ Content-Length: 3423
 - 캐시 시간 초과
     - 캐시 유효 시간이 초과해서 서버에 다시 요청하면 다음 두 가지 상황이 나타난다.
         1. 서버에서 기존 데이터를 변경함. 
-            - 기존별 -> 바뀐 별(new_star.jpg)
+            - 기존별(star.jpg) -> 바뀐 별(new_star.jpg)
         2. 서버에서 기존 데이터를 변경하지 않음.
             - 기존별 그대로(star.jpg)
     - 캐시 만료가 되긴 했는데 만약 서버에서 데이터를 변경하지 않을 경우!
     - 생각해보면 데이터를 전송하는 대신에 저장해 두었던 로컬 캐시를 재사용 할 수 있다.
-    - 단 클라이언트의 데이터와 서버의 데이터가 같다는 사실을 확인할 수 있는 방법 필요!!!
+    - 단, 클라이언트의 데이터와 서버의 데이터가 같다는 사실을 확인할 수 있는 방법 필요!!!
     - 그래서 검증 헤더가 생겼다.
     
 - 검증 헤더 추가
@@ -2357,7 +2371,7 @@ Content-Length: 3423
     - 클라이언트는 캐시에 저장되어 있는 데이터 재활용
     - 결과적으로 네트워크 다운로드가 발생하지만 용량이 적은 헤더 정보만 다운로드
     - 매우 실용적인 해결책
-    - 웹 브라우저는 이 메커니즘을 대부분 실행하고 있다.
+    - `웹 브라우저는 이 메커니즘을 대부분 실행하고 있다.`
 
 
 ## 검증 헤더와 조건부 요청2
@@ -2401,7 +2415,9 @@ Content-Length: 3423
         - 예) ETag: "aaaaa" -> ETag: "bbbbb"
     - 진짜 단순하게 ETag만 보내서 같으면 유지, 다르면 다시 받기!
 
+
     - 첫 번째 요청
+    ![image](https://user-images.githubusercontent.com/57219160/144183890-bbcd1b00-76b8-4265-852a-236ff31c871c.png)
     ```
     GET /star.jpg
     ```
@@ -2420,12 +2436,18 @@ Content-Length: 3423
     - 웹 브라우저는 브라우저 캐시에 ETag저장
         - 60초 유효값
         - Etag "aaaaaaaaaa" 저장
+
+
     - 두번째 요청
+    ![image](https://user-images.githubusercontent.com/57219160/144184054-1ec6fa40-ce5a-4f48-bf10-e380af5734d5.png)
+    ![image](https://user-images.githubusercontent.com/57219160/144184233-88b85b9e-efdb-472e-9a88-10ba410d87b0.png)
+    ![image](https://user-images.githubusercontent.com/57219160/144184281-0606230e-9070-4ebf-8770-76c6a5df8bad.png)
+    ![image](https://user-images.githubusercontent.com/57219160/144184307-105c507f-d64d-4441-a705-4285e89b7198.png)
         ```
         GET /star.jpg
         If-None-Match: "aaaaaaaaaa" // 캐시가 가지고 있는 ETag
         ```
-        - 브라우저 캐시에 들려보니 시간이 초과된 것을 알게 됨
+        - 브라우저 캐시에 들려보니 시간이 초과(60초)된 것을 알게 됨
         - ETag "aaaaaaaaaa" 를 요청메시지에 넣어서 보냄
     - 서버는 갖고 있는 ETag의 값과 방금 보내온 ETag의 값을 비교. 
         - "aaaaaaaaaa" = "aaaaaaaaaa" 같음
@@ -2460,7 +2482,6 @@ Content-Length: 3423
     - Pragma: 캐시 제어(하위 호환)
     - Expires: 캐시 유효 기간(하위 호환)
 
-
 - Cache-Control - 캐시 지시어(directives)
     - Cache-Control: max-age
         - 캐시 유효 시간, 초 단위
@@ -2489,12 +2510,13 @@ Content-Length: 3423
 
 
 ## 프록시 캐시
-- 원 서버 직접 접근(pdf 344)
+- 원 서버 직접 접근
     - origin 서버 (원 소스가 있는 곳 = 원 서버)
 
 ![프록시캐시](https://user-images.githubusercontent.com/57219160/129993001-e0ae6b53-bb3c-4e59-97ee-10504c53e18a.PNG)
+![image](https://user-images.githubusercontent.com/57219160/144189450-77d52bcb-d03f-47c2-a9f1-a6b79e75fd14.png)
 
-- 한국에서의 클라이언트들(웹 브라우저1, 2, 3)이 미국에 있는 원 서버에 접근 하려면 각각 다`500ms (0.5초)`.
+- 한국에서의 클라이언트들(웹 브라우저1, 2, 3)이 미국에 있는 원 서버에 접근 하려면 각각 다 `500ms (0.5초)`.
 - 그런데 중간에 한국어딘가에 프록시 캐시 서버를 두면 한국의 클라이언트들은 이 서버에 접속하는 것은 `100ms(0.1초)`밖에 걸리지 않는다. 
 
 - 한국의 클라이언트 서버들의 캐시를 `private 캐시(로컬)`, 프록시 서버에 있는 캐시를 `public 캐시(공용)`라고 한다.
@@ -2526,7 +2548,7 @@ Content-Length: 3423
 
 - 확실하게 캐시를 무효화하게 하려면?
     - Cache-Control: no-cache, no-store, must-revalidate 다 넣기
-    - Pragma: no-cache 넣기
+    - Pragma: no-cache 까지 넣기
         - HTTP 1.0 하위 호환
     - 이렇게 4가지를 넣으면 무효화 가능
 
@@ -2543,7 +2565,7 @@ Content-Length: 3423
         -  HTTP 1.0 하위 호환
     
 
-- no-cache vs must-revalidate (pdf 351 꼭 참조)
+- no-cache vs must-revalidate 
     - 프록시 캐시 서버 - 원 서버가 연결되어 있을 경우
         
         ![원서버연결](https://user-images.githubusercontent.com/57219160/129993125-fda95945-c564-45e3-906b-6899142aea5e.PNG)
