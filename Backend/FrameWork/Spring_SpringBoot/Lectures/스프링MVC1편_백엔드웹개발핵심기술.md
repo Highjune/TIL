@@ -497,7 +497,15 @@
 - HelloServlet 클래스
     - HttpServlet 상속받아야 한다.
     - @WebServlet - 서블릿 애노테이션 (아래 2개는 다른 것들과 겹치면 안된다)
-        - name : 서블릿 이름
+        - name : 서블릿 이름, 
+            - [서블릿 이름의 역할에 대한 글](https://www.inflearn.com/questions/243878)
+            - 예전에 @WebServlet이 없을 때에는 web.xml을 통해 서블릿을 설정했었음. 
+            - @WebServlet이 추가되면서 굳이 서블릿 name을 사용할 필요가 없어졌다.
+            - web.xml에서 서블릿을 지정해줄 때에는 서블릿 name과 서블릿 class 명시해줬었다.
+            - 그리고 해당 서블릿에 할당될 url pattern을 추가할 때 url pattern이 어떤 서블릿에 속하는지 식별하기 위해 서블릿 name을 사용했엇다.
+            - 그러나 @WebServlet은 사용되어질 서블릿 class에 붙여서 사용하기 때문에 굳이 서블릿 name을 명시해줄 필요가 없어졌기 때문에 선택사항이 되었다.
+            - 내부적으로 @WebServlet의 name 속성을 따로 명시하지 않으면 해당 클래스의 이름을 name 속성으로 사용한다.
+            - @WebServlet은 WebServletHandler에 의해 처리되는데 이때 handler가 @WebServlet의 name 속성을 사용하여 BeanDefinition을 만들게 됩니다.
         - urlPattenrs : URL 매핑
     
     ```
@@ -538,7 +546,7 @@ protected void service(HttpServletRequest request, HttpServletResponse response)
         }
     }
     ```
-    - 로그보기
+    - `로그보기(중요)`
         - org.apache.catalina.connector 이것들은 톰캣 라이브러리
         - HttpServletRequest, HttpServletResponse -> 다 인터페이스임. 톰캣이나 제티 등등 WAS서버가 많은데, 그 WAS 서버들이 이 서블릿 표준스펙(HttpServletRequest, HttpServletResponse)을 구현하는 것. 그래서 밑에 로그에 찍힌 것들은 그 구현체들이다.
     ```
@@ -601,7 +609,7 @@ protected void service(HttpServletRequest request, HttpServletResponse response)
         }
     }
     ```
-    - 서버 재시작 후 가능.
+    - 저장 후 서버 재시작 후 가능.(컴파일 후)
     - localhost:8080/hello?username=kim 새로고침
     - hello kim만 보이고 페이지 소스보기 해도 똑같다.
     - f12로 개발자도구로 보면 Response, Request 다 볼 수 있다.
@@ -693,7 +701,7 @@ protected void service(HttpServletRequest request, HttpServletResponse response)
     - 세션 관리 기능
         - request.getSession(create: true)
     - 중요
-        - HttpServletRequest, HttpServletResponse를 사용할 때 가장 중요한 점은 이 객체들이 HTTP 요청 메시지, HTTP 응답 메시지를 편리하게 사용하도록 도와주는 객체라는 점이다. 따라서 이 기능에 대해서 깊이있는 이해를 하려면 HTTP 스펙이 제공하는 요청, 응답 메시지 자체를 이해해야 한다.
+        - `HttpServletRequest, HttpServletResponse를 사용할 때 가장 중요한 점은 이 객체들이 HTTP 요청 메시지, HTTP 응답 메시지를 편리하게 사용하도록 도와주는 객체라는 점이다.` 따라서 이 기능에 대해서 깊이있는 이해를 하려면 HTTP 스펙이 제공하는 요청, 응답 메시지 자체를 이해해야 한다.
 
 
 ## HttpServletRequest - 기본 사용법
@@ -708,7 +716,7 @@ import java.io.IOException;
 
 //http://localhost:8080/request-header?username=hello
 @WebServlet(name = "requestHeaderServlet", urlPatterns = "/request-header")
-    public class RequestHeaderServlet extends HttpServlet {
+public class RequestHeaderServlet extends HttpServlet {
     
     @Override
     protected void service(HttpServletRequest request, HttpServletResponse 
@@ -758,9 +766,9 @@ request.isSecure() = false
 ```
 
 - 헤더 정보
-    - 만약 하나만 딱 조회하고 싶으면 request.getHeader("host"); 같이.
+    - 만약 하나만 딱 조회하고 싶으면 request.getHeader("host"); 같이 사용하면 된다.
 ```
-//Header 모든 정보
+// Header 모든 정보
 private void printHeaders(HttpServletRequest request) {
     System.out.println("--- Headers - start ---");
 
@@ -1037,7 +1045,7 @@ request.getParameter(age) = 20
 [이름이 같은 복수 파라미터 조회]
 request.getParameterValues(username)
 username=hello
-username=kim
+username=kim // 없어야 되는 것 아닌가?
 ```
 
 - 실행 - 동일 파라미터 전송
