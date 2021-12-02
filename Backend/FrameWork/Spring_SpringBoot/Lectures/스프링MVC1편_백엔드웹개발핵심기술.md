@@ -1098,6 +1098,7 @@ username=kim // 없어야 되는 것 아닌가?
 </html>
 ```
 
+
 - 실행
     - 정적 html이 제공되는 것
     ```
@@ -1167,7 +1168,6 @@ public class RequestBodyStringServlet extends HttpServlet {
     }
 } 
 ```
-
 
 - 참고
     - inputStream은 byte 코드를 반환한다. byte 코드를 우리가 읽을 수 있는 문자(String)로 보려면 문자표(Charset)를 지정해주어야 한다.(반대도 마찬가지) 여기서는 UTF_8 Charset을 지정해주었다.
@@ -2008,7 +2008,7 @@ public class Member {
     - MVC 패턴은 지금까지 학습한 것처럼 하나의 서블릿이나, JSP로 처리하던 것을 컨트롤러(Controller)와 뷰(View)라는 영역으로 서로 역할을 나눈 것을 말한다. 웹 애플리케이션은 보통 이 MVC 패턴을 사용한다.
     - `컨트롤러`: HTTP 요청을 받아서 파라미터를 검증하고, 비즈니스 로직을 실행한다. 그리고 뷰에 전달할 결과 데이터를 조회해서 모델에 담는다. (여기서는 서블릿)
     - `모델`: 뷰에 출력할 데이터를 담아둔다. 뷰가 필요한 데이터를 모두 모델에 담아서 전달해주는 덕분에 뷰는 비즈니스 로직이나 데이터 접근을 몰라도 되고, 화면을 렌더링 하는 일에 집중할 수 있다.
-    - `뷰`: 모델에 담겨있는 데이터를 사용해서 화면을 그리는 일에 집중한다. 여기서는 HTML을 생성하는 부분을 말한다. (역시서는 JSP)
+    - `뷰`: 모델에 담겨있는 데이터를 사용해서 화면을 그리는 일에 집중한다. 여기서는 HTML을 생성하는 부분을 말한다. (여기서는 JSP)
 
 - MVC 패턴 이전
     <img width="591" alt="스크린샷 2021-08-22 오후 3 14 11" src="https://user-images.githubusercontent.com/57219160/130344612-0c0fabe4-2ff2-4cd3-8eac-d1f2e6cf06c2.png">
@@ -2050,7 +2050,7 @@ public class Member {
         ```
     - 회원 등록 폼 - 뷰
         - `main/webapp/WEB-INF/views/new-form.jsp`
-            - 여기서 form의 action을 보면 절대 경로(/로 시작)이 아니라 상대경로(/로 시작X)하는 것을 확인할 수 있다. 이렇게 상대경로를 사용하면 폼 전송시 현재 URL이 속한 계층 경로 + save가 호출된다.
+            - 여기서 form의 action을 보면 절대 경로(/로 시작)가 아니라 상대경로(/로 시작X)하는 것을 확인할 수 있다. 이렇게 상대경로를 사용하면 폼 전송시 현재 URL이 속한 계층 경로 + save가 호출된다.
                 - 현재 등록 폼 경로 : /servlet-mvc/members/new-form
                 - 현재 계층 경로 : /servlet-mvc/members/
                 - 결과 : /servlet-mvc/members/save
@@ -2386,7 +2386,7 @@ public class MemberListControllerV1 implements ControllerV1 {
         - 브라우저에서 localhost8080/front-controller/v1/* 에서 * 자리에 아무거나 넣어서 404 에러 뜨는 것도 확인가능하다.(개발자도구)
             - 콘솔에 FrontControllerServletV1.service 가 찍힌 것을 봐서는 서블릿은 호출이 되었지만 해당하는 컨트롤러, 즉 3개 중에 속하지 않은 주소가 들어와서 그렇다.
     - 현업에서 아키텍트를 크게 개선할 때는 말 그대로 우선 구조만 개선해야 한다. 작은 부분들은 나중에. 즉 레벨에 맞는 리팩토링을 먼저 따로 해야 한다(해당하지 않은 부분에 대한 코드들은 유지시켜줘야 한다). 그 다음에 문제가 없을 때(커밋까지 끝내고 테스트까지) 세세한 부분들을 개선해야 한다. 그렇지 않으면 섞이고 리팩토링이 힘들다. 
-    - 그리고 실제 개발할 떄는 상대경로 잘 안 쓰고 절대경로를 쓰는 편이다. (여기에서 저장하는 부분의 "save" 는 상대경로이므로 건드리면 안된다)
+    - 그리고 실제 개발할 때는 상대경로 잘 안 쓰고 절대경로를 쓰는 편이다. (여기에서 저장하는 부분의 "save" 는 상대경로이므로 건드리면 안된다)
 
 ## View 분리 - v2
 - v1버전에서는 모든 컨트롤러에서 뷰로 이동하는 부분에 중복이 있고, 깔끔하지 않다.
@@ -2406,7 +2406,7 @@ dispatcher.forward(request, response);
     - 뷰 객체는 이후 다른 버전에서도 함께 사용하므로 패키지 위치를 frontcontroller 에 두었다.
     - 컨트롤러들이 이 MyView만 반환하면 된다. 따로 jsp 파일을 렌더링 할 필요가 없다.
     ```
-        public class MyView {
+    public class MyView {
 
         private String viewPath;
 
@@ -2424,13 +2424,13 @@ dispatcher.forward(request, response);
 - ControllerV2 인터페이스
     - MyView를 반환하는 process 메서드
     - 그러면 개발자들은 모두 MyView를 반환해야 된다고 생각하고(강제) 컴파일 에러를 내뱉는다.
-```
-public interface ControllerV2 {
+    ```
+    public interface ControllerV2 {
 
-    MyView process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException;
-}
+        MyView process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException;
+    }
 
-```
+    ```
 
 - MemberFormControllerV2 - 회원 등록 폼
     - 이제 각 컨트롤러는 복잡한 dispatcher.forward() 를 직접 생성해서 호출하지 않아도 된다. 단순히 MyView 객체를 생성하고 거기에 뷰 이름만 넣고 반환하면 된다.
@@ -2507,14 +2507,14 @@ private MemberRepository memberRepository = MemberRepository.getInstance();
     }
     ```
     - Myview.render()
-        - 프론트 컨트롤러의 도입으로 MyView 객체의 render() 를 호출하는 부분을 모두 일관되게 처리할 수 있다. 각각의 컨트롤러는 MyView 객체를 생성만 해서 반환하면 된다.
-    ```
-    public void render(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
-        dispatcher.forward(request, response);
-    }
-    ```
+        - 프론트 컨트롤러의 도입으로 MyView 객체의 render() 를 호출하는 부분을 모두 일관되게 처리할 수 있다. 이렇게 각각의 컨트롤러는 MyView 객체를 생성만 해서 반환하면 된다.
+        ```
+        public void render(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+            RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+            dispatcher.forward(request, response);
+        }
+        ```
     - 실행
         - 등록 : http://localhost:8080/front-controller/v2/members/new-form
         - 목록 : http://localhost:8080/front-controller/v2/members
