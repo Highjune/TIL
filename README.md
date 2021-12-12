@@ -37,11 +37,12 @@
             - [스프링 핵심 원리 - 기본편](https://github.com/Highjune/TIL/blob/main/Backend/FrameWork/Spring_SpringBoot/Lectures/%EC%8A%A4%ED%94%84%EB%A7%81%20%ED%95%B5%EC%8B%AC%20%EC%9B%90%EB%A6%AC%20-%20%EA%B8%B0%EB%B3%B8%ED%8E%B8.md)
             - [스프링MVC 1편 - 백엔드 웹 개발핵심기술](https://github.com/Highjune/TIL/blob/main/Backend/FrameWork/Spring_SpringBoot/Lectures/%EC%8A%A4%ED%94%84%EB%A7%81MVC1%ED%8E%B8_%EB%B0%B1%EC%97%94%EB%93%9C%EC%9B%B9%EA%B0%9C%EB%B0%9C%ED%95%B5%EC%8B%AC%EA%B8%B0%EC%88%A0.md)
             - [스프링MVC 2편 - 백엔드 웹 개발핵심기술](https://github.com/Highjune/TIL/blob/main/Backend/FrameWork/Spring_SpringBoot/Lectures/%EC%8A%A4%ED%94%84%EB%A7%81MVC2%ED%8E%B8_%EB%B0%B1%EC%97%94%EB%93%9C%EC%9B%B9%EA%B0%9C%EB%B0%9C%ED%99%9C%EC%9A%A9%EA%B8%B0%EC%88%A0.md)
-    - [TemplateEngine](https://github.com/Highjune/TIL/tree/main/Backend/FrameWork/Spring_SpringBoot/TempleteEngine)
-        - [Freemarker](https://github.com/Highjune/TIL/blob/main/Backend/FrameWork/Spring_SpringBoot/TempleteEngine/Freemarker.md)
-        - [Thymeleaf](https://github.com/Highjune/TIL/blob/main/Backend/FrameWork/Spring_SpringBoot/TempleteEngine/Thymeleaf.md)
-        - [Mustache](https://github.com/Highjune/TIL/blob/main/Backend/FrameWork/Spring_SpringBoot/TempleteEngine/Mustache.md)
-
+        - [TemplateEngine](https://github.com/Highjune/TIL/tree/main/Backend/FrameWork/Spring_SpringBoot/TempleteEngine)
+            - [Freemarker](https://github.com/Highjune/TIL/blob/main/Backend/FrameWork/Spring_SpringBoot/TempleteEngine/Freemarker.md)
+            - [Thymeleaf](https://github.com/Highjune/TIL/blob/main/Backend/FrameWork/Spring_SpringBoot/TempleteEngine/Thymeleaf.md)
+            - [Mustache](https://github.com/Highjune/TIL/blob/main/Backend/FrameWork/Spring_SpringBoot/TempleteEngine/Mustache.md)
+        - Jpa
+            - Lectures
 
 
 ### [Cloud](https://github.com/Highjune/TIL/tree/main/Cloud)
