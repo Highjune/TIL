@@ -229,3 +229,171 @@ public class Member {
 
 # 도메인 분석 설계
 ## 요구사항 분석
+- 생략. pdf 16 참조
+## 도메인 모델과 테이블 설계
+- 생략. pdf 17 참조  
+## 엔티티 클래스 개발1, 2
+- 예제에서는 설명을 쉽게하기 위해 엔티티 클래스에 Getter, Setter를 모두 열고, 최대한 단순하게 설계
+- 실무에서는 가급적 Getter는 열어두고, Setter는 꼭 필요한 경우에만 사용하는 것을 추천
+- 참고
+    - 이론적으로 Getter, Setter 모두 제공하지 않고, 꼭 필요한 별도의 메서드를 제공하는게 가장 이상적 이다. 하지만 실무에서 엔티티의 데이터는 조회할 일이 너무 많으므로, Getter의 경우 모두 열어두는 것이 편리하다. Getter는 아무리 호출해도 호출 하는 것 만으로 어떤 일이 발생하지는 않는다. 하지만 Setter는 문제가 다르다. Setter를 호출하면 데이터가 변한다. Setter를 막 열어두면 가까운 미래에 엔티티에가 도대 체 왜 변경되는지 추적하기 점점 힘들어진다. 그래서 엔티티를 변경할 때는 Setter 대신에 변경 지점이 명확하도록 변경을 위한 비즈니스 메서드를 별도로 제공해야 한다.
+
+- 회원 엔티티
+    - 내장타입은 해당하는 필드에 @Embedded를 붙이거나 해당하는 클래스(Address)에 @Embeddable를 붙이거나 둘 중 하나만 하면 되지만 보통 2개 다 명시해준다.
+    ```
+    @Entity
+    @Getter
+    @Setter
+    public class Member {
+
+        @Id @GeneratedValue
+        @Column(name = "member_id")
+        private Long id;
+
+        private String name;
+
+        @Embedded
+        private Address address;
+
+        @OneToMany(mappedBy = "member") // 연관관계의 주인이 아님. 매핑된 테이블의 거울일 뿐. 여기에 값을 넣는다고 해서 FK의 값의 변경되지 않는다.
+        private List<Order> orders = new ArrayList<>();
+    }
+    ```
+    - 참고: 엔티티의 식별자는 id 를 사용하고 PK 컬럼명은 member_id 를 사용했다. 엔티티는 타입(여기서는 Member )이 있으므로 id 필드만으로 쉽게 구분할 수 있다. 테이블은 타입이 없으므로 구분이 어렵다. 그리고 테이블은 관례상 테이블명 + id 를 많이 사용한다. 참고로 객체에서 id 대신에 memberId 를 사용해도 된다. 중요한 것은 일관성이다.
+
+- 기타 엔티티 생략
+
+- 참고
+    - 실무에서는 @ManyToMany 를 사용하지 말자
+    - @ManyToMany 는 편리한 것 같지만, 중간 테이블( CATEGORY_ITEM )에 컬럼을 추가할 수 없고(등록일, 수정일 등), 세밀하게 쿼리를 실행하기 어렵기 때문에 실무에서 사용하기에는 한계가 있다. 중간 엔티티( CategoryItem 를 만들고 @ManyToOne, @OneToMany 로 매핑해서 사용하자. 정리하면 대다대 매핑을 일대다, 다대일 매핑으로 풀어 내서 사용하자.
+
+- 주소 값 타입
+    ```
+    @Embeddable
+    @Getter
+    public class Address {
+
+        private String city;
+        private String street;
+        private String zipcode;
+
+        protected Address() {
+        }
+
+        public Address(String city, String street, String zipcode) {
+            this.city = city;
+            this.street = street;
+            this.zipcode = zipcode;
+        }
+    }
+    ```
+    - 값 타입은 변경 불가능하게 설계해야 한다.
+        - @Setter 를 제거하고, 생성자에서 값을 모두 초기화해서 변경 불가능한 클래스를 만들자. JPA 스펙상 엔티티나 임베디드 타입( @Embeddable )은 자바 기본 생성자(default constructor)를 public 또는 protected 로 설정해야 한다. public 으로 두는 것 보다는 protected 로 설정하는 것이 그나마 더 안전하다.
+        - JPA가 이런 제약을 두는 이유는 JPA 구현 라이브러리가 객체를 생성할 때 리플랙션 같은 기술을 사용할 수 있도록 지원해야 하기 때문이다.
+
+
+- Foreign Key를 꼭 걸어야 하는가?
+    - 시스템마다 다름. 실시간 트래픽 엄청 중요하고 정합성보다는 유연하게 잘 운영되는 서비스가 필요하면 Foreign Key 빼고 인덱스만 잘 잡아도 된다. 하지만 데이터가 항상 무조건 다 맞아야 하는(돈과 관련된) 것이라면 Foreign Key 걸기.
+
+- cascade = CascadeType.All 옵션
+    ```
+    @Entity
+    @Table(name = "orders")
+    @Getter @Setter
+    public class Order {
+
+        ...
+
+        @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+        private List<OrderItem> orderItems = new ArrayList<>();
+        ...
+
+    }
+    ```
+    - cascade = CascadeType.ALL 옵션이 들어가게 되면 orderItem에 데이터를 넣어두고, Order를 저장하게 되면 Order가 저장이 될 때 orderItem도 동시에 저장이 다 된다. 원래는 orderItems를 저장한 후 그 후에 Order가 저장이 된다. 그리고 ALL이므로 delete할 때도 다 같이 지워진다.
+    ```
+    // 기존
+    persist(orderItemA)
+    persist(orderItemB)
+    persist(orderItemC)
+    persist(order)
+
+    // 옵션 적용 후 코드가 간략하게 됨
+    persist(order)
+    ```
+
+
+## 엔티티 설계시 주의점
+- 엔티티에는 가급적 Setter를 사용하지 말자
+    - 현재까지 코드들은 Setter가 모두 열려있다. 변경 포인트가 너무 많아서, 유지보수가 어렵다. 나중에 리펙토링으로 Setter 제거
+
+- (매우 중요) 모든 연관관계는 지연로딩으로 설정! 해야 한다.
+    - 무조건 암기
+    - 즉시로딩( EAGER )은 예측이 어렵고, 어떤 SQL이 실행될지 추적하기 어렵다. 특히 JPQL을 실행할 때 N+1 문제가 자주 발생한다.
+    - 실무에서 모든 연관관계는 지연로딩( LAZY )으로 설정해야 한다.
+    - 연관된 엔티티를 함께 DB에서 조회해야 하면, fetch join 또는 엔티티 그래프 기능을 사용한다.
+    - @XToOne(OneToOne, ManyToOne) 관계는 기본이 즉시로딩이므로 직접 지연로딩으로 설정해야 한다.
+
+- 컬렉션은 필드에서 초기화 하자. 컬렉션은 필드에서 바로 초기화 하는 것이 안전하다.
+    - null 문제에서 안전하다.
+    - 즉 아래에서 생성자보다는 필드에서 바로 초기화 하는 것이 낫다.
+    ```
+    // 필드에서 바로 초기화
+    @OneToMany(MappedBy = "member")
+    private List<Order> orders = new ArrayList<>();
+    ```
+    ```
+    // 생성자 초기화
+    @OneToMany(MappedBy = "member")
+    private List<Order> orders;
+
+    public MembeR() {
+        orderes = new ArrayList<>();
+    }
+    ```
+    - 하이버네이트는 엔티티를 영속화 할 때, 컬랙션을 감싸서 하이버네이트가 제공하는 내장 컬렉션으로 변경한다. 만약 getOrders() 처럼 임의의 메서드에서 컬력션을 잘못 생성하면 하이버네이트 내부 메커니즘에 문 제가 발생할 수 있다. 따라서 필드레벨에서 생성하는 것이 가장 안전하고, 코드도 간결하다.
+    ```
+    Member member = new Member();
+    System.out.println(member.getOrders().getClass());
+    em.persist(team);
+    System.out.println(member.getOrders().getClass());
+
+    //출력 결과
+    class java.util.ArrayList
+    class org.hibernate.collection.internal.PersistentBag
+    ```
+    - 위에서 보면 변경되어 있음. hibernate는 컬렉션이 변경된 것을 추적해야 하므로 hibernate가 추적할 수 있는 것(ex. PersistentBag) 으로 변경함. 그런데 기껏 PersistentBag로 변경했는데 다시 setOrders() 해서 변경해버리면 hibernate가 원하는 메커니즘으로 돌아가지 않는다. 그래서 orders 커넥션을 가급적 꺼내지도 말고 꺼냈으면 수정하면 안된다. 
+
+
+- 테이블, 컬럼명 생성 전략
+    - 스프링 부트에서 하이버네이트 기본 매핑 전략을 변경해서 실제 테이블 필드명은 다름
+    - https://docs.spring.io/spring-boot/docs/2.1.3.RELEASE/reference/htmlsingle/#howto- configure-hibernate-naming-strategy
+    - http://docs.jboss.org/hibernate/orm/5.4/userguide/html_single/ Hibernate_User_Guide.html#naming
+
+
+    - SpringPhysicalNamingStrategy 클래스에 변경 로직이 들어가 있음
+    - 하이버네이트 기존 구현: 엔티티의 필드명을 그대로 테이블의 컬럼명으로 사용 
+    - 스프링 부트 신규 설정(엔티티(필드) -> 테이블(컬럼))
+        1. 카멜 케이스 -> 언더스코어 (memberPoint -> member_point, orderDate -> order_date)
+        2. .(점) -> _(언더스코어)
+        3. 대문자 -> 소문자
+
+    - 적용 2단계
+        1. 논리명 생성 : 명시적으로 컬럼, 테이블명을 직접 적지 않으면 ImplicitNamingStrategy 사용.
+            - spring.jpa.hibernate.naming.implicit-strategy : 테이블이나, 컬럼명을 명시하지 않을 때 논리명 적용,
+
+        2. 물리명 적용 
+            - spring.jpa.hibernate.naming.physical-strategy : 모든 논리명에 적용됨, 실제 테이블에 적용 (username -> usernm 등으로 회사 룰로 바꿀 수 있음)
+
+
+- 스프링 부트 기본 설정
+```
+spring.jpa.hibernate.naming.implicit-strategy:
+org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+
+spring.jpa.hibernate.naming.physical-strategy:
+org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy 
+```
+
+
+d
