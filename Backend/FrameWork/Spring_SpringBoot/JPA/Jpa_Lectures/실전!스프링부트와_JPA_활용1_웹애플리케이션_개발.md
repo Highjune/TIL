@@ -427,3 +427,229 @@ spring.jpa.hibernate.naming.physical-strategy:
 org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy 
 ```
 
+# 애플리케이션 구현 준비
+## 구현 요구사항
+- 생략. pdf 32 참조
+## 애플리케이션 아키텍쳐 
+- 생략. pdf 33 참조
+
+# 회원 도메인 개발
+## 회원 리포지토리 개발
+- 회원 리포지토리 코드
+```
+@Repository
+@RequiredArgsConstructor
+public class MemberRepository {
+
+    private final EntityManager em;
+
+    public void save(Member member) {
+        em.persist(member);
+    }
+
+    public Member findOne(Long id) {
+        return em.find(Member.class, id);
+    }
+
+    public List<Member> findAll() {
+        return em.createQuery("select m from Member m", Member.class)
+                .getResultList();
+    }
+
+    public List<Member> findByName(String name) {
+        return em.createQuery("select m from Member m where m.name = :name", Member.class)
+                .setParameter("name", name)
+                .getResultList();
+    }
+
+```
+- 기술 설명
+    - @Repository : 스프링 빈으로 등록, JPA 예외를 스프링 기반 예외로 예외 변환
+    - @PersistenceContext : 엔티티 메니저( EntityManager ) 주입
+    - @PersistenceUnit : 엔티티 메니터 팩토리( EntityManagerFactory ) 주입
+
+- 기능 설명
+    - save()
+    - findOne()
+    - findAll()
+    - findByName()
+## 회원 서비스 개발
+- 회원 서비스 코드
+```
+@Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
+public class MemberService {
+
+    private final MemberRepository memberRepository;
+
+    /**
+     * 회원 가입
+     */
+    @Transactional
+    public Long join(Member member) {
+        validateDuplicateMember(member);    // 중복 회원 검증
+        memberRepository.save(member);
+        return member.getId();
+    }
+
+    private void validateDuplicateMember(Member member) {
+        List<Member> findMembers = memberRepository.findByName(member.getName());
+        if (!findMembers.isEmpty()) {
+            throw new IllegalStateException("이미 존재하는 회원입니다.");
+        }
+    }
+
+    // 회원 전체 조회
+    public List<Member> findMembers() {
+        return memberRepository.findAll();
+    }
+
+    public Member findOne(Long memberId) {
+        return memberRepository.findOne(memberId);
+    }
+}
+```
+- 기술 설명
+    - @Transactional : 트랜잭션, 영속성 컨텍스트
+        - 클래스 단위에 @Transactional(readOnly = true) 붙이면 public 메서드에 다 적용. 
+        - readOnly=false 가 기본값이다. 클래스 단위로 만약 @Transactional(readOnly = true) 붙이고 특정한 메서드에 @Transactional 만 붙이면 우선권을 가지게 된다. 그래서 readOnyl=false가 그 메서드에 적용되는 것임
+        - readOnly=true : 데이터의 변경이 없는 읽기 전용 메서드에 사용, 영속성 컨텍스트를 플러시 하지 않 으므로 약간의 성능 향상(읽기 전용에는 다 적용). 쓰기에는 사용하면 안됨(데이터 변경이 안됨)
+        - 데이터베이스 드라이버가 지원하면 DB에서 성능 향상
+    - @Autowired
+        - 생성자 Injection 많이 사용, 생성자가 하나면 생략 가능
+        - 스프링부트 라이브러리를 사용하면 EntityManager 에 @PersistenceContext 대신 @Autowired를 붙여도 주입이 된다. 스프링부트 Jpa 가 지원을 해주는 것임. 원래 사실은 EntityManager는 @Autowired로 안되고 무조건 @PersistenceContext가 있어야 주입이 되는데 스프링부트 Jpa 가 지원해줌
+
+- 기능 설명
+    - join()
+    - findMembers()
+    - findOne()
+
+- 참고
+    - 실무에서는 검증 로직이 있어도 멀티 쓰레드 상황을 고려해서 회원 테이블의 회원명 컬럼에 유니크 제약 조건을 추가하는 것이 안전하다. 
+    - 스프링 필드 주입 대신에 생성자 주입을 사용하자.
+
+## 회원 기능 테스트
+- 테스트 요구사항
+    - 회원가입을 성공해야 한다.
+    - 회원가입 할 때 같은 이름이 있으면 예외가 발생해야 한다.
+
+- 회원가입 테스트 코드
+    ```
+
+    @RunWith(SpringRunner.class)
+    @SpringBootTest
+    @Transactional // 롤백을 위해
+    public class MemberServiceTest {
+
+        @Autowired MemberService memberService;
+        @Autowired MemberRepository memberRepository;
+        @Autowired EntityManager em;
+
+        @Test
+        public void 회원가입() throws Exception {
+            //given
+            Member member = new Member();
+            member.setName("kim");
+
+            //when
+            Long savedId = memberService.join(member);
+
+            //then
+            assertEquals(member, memberRepository.findOne(savedId));
+        }
+
+        @Test(expected = IllegalStateException.class)
+        public void 중복_회원_예외() throws Exception {
+            //given
+            Member member1 = new Member();
+            member1.setName("kim");
+
+            Member member2 = new Member();
+            member2.setName("kim");
+
+            //when
+            memberService.join(member1);
+            memberService.join(member2); // 예외가 발생해야 한다!!
+
+            //then
+            fail("예외가 발생해야 한다.");
+
+        }
+    }
+    ```
+    - 기술 설명
+        - @RunWith(SpringRunner.class) : 스프링과 테스트 통합
+        - @SpringBootTest : 스프링 부트 띄우고 테스트(이게 없으면 @Autowired 다 실패)
+        - @Transactional : 반복 가능한 테스트 지원, 각각의 테스트를 실행할 때마다 트랜잭션을 시작하고 테스트가 끝나면 트랜잭션을 강제로 롤백 (이 어노테이션이 테스트 케이스에서 사용될 때만 롤백)
+
+    - 기능 설명
+        - 회원가입 테스트
+        - 중복 회원 예외처리 테스트
+
+- 참고: 테스트 케이스 작성 고수 되는 마법: Given, When, Then(http://martinfowler.com/bliki/GivenWhenThen.html)
+    - 이 방법이 필수는 아니지만 이 방법을 기본으로 해서 다양하게 응용하는 것을 권장한다.
+
+- 테스트 케이스를 위한 설정
+    - 테스트는 케이스 격리된 환경에서 실행하고, 끝나면 데이터를 초기화하는 것이 좋다. 그런 면에서 메모리 DB를 사용하는 것이 가장 이상적이다. 지금껏 사용해온 것인 외부적인 DB(h2) 를 설치하고 터미널에서 가동해서 사용한 것이다.
+    - 그래서 메모리에서만 테스트가 가능할 수 있도록 h2 메모리 DB를 사용하면 된다. 그러면 설치도 필요없음.
+    - 추가로 테스트 케이스를 위한 스프링 환경과, 일반적으로 애플리케이션을 실행하는 환경은 보통 다르므로 설정 파일을 다르게 사용하자. 파일을 따로 두는 것이 맞다!
+    - 다음과 같이 간단하게 테스트용 설정 파일을 추가하면 된다.
+
+- test/resources/application.yml
+    - 이 곳에 설정 파일을 두면 test는 src/main/resources/application.yml을 우선하는 것이 아니라 이 곳에 있는 설정 파일에 우선순위를 둔다.
+    - h2 메모리 DB를 사용하기 위해서는 https://h2database.com/html/cheatSheet.html 에서 In-Memory 설정값 들고오면 됨.   
+    ```
+    spring:
+    datasource:
+        url: jdbc:h2:mem:test
+        username: sa
+        password:
+        driver-class-name: org.h2.Driver
+
+    jpa:
+        hibernate:
+        ddl-auto: create # 자동으로 테이블 만들어줌
+        properties:
+        hibernate:
+    #        show_sql: true   # System.out을 통해서 출력
+            format_sql: true
+
+    logging.level:
+    org.hibernate.SQL: debug  # log를 통해서 출력
+    org.hibernate.type: trace
+    ```
+    - 그래서 위와 같이 한 후 기존의 설치한 h2 DB 내린 후에 다시 테스트하면 다 통과가 된다.
+    - 로그에서 p6spy에서 찍은 커넥션 정보를 보면 url jdbc:h2:mem:test 가 나온다.
+
+- 하지만 !! 
+    - 아래처럼 다 설정을 없애더라도 스프링부트가 기본적으로 메모리 모드로 가동한다.
+    - 스프링 부트는 datasource 설정이 없으면, 기본적을 메모리 DB를 사용하고, driver-class도 현재 등록된 라이브러를 보고 찾아준다. (극단적으로 텅 빈 application.yml이어도 마찬가지임)
+    ```
+    spring:
+    #  datasource:
+    #    url: jdbc:h2:mem:test
+    #    username: sa
+    #    password:
+    #    driver-class-name: org.h2.Driver
+
+    #  jpa:
+    #    hibernate:
+    #      ddl-auto: create # 자동으로 테이블 만들어줌
+    #    properties:
+    #      hibernate:
+    #        show_sql: true   # System.out을 통해서 출력
+    #        format_sql: true
+
+    logging.level:
+    org.hibernate.SQL: debug  # log를 통해서 출력
+    org.hibernate.type: trace
+    ```
+    - 똑같이 테스트가 다 통과가 되고 로그를 보면 마찬가지로 url jdbc:h2:mem:test 가 나온다.
+
+- 추가로 ddl-auto 도 create-drop 모드로 동작한다. 따라서 데이터소스나, JPA 관련된 별도의 추가 설정을 하지 않아도 된다.
+    - create는 가지고 있는 Entity 다 드랍한 후에 create 하고 애플리케이션 실행
+    - create-drop는 create와 똑같은데 애플리케이션 종료 시점에 drop 쿼리 다 날리고 완전히 깨끗하게 없앰.
+
+
+# 상품 도메인 개발

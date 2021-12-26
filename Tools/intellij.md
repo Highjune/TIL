@@ -11,6 +11,20 @@
 command + fn + f12
 ```
 
+- 단축키 템플릿은 Live templates 에서 적용하면 됨
+  - ex) custom 그룹 만들어서 tdd
+  ```
+  @Test
+  public void $NAME$() throws Exception {
+      //given
+      $END$
+      //when
+      
+      //then
+  }
+  ```
+
+
 - 작성중인 함수의 파라미터 요소, 타입 확인하기
 ```
 command + p
