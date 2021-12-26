@@ -653,3 +653,109 @@ public class MemberService {
 
 
 # 상품 도메인 개발
+## 상품 엔티티 개발(비즈니스 로직 추가)
+- 상품 엔티티 코드
+```
+
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)// 상속관계 전략 중 싱글테이블 전략
+@DiscriminatorColumn(name = "dtype")
+@Getter @Setter
+public abstract class Item {
+
+    @Id
+    @GeneratedValue
+    @Column(name = "item_id")
+    private Long id;
+
+    private String name;
+    private int price;
+    private int stockQuantity;
+
+    @ManyToMany(mappedBy = "items")
+    private List<Category> categories = new ArrayList<>();
+
+    //==비즈니스 로직==//
+
+    /**
+     * stock 증가
+     */
+    public void addStock(int quantity) {
+        this.stockQuantity += quantity;
+    }
+
+    /**
+     * stock 감소
+     *
+     */
+    public void removeStock(int quantity) {
+        int restStock = this.stockQuantity -= quantity;
+        if (restStock < 0) {
+            throw new NotEnoughStockException("need more stock");
+        }
+        this.stockQuantity = restStock;
+    }
+}
+```
+- 예외 추가
+    - 그냥 오버라이딩 메서드만 나열한 것임
+    ```
+
+    public class NotEnoughStockException extends RuntimeException{
+
+        public NotEnoughStockException() {
+            super();
+        }
+
+        public NotEnoughStockException(String message) {
+            super(message);
+        }
+
+        public NotEnoughStockException(String message, Throwable cause) {
+            super(message, cause);
+
+        }
+
+        public NotEnoughStockException(Throwable cause) {
+            super(cause);
+        }
+
+        protected NotEnoughStockException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+            super(message, cause, enableSuppression, writableStackTrace);
+        }
+    }
+    ```
+- 비즈니스 로직 분석
+    - addStock() 메서드는 파라미터로 넘어온 수만큼 재고를 늘린다. 이 메서드는 재고가 증가하거나 상품 주 문을 취소해서 재고를 다시 늘려야 할 때 사용한다.
+    - removeStock() 메서드는 파라미터로 넘어온 수만큼 재고를 줄인다. 만약 재고가 부족하면 예외가 발생한다. 주로 상품을 주문할 때 사용한다.
+    - 보통은 setter를 사용해서 item의 재고를 조정하는 식으로 보통 코딩을 많이 할 텐데, 이런 식으로 그 객체 자체에서 그냥 add, remove 비즈니스 메서드를 만들어서 처리하는 것이 훨씬 더 응집력 있는 객체지향적 코드라고 할 수 있다.
+
+## 상품 리포지토리 개발
+- 상품 리포지토리 코드
+```
+
+@Repository
+@RequiredArgsConstructor
+public class ItemRepository {
+
+    private final EntityManager em;
+
+    public void save(Item item) {
+        if (item.getId() == null) { // item은 jpa에 저장하기 전까지 id값이 없으므로.
+            em.persist(item); // 신규 등록
+        } else {
+            em.merge(item); // 이미 DB에 한 번 등록이 된 것을 가져오는 것. 즉 update와 비슷한 개념
+        }
+    }
+
+    public Item findOne(Long id) {
+        return em.find(Item.class, id);
+    }
+
+    public List<Item> findAll() {
+        return em.createQuery("select i from Item i", Item.class)
+                .getResultList();
+    }
+}
+
+```
