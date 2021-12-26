@@ -322,6 +322,38 @@ public class Member {
     persist(order)
     ```
 
+- 연관관계 편의 메서드
+    - Order와 Member 관계에서 결국 둘 다 값을 넣어야 할 텐데(물론 DB에서는 연관관계의 주인인 Order쪽만 값을 넣으면 되지만) 로직상 어느 한 쪽을 빼거나 할 수도 있다. 그렇기 때문에 원자화 해서 둘을 묶어두는 것
+    - 원래는 아래 처럼 해야 하지만!
+    ```
+    Member member = new Membmer();
+    Order order = new Order();
+
+    member.getOrders().add(order);
+    order.setMember(member);
+    ```
+    - 아래처럼 다 묶어두기!
+    ```
+    //==연관관계 편의 메서드 ===, Member와 Order의 관계 //
+    public void setMember(Member member) {
+        this.member = member;
+        member.getOrders().add(this);
+    }
+    
+    //==연관관계 편의 메서드 ===, Order와 OrderItem
+    public void addOrderItem(OrderItem orderItem) {
+        orderItems.add(orderItem);
+        orderItem.setOrder(this);
+    }
+
+    //==연관관계 편의 메서드 ===, Delivery와 Order
+    public void setDelivery(Delivery delivery) {
+        this.delivery = delivery;
+        delivery.setOrder(this);
+    }
+    ```
+    - 연관관계 메서드의 위치는 양쪽 중에서 핵심적으로 컨트롤 하는 곳에 두는 것이 낫다.
+
 
 ## 엔티티 설계시 주의점
 - 엔티티에는 가급적 Setter를 사용하지 말자
@@ -395,5 +427,3 @@ spring.jpa.hibernate.naming.physical-strategy:
 org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy 
 ```
 
-
-d
