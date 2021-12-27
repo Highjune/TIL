@@ -759,3 +759,339 @@ public class ItemRepository {
 }
 
 ```
+- 기능 설명
+    - save()
+        - id 가 없으면 신규로 보고 persist() 실행
+        - id 가 있으면 이미 데이터베이스에 저장된 엔티티를 수정한다고 보고, merge() 를 실행, 자세한 내용은 뒤에 웹에서 설명(그냥 지금은 저장한다 정도로 생각하자)
+
+## 상품 서비스 개발
+- 상품 서비스 코드
+```
+@Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
+public class ItemService {
+
+    private final ItemRepository itemRepository;
+
+    @Transactional
+    public void saveItem(Item item) {
+        itemRepository.save(item);
+    }
+
+    public List<Item> findItems() {
+        return itemRepository.findAll();
+    }
+
+    public Item findOne(Long itemId) {
+        return itemRepository.findOne(itemId);
+    }
+}
+
+```
+- 상품 서비스는 상품 리포지토리에 단순히 위임만 하는 클래스
+
+- 상품 기능 테스트
+    - 상품 테스트는 회원 테스트와 비슷하므로 생략(영상에서 자체 생략함)
+
+
+# 주문 도메인 개발
+- 구현 기능 및 순서 생략
+
+## 주문, 주문상품 엔티티 개발
+- 주문 엔티티 개발
+- 주문 엔티티 코드
+    ```
+    @Entity
+    @Table(name = "orders")
+    @Getter @Setter
+    public class Order {
+
+        @Id @GeneratedValue
+        @Column(name = "order_id")
+        private Long id;
+
+        @ManyToOne(fetch = FetchType.LAZY)  // 연관관계의 주인
+        @JoinColumn(name = "member_id")
+        private Member member;  // 여기에 값을 세팅하면 member_id(FK) 값이 변경된다.
+
+        @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+        private List<OrderItem> orderItems = new ArrayList<>();
+
+        @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+        @JoinColumn(name = "delivery_id")
+        private Delivery delivery;  // 배송 정보
+
+        private LocalDateTime orderDate;    // 주문시간
+
+        @Enumerated(EnumType.STRING)
+        private OrderStatus status; // 주문상태 (ORDER, CANCEL)
+
+        //==연관관계 편의 메서드 ===, Member와 Order
+        public void setMember(Member member) {
+            this.member = member;
+            member.getOrders().add(this);
+        }
+
+        //==연관관계 편의 메서드 ===, Order와 OrderItem
+        public void addOrderItem(OrderItem orderItem) {
+            orderItems.add(orderItem);
+            orderItem.setOrder(this);
+        }
+
+        //==연관관계 편의 메서드 ===, Delivery와 Order
+        public void setDelivery(Delivery delivery) {
+            this.delivery = delivery;
+            delivery.setOrder(this);
+        }
+
+        //==생성 메서드==//
+        public static Order createOrder(Member member, Delivery delivery, OrderItem... orderItems) {
+            Order order = new Order();
+            order.setMember(member);
+            order.setDelivery(delivery);
+            for (OrderItem orderItem : orderItems) {
+                order.addOrderItem(orderItem);
+            }
+            order.setStatus(OrderStatus.ORDER);
+            order.setOrderDate(LocalDateTime.now());
+            return order;
+        }
+
+        //==비즈니스 로직==//
+        /**
+        * 주문 취소
+        */
+        public void cancel() {
+            if (delivery.getStatus() == DeliveryStatus.COMP) { // 이미 배송완료(COMP) 라면/
+                throw new IllegalStateException("이미 배송완료된 상품은 취소가 불가능합니다.");
+            }
+
+            this.setStatus(OrderStatus.CANCEL);
+            for (OrderItem orderItem : orderItems) {
+                orderItem.cancel();
+            }
+        }
+
+        //==조회 로직==//
+        /**
+        * 전체 주문 가격 조회
+        */
+        public int getTotalPrice() {
+    //        return orderItems.stream()
+    //                .mapToInt(OrderItem::getTotalPrice)
+    //                .sum();
+            int totalPrice = 0;
+            for (OrderItem orderItem : orderItems) {
+                totalPrice += orderItem.getTotalPrice();
+            }
+            return totalPrice;
+        }
+
+    }
+
+    ```
+    - 기능 설명
+        - 생성 메서드( createOrder() ): 주문 엔티티를 생성할 때 사용한다. 주문 회원, 배송정보, 주문상품의 정보 를 받아서 실제 주문 엔티티를 생성한다.
+        - 주문 취소( cancel() ): 주문 취소시 사용한다. 주문 상태를 취소로 변경하고 주문상품에 주문 취소를 알린다. 만약 이미 배송을 완료한 상품이면 주문을 취소하지 못하도록 예외를 발생시킨다.
+        - 전체 주문 가격 조회: 주문 시 사용한 전체 주문 가격을 조회한다. 전체 주문 가격을 알려면 각각의 주문상품 가격을 알아야 한다. 로직을 보면 연관된 주문상품들의 가격을 조회해서 더한 값을 반환한다. (실무에서는 주로 주문에 전체 주문 가격 필드를 두고 역정규화 한다.)
+
+- 주문상품 엔티티 개발
+- 주문상품 엔티티 코드
+    ```
+
+    @Entity
+    @Getter @Setter
+    public class OrderItem {
+
+        @Id @GeneratedValue
+        @Column(name = "order_item_id")
+        private Long id;
+
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "item_id")
+        private Item item;
+
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "order_id")  // 연관관계 주인
+        private Order order;
+
+        private int orderPrice; // 주문 가격
+        private int count;  // 주문 수량
+
+        //==생성 메서드==//
+        public static OrderItem createOrderItem(Item item, int orderPrice, int count) {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setItem(item);
+            orderItem.setOrderPrice(orderPrice);
+            orderItem.setCount(count);
+
+            item.removeStock(count);
+            return orderItem;
+        }
+
+        //==비즈니스 로직==//
+        public void cancel() {
+            getItem().addStock(count);
+        }
+
+        //==조회 로직==//
+
+        /**
+        * 주문상품 전체 가격 조회
+        */
+        public int getTotalPrice() {
+            return getOrderPrice() * getCount();
+        }
+    }
+
+    ```
+    - 기능 설명
+        - 생성 메서드( createOrderItem() ): 주문 상품, 가격, 수량 정보를 사용해서 주문상품 엔티티를 생성한다. 그리고 item.removeStock(count) 를 호출해서 주문한 수량만큼 상품의 재고를 줄인다.
+        - 주문 취소( cancel() ): getItem().addStock(count) 를 호출해서 취소한 주문 수량만큼 상품의 재고를 증가시킨다.
+        - 주문 가격 조회( getTotalPrice() ): 주문 가격에 수량을 곱한 값을 반환한다.
+
+
+## 주문 리포지토리 개발
+- 주문 리포지토리 코드
+```
+@Repository
+@RequiredArgsConstructor
+public class OrderRepository {
+
+    private final EntityManager em;
+
+    public void save(Order order) {
+        em.persist(order);
+    }
+
+    public Order findOne(Long id) {
+        return em.find(Order.class, id);
+    }
+
+//    public List<Order> findAll(OrderSearch orderSearch) {}
+}
+```
+- 주문 리포지토리에는 주문 엔티티를 저장하고 검색하는 기능이 있다. 마지막의 findAll(OrderSearch orderSearch) 메서드는 조금 뒤에 있는 주문 검색 기능에서 자세히 알아보자.
+
+## 주문 서비스 개발
+- 주문 서비스 코드
+```
+
+@Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
+public class OrderService {
+
+    private final OrderRepository orderRepository;
+    private final MemberRepository memberRepository;
+    private final ItemRepository itemRepository;
+
+    /**
+     * 주문
+     */
+    @Transactional
+    public Long order(Long memberId, Long itemId, int count) {
+        //엔티티 조회
+        Member member = memberRepository.findOne(memberId);
+        Item item = itemRepository.findOne(itemId);
+
+        //배송정보 생성
+        Delivery delivery = new Delivery();
+        delivery.setAddress(member.getAddress());
+
+        //주문상품 생성
+        OrderItem orderItem = OrderItem.createOrderItem(item, item.getPrice(), count);
+
+        //주문 생성
+        Order order = Order.createOrder(member, delivery, orderItem);
+
+        //주문 저장
+        orderRepository.save(order);
+        return order.getId();
+    }
+
+    /**
+     * 주문 취소
+     */
+    @Transactional
+    public void cancelOrder(Long orderId) {
+        //주문 엔티티 조회
+        Order order = orderRepository.findOne(orderId);
+        //주문 취소
+        order.cancel();
+    }
+
+    //검색
+//    public List<Order> findOrders(OrderSearch orderSearch) {
+//        return orderRepository.findAll(orderSearch);
+//    }
+}
+
+```
+- 주문 서비스는 주문 엔티티와 주문 상품 엔티티의 비즈니스 로직을 활용해서 주문, 주문 취소, 주문 내역 검색 기능을 제공한다.
+- 참고: 예제를 단순화하려고 한 번에 하나의 상품만 주문할 수 있다.
+
+- 주문( order() ): 주문하는 회원 식별자, 상품 식별자, 주문 수량 정보를 받아서 실제 주문 엔티티를 생성한 후 저장한다.
+- 주문 취소( cancelOrder() ): 주문 식별자를 받아서 주문 엔티티를 조회한 후 주문 엔티티에 주문 취소를 요청한다.
+    - JdbcTemplate이나 MyBatis나 쿼리를 직접 다루는 것들은 해당하는 곳들에 별도로 Update쿼리를 다 날려줘야 한다. 하지만 Jpa에서는 더티체킹으로 알아서 쿼리를 다 날려준다.
+- 주문 검색( findOrders() ): OrderSearch 라는 검색 조건을 가진 객체로 주문 엔티티를 검색한다. 자세한 내용은 다음에 나오는 주문 검색 기능에서 알아보자.
+
+
+- `orderRepository.save(order)`
+    - Cascadetype.All 덕분에 OrderItem과 Delivery를 따로 persist 된다. order 만 save해주면 자동으로 OrderItem과 Delivery 가 persist 됨.
+    - Cascade의 범위는 ?
+        - 어디까지 해야하나의 고민. Order가 Delivery, OrderItem을 다 관리한다. 이 정도 영역에서만 써야 한다. Delivery와 OrderItem은 Order에서만 참조할 뿐 다른 곳에서 참조하지 않는다. 라이프 사이클적인 면에서 동일하게 관리를 할 때! 그리고 다른 곳에서 참조할 수 없는 private owner인 경우에 쓰면 좋다.
+        - 만약 Order뿐 아니라 다른 곳에서도 Delivery를 참조하거나 하면 Cascade를 막 사용하면 안 된다. 왜냐하면 Order를 지울 때도 Delivery가 자동으로 지워지거나 하기 때문에 부가적인  문제가 발생할 수 있다.
+
+- `OrderItem.createOrderItem(item, item.getPrice(), count);` 으로 상품 주문한 이유
+    - 만약에 아래처럼 하게 되면 곳곳에서 다 이런식으로 하게 되니까 다 분산이 된다. 그리고 만약 필드를 추가한다던지 하는 생성로직을 변경하게 될 경우 모든 생성하는 곳의 코드를 변경해야 하므로 번거로워진다. 
+    ```
+    OrderItem orderItem1 = new OrderItem();
+    orderItem1.setItem(item);
+    ...
+    ```
+    - 그래서 위와 같이 기본생성자로 생성해서 따로 다 값을 넣게 할 수 있는 경우를 애초에 다 막아야 한다.(재약) Jpa에서는 Protected까지 기본생성자를 만들 수 있게 허용
+    ```
+    @Entity
+    @Getter @Setter
+    public class OrderItem {
+
+        ...
+
+        protected OrderItem() {
+
+        }
+        ...
+    }
+    ```
+    - 또는 롬복으로 해결해도 된다.
+    ```
+    @Entity
+    @Getter @Setter
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    public class OrderItem {
+
+        ...
+    }
+    ```
+    - Order 클래스도 마찬가지
+    - 그래서 이런식으로 항상 제약하는 방향대로 코드를 짜야 한다.
+        - 기본생성자 써야지 -> 어? 안되네 -> 해당 클래스 들어가보니 어? 왜 protected로 막아놨지? -> 그럼 다른 방법으로 생성해야겠네? 
+
+
+- 참고
+    - 주문 서비스의 주문과 주문 취소 메서드를 보면 비즈니스 로직 대부분이 엔티티에 있다. 서비스 계층 은 단순히 엔티티에 필요한 요청을 위임하는 역할을 한다. 이처럼 엔티티가 비즈니스 로직을 가지고 객체 지 향의 특성을 적극 활용하는 것을 `도메인 모델 패턴`(http://martinfowler.com/eaaCatalog/ domainModel.html)이라 한다. 반대로 엔티티에는 비즈니스 로직이 거의 없고 서비스 계층에서 대부분 의 비즈니스 로직을 처리하는 것을 `트랜잭션 스크립트 패턴`(http://martinfowler.com/eaaCatalog/ transactionScript.html)이라 한다. 
+    - sql을 직접 다뤘었던 것들은 대부분 트랜잭션 스크립트 패턴이다. 로직들이 엔티티 안에 있지 않고 바깥(Service)에 다 나와있다.
+    - ORM을 다루게 되면 대부분 도메인 모델 패턴을 사용한다.
+    - 문맥에 따라서 각각 트레이드 오프가 있어서 어느 것이 꼭 더 무조건 좋다고는 말할 수 없다.
+    - 한 프로젝트 안에서 이 두 개의 패턴이 양립할 수 있다. 문맥에 어느 것이 더 맞는지를 사용하면 된다.
+
+
+## 주문 기능 테스트
+- 테스트 요구사항
+    - 상품 주문이 성공해야 한다.
+    - 상품을 주문할 때 재고 수량을 초과하면 안 된다.
+    - 주문 취소가 성공해야 한다.
+
+## 상품 주문 테스트 코드
