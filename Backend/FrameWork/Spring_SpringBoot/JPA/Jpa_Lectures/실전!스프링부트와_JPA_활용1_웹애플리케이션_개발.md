@@ -1095,3 +1095,249 @@ public class OrderService {
     - 주문 취소가 성공해야 한다.
 
 ## 상품 주문 테스트 코드
+- 참고
+    - 사실 테스트하고 있는 것들은 Jpa를 자세하게 설명하게 위해서 스프링 부트를 가지고 와서 하고 있는 것인데 사실 이것은 좋은 테스트라고 볼 수는 없다. 좋은 테스트는 순수한 메서드로만 단위테스트 하는 것이 좋다. 여기서는 Jpa와 잘 엮여서 전체적으로 잘 동작하는지 보려고 하는 것이므로 통합 테스트하고 있는 것.
+
+- 상품 주문 테스트 코드
+    ```
+
+    @RunWith(SpringRunner.class)
+    @SpringBootTest
+    @Transactional
+    public class OrderServiceTest {
+
+        @Autowired EntityManager em;
+        @Autowired OrderService orderService;
+        @Autowired OrderRepository orderRepository;
+
+        @Test
+        public void 상품주문() throws Exception {
+            //given
+            Member member = createMember();
+
+            Item book = createBook("시골 JPA", 10000, 10);
+
+            int orderCount = 2;
+            //when
+            Long orderId = orderService.order(member.getId(), book.getId(), orderCount);
+
+            //then
+            Order getOrder = orderRepository.findOne(orderId);
+
+            Assert.assertEquals("상품 주문시 상태는 ORDER", OrderStatus.ORDER, getOrder.getStatus());
+            Assert.assertEquals("주문한 상품 종류 수가 정확해야 한다.", 1, getOrder.getOrderItems().size());
+            Assert.assertEquals("주문 가격은 가격 * 수량이다.", 10000 * orderCount, getOrder.getTotalPrice());
+            Assert.assertEquals("주문 수량만큼 재고가 줄어야 한다.", 8, book.getStockQuantity());
+        }
+
+        private Item createBook(String name, int price, int stockQuantity) {
+            Item book = new Book();
+            book.setName(name);
+            book.setPrice(price);
+            book.setStockQuantity(stockQuantity);
+            em.persist(book);
+            return book;
+        }
+
+        private Member createMember() {
+            Member member = new Member();
+            member.setName("회원1");
+            member.setAddress(new Address("서울", "경기", "123-123"));
+            em.persist(member);
+            return member;
+        }
+    }
+    ```
+    - 상품주문이 정상 동작하는지 확인하는 테스트다. Given 절에서 테스트를 위한 회원과 상품을 만들고 When 절에서 실제 상품을 주문하고 Then 절에서 주문 가격이 올바른지, 주문 후 재고 수량이 정확히 줄었는지 검증한다.
+
+- 재고 수량 초과 테스트
+    - 재고 수량을 초과해서 상품을 주문해보자. 이때는 NotEnoughStockException 예외가 발생해야 한다.
+- 재고 수량 초과 테스트 코드
+    ```
+    @Test(expected = NotEnoughStockException.class) 
+    public void 상품주문_재고수량초과() throws Exception {
+
+        //Given
+        Member member = createMember();
+        Item item = createBook("시골 JPA", 10000, 10); //이름, 가격, 재고
+
+        int orderCount = 11; //재고보다 많은 수량 
+        
+        //When
+        orderService.order(member.getId(), item.getId(), orderCount);
+        
+        //Then
+        fail("재고 수량 부족 예외가 발생해야 한다."); 
+    }
+
+    ``` 
+    - 코드를 보면 재고는 10권인데 orderCount = 11 로 재고보다 1권 더 많은 수량을 주문했다. 주문 초과로 다음 로직에서 예외가 발생한다.
+    ```
+    public abstract class Item {
+
+        //...
+        public void removeStock(int orderQuantity) {
+            int restStock = this.stockQuantity - orderQuantity;
+            if (restStock < 0) {
+                throw new NotEnoughStockException("need more stock");
+            }
+            this.stockQuantity = restStock;
+        }
+
+    }
+    ```
+
+- 주문 취소 테스트
+    - 주문 취소 테스트 코드를 작성하자. 주문을 취소하면 그만큼 재고가 증가해야 한다.
+- 주문 취소 테스트 코드
+```=
+@Test
+public void 주문취소() {
+
+    //Given
+    Member member = createMember();
+    Item item = createBook("시골 JPA", 10000, 10); //이름, 가격, 재고
+    int orderCount = 2;
+
+    Long orderId = orderService.order(member.getId(), item.getId(),
+    orderCount);
+
+    //When
+    orderService.cancelOrder(orderId);
+    
+    //Then
+    Order getOrder = orderRepository.findOne(orderId); 
+    
+    assertEquals("주문 취소시 상태는 CANCEL 이다.",OrderStatus.CANCEL,
+    getOrder.getStatus());
+    
+    assertEquals("주문이 취소된 상품은 그만큼 재고가 증가해야 한다.", 10,
+    item.getStockQuantity());
+}
+```
+- 주문을 취소하려면 먼저 주문을 해야 한다. Given 절에서 주문하고 When 절에서 해당 주문을 취소했다. Then 절에서 주문상태가 주문 취소 상태인지( CANCEL ), 취소한 만큼 재고가 증가했는지 검증한다.
+
+
+## 주문 검색 기능 개발
+- JPA에서 동적 쿼리를 어떻게 해결해야 하는가?
+    - 조건(회원명, 주문상태)에 따라 동적쿼리가 만들어져야 되는 상황
+- 실무에서는 동적 쿼리를 안 쓸 수가 없다.
+
+- 검색 조건 파라미터 OrderSearch 
+```
+package jpabook.jpashop.domain;
+public class OrderSearch {
+
+    private String memberName; //회원 이름
+    private OrderStatus orderStatus;//주문 상태[ORDER, CANCEL] 
+    
+    //Getter, Setter
+}
+```
+
+- 검색을 추가한 주문 리포지토리 코드
+    ```
+    @Repository
+    public class OrderRepository {
+
+        @PersistenceContext
+        EntityManager em;
+        
+        public void save(Order order) {
+            em.persist(order);
+        }
+        
+        public Order findOne(Long id) {
+            return em.find(Order.class, id);
+        }
+
+        public List<Order> findAll(OrderSearch orderSearch) { 
+            //... 검색 로직
+        } 
+    }
+    ```
+    - findAll(OrderSearch orderSearch) 메서드는 검색 조건에 동적으로 쿼리를 생성해서 주문 엔티티를 조회한다
+
+- JPQL로 처리
+    ```
+    public List<Order> findAllByString(OrderSearch orderSearch) {
+        //language=JPAQL
+        String jpql = "select o From Order o join o.member m";
+        boolean isFirstCondition = true;
+
+        //주문 상태 검색
+        if (orderSearch.getOrderStatus() != null) {
+            if (isFirstCondition) {
+                jpql += " where";
+                isFirstCondition = false;
+            } else {
+                jpql += " and";
+            }
+            jpql += " o.status = :status";
+        }
+
+        //회원 이름 검색
+        if (StringUtils.hasText(orderSearch.getMemberName())) {
+            if (isFirstCondition) {
+                jpql += " where";
+                isFirstCondition = false;
+            } else {
+                jpql += " and";
+            }
+            jpql += " m.name like :name";
+        }
+
+        TypedQuery<Order> query = em.createQuery(jpql, Order.class)
+                .setMaxResults(1000); //최대 1000건
+
+        if (orderSearch.getOrderStatus() != null) {
+            query = query.setParameter("status", orderSearch.getOrderStatus());
+        }
+        if (StringUtils.hasText(orderSearch.getMemberName())) {
+            query = query.setParameter("name", orderSearch.getMemberName());
+        }
+
+        return query.getResultList();
+
+    }
+    ```
+    - JPQL 쿼리를 문자로 생성하기는 번거롭고, 실수로 인한 버그가 충분히 발생할 수 있다.
+
+- JPA Criteria로 처리
+    ```
+    public List<Order> findAllByCriteria(OrderSearch orderSearch) {
+            
+            CriteriaBuilder cb = em.getCriteriaBuilder();
+            CriteriaQuery<Order> cq = cb.createQuery(Order.class);
+            Root<Order> o = cq.from(Order.class);
+            Join<Order, Member> m = o.join("member", JoinType.INNER); //회원과 조인
+
+            List<Predicate> criteria = new ArrayList<>();
+
+            //주문 상태 검색
+            if (orderSearch.getOrderStatus() != null) {
+                Predicate status = cb.equal(o.get("status"),
+                        orderSearch.getOrderStatus());
+                criteria.add(status);
+            }
+
+            //회원 이름 검색
+            if (StringUtils.hasText(orderSearch.getMemberName())) {
+                Predicate name =
+                        cb.like(m.<String>get("name"), "%" +
+                                orderSearch.getMemberName() + "%");
+                criteria.add(name);
+            }
+
+            cq.where(cb.and(criteria.toArray(new Predicate[criteria.size()])));
+            TypedQuery<Order> query = em.createQuery(cq).setMaxResults(1000); //최대 1000건
+            return query.getResultList();
+        }
+
+    ```
+    - JPA Criteria는 JPA 표준 스펙이지만 실무에서 사용하기에 너무 복잡하다. 결국 다른 대안이 필요하다. 많 은 개발자가 비슷한 고민을 했지만, 가장 멋진 해결책은 Querydsl이 제시했다. Querydsl 소개장에서 간 단히 언급하겠다. 지금은 이대로 진행하자.
+
+- 참고
+    - JPA Criteria에 대한 자세한 내용은 자바 ORM 표준 JPA 프로그래밍 책을 참고하자
+
+# 웹 계층 개발
