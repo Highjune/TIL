@@ -1341,3 +1341,4 @@ public class OrderSearch {
     - JPA Criteria에 대한 자세한 내용은 자바 ORM 표준 JPA 프로그래밍 책을 참고하자
 
 # 웹 계층 개발
+## 홈 화면과 레이아웃
