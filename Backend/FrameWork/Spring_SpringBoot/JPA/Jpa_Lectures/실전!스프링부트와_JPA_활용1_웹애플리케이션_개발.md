@@ -1342,3 +1342,263 @@ public class OrderSearch {
 
 # 웹 계층 개발
 ## 홈 화면과 레이아웃
+- 홈 컨트롤러 등록
+```
+@Controller
+  @Slf4j
+  public class HomeController {
+      @RequestMapping("/")
+      public String home() {
+          log.info("home controller");
+          return "home";
+      }
+}
+```
+
+- 스프링 부트 타임리프 기본 설정
+```
+spring:
+    thymeleaf:
+      prefix: classpath:/templates/
+      suffix: .html
+```
+
+
+- 스프링 부트 타임리프 viewName 매핑
+    - resources:templates/ +{ViewName}+ .html
+    - resources:templates/home.html
+- 반환한 문자( home )과 스프링부트 설정 prefix , suffix 정보를 사용해서 렌더링할 뷰( html )를 찾는다.
+- 참고
+    - https://docs.spring.io/spring-boot/docs/2.1.7.RELEASE/reference/html/common- application-properties.html
+
+
+- 타임리프 템플릿 등록
+    - 생략
+
+- 참고: Hierarchical-style layouts
+    - 예제에서는 뷰 템플릿을 최대한 간단하게 설명하려고, header , footer 같은 템플릿 파일을 반복해서 포함한다. 다음 링크의 Hierarchical-style layouts을 참고하면 이런 부분도 중복을 제거할 수 있다.
+    - https://www.thymeleaf.org/doc/articles/layouts.html
+
+- 참고: 뷰 템플릿 변경사항을 서버 재시작 없이 즉시 반영하기
+    1. spring-boot-devtools 추가
+    2. html 파일 build-> Recompile
+
+- view 리소스 등록
+    - resources/static 하위에 css , js 추가
+    - resources/static/css/jumbotron-narrow.css 추가
+- jumbotron-narrow.css 파일
+    - 생략
+
+
+## 회원 등록
+- 폼 객체를 사용해서 화면 계층과 서비스 계층을 명확하게 분리한다.
+    - Entity 폼 객체로 대체하지 않는 이유는, 두 개가 미묘하게 맞지 않은 부분들이 많다. 예를 들어 필드값들도 한두개씩 맞지 않을 뿐더러, 인증을 위한 @NotEmpty 와 같은 것들을 Entity에 붙이기 시작하면 @Entity가 지저분해진다. 실무에서는 사실 이 2가지가 일치하는 경우가 거의 없다.
+    - 그래서 화면에 최대한 맞는 Form 객체를 Entity와 따로 만드는 것이 좋다.
+    - Jpa를 할 때는 Entity를 최대한 순수하게 유지하는 것이 매우 중요하다. 핵심 비즈니스 로직만 갖고 있고 화면 로직은 없어야 한다. 화면에 맞는 것은 폼 객체나 DTO를 사용해야 한다.
+
+
+- 회언 등록 폼 객체
+```
+@Getter @Setter
+public class MemberForm {
+
+    @NotEmpty(message = "회원 이름은 필수 입니다") 
+    private String name;
+
+    private String city;
+    private String street;
+    private String zipcode;
+}
+ 
+```
+- 회원 등록 컨트롤러
+```
+@Controller
+@RequiredArgsConstructor
+public class MemberController {
+
+    private final MemberService memberService;
+
+    @GetMapping("/members/new")
+    public String createForm(Model model) {
+        model.addAttribute("memberForm", new MemberForm());
+        return "members/createMemberForm";
+    }
+
+    @PostMapping("/members/new")
+    public String create(@Valid MemberForm form, BindingResult result) {
+
+        if (result.hasErrors()) {
+            return "members/createMemberForm";
+        }
+
+        Address address = new Address(form.getCity(), form.getStreet(), form.getZipcode());
+
+        Member member = new Member();
+        member.setName(form.getName());
+        member.setAddress(address);
+
+        memberService.join(member);
+        return "redirect:/";
+    }
+}
+```
+
+- 회원 등록 폼 화면( templates/members/createMemberForm.html )*
+```
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: header" />
+<style>
+    .fieldError {
+        border-color: #bd2130;
+    }
+</style>
+<body>
+
+<div class="container">
+    <div th:replace="fragments/bodyHeader :: bodyHeader"/>
+
+    <form role="form" action="/members/new" th:object="${memberForm}" method="post">
+        <div class="form-group">
+            <label th:for="name">이름</label>
+            <input type="text" th:field="*{name}" class="form-control" placeholder="이름을 입력하세요"
+                   th:class="${#fields.hasErrors('name')}? 'form-control fieldError' : 'form-control'">
+            <p th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Incorrect date</p>
+        </div>
+        <div class="form-group">
+            <label th:for="city">도시</label>
+            <input type="text" th:field="*{city}" class="form-control"
+                   placeholder="도시를 입력하세요"> </div>
+        <div class="form-group">
+            <label th:for="street">거리</label>
+            <input type="text" th:field="*{street}" class="form-control" placeholder="거리를 입력하세요">
+        </div>
+        <div class="form-group">
+            <label th:for="zipcode">우편번호</label>
+            <input type="text" th:field="*{zipcode}" class="form-control"
+                   placeholder="우편번호를 입력하세요"> </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <br/>
+
+    <div th:replace="fragments/footer :: footer" />
+</div> <!-- /container -->
+</body>
+</html>
+```
+
+
+## 회원 목록 조회
+- 회원 목록 컨트롤러 추가
+    ```
+        @GetMapping("/members")
+        public String list(Model model) {
+            List<Member> members = memberService.findMembers();
+            model.addAttribute("members", members);
+            return "members/memberList";
+        }
+    }
+    ```
+    - 조회한 상품을 뷰에 전달하기 위해 스프링 MVC가 제공하는 모델( Model ) 객체에 보관
+    - 실행할 뷰 이름을 반환
+
+- 회원 목록 뷰( templates/members/memberList.html)
+    ```
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="fragments/header :: header" />
+    <body>
+
+    <div class="container">
+
+        <div th:replace="fragments/bodyHeader :: bodyHeader" />
+
+        <div>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>이름</th> <th>도시</th> <th>주소</th> <th>우편번호</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="member : ${members}">
+                    <td th:text="${member.id}"></td>
+                    <td th:text="${member.name}"></td>
+                    <td th:text="${member.address?.city}"></td>
+                    <td th:text="${member.address?.street}"></td>
+                    <td th:text="${member.address?.zipcode}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:replace="fragments/footer :: footer" />
+
+    </div> <!-- /container -->
+
+    </body>
+    </html>
+
+    ```
+    - 타임리프에서 ?를 사용하면 null 을 무시한다. null 이면 그 뒤 코드가 진행이 안됨
+    - 참고: 폼 객체 vs 엔티티 직접 사용
+        -  요구사항이 정말 단순할 때는 폼 객체( MemberForm ) 없이 엔티티( Member )를 직접 등록과 수정 화면에서 사용해도 된다. 하지만 화면 요구사항이 복잡해지기 시작하면, 엔티티에 화면을 처리하기 위한 기능이 점점 증가한다. 결과적으로 엔티티는 점점 화면에 종속적으로 변하고, 이렇게 화면 기능 때문에 지저분해진 엔티티는 결국 유지보수하기 어려워진다. 실무에서 엔티티는 핵심 비즈니스 로직만 가지고 있고, 화면을 위한 로직은 없어야 한다. 화면이나 API에 맞 는 폼 객체나 DTO를 사용하자. 그래서 화면이나 API 요구사항을 이것들로 처리하고, 엔티티는 최대한 순수 하게 유지하자.
+
+## 상품 등록
+- 상품 등록 폼
+```
+@Getter @Setter
+public class BookForm {
+
+    private Long id;
+
+    private String name;
+    private int price;
+    private int stockQuantity;
+
+    private String author;
+    private String isbn;
+}
+```
+- 상품 등록 컨트롤러
+    ```
+    @Controller
+    @RequiredArgsConstructor
+    public class ItemController {
+
+        private final ItemService itemService;
+
+        @GetMapping("/items/new")
+        public String createForm(Model model) {
+            model.addAttribute("form", new BookForm());
+            return "items/createItemForm";
+        }
+
+        @PostMapping("/items/new")
+        public String create(BookForm form) {
+            Book book = new Book();
+            book.setName(form.getName());
+            book.setPrice(form.getPrice());
+            book.setStockQuantity(form.getStockQuantity());
+            book.setAuthor(form.getAuthor());
+            book.setIsbn(form.getIsbn());
+
+            itemService.saveItem(book);
+            return "redirect:/";
+        }
+    }
+
+    ```
+    - 상품 등록 폼에서 데이터를 입력하고 Submit 버튼을 클릭하면 /items/new 를 POST 방식으로 요청
+    - 상품 저장이 끝나면 상품 목록 화면( redirect:/items )으로 리다이렉트
+
+
+- 상품 등록 뷰( items/createItemForm.html )
+    - 생략
+
+
+## 상품 목록
+- 
