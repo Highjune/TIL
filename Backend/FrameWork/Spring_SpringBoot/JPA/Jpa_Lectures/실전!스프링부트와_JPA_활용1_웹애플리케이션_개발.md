@@ -3,6 +3,7 @@
 - [JPA 로드맵](https://www.inflearn.com/roadmaps/149) 에서 야생형 첫 번째 강의
 - 생략된 부분들은 pdf 파일 꼭 보기!
 - 꼭 필기에 집착하지 않기.
+- [코드](https://github.com/Highjune/Jpa_Lecture1_Use_Kim_Young_Han/tree/master)
 
 # 프로젝트 환경설정
 ## 프로젝트 생성
