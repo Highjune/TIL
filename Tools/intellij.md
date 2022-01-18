@@ -24,6 +24,12 @@ command + fn + f12
   }
   ```
 
+- 컨트롤러 /url 찾기
+  - command + shift + \ (역슬러쉬)
+
+- 드래그 한 후 해당한 파일 찾기
+  - command + shift + o 
+
 
 - 작성중인 함수의 파라미터 요소, 타입 확인하기
 ```
