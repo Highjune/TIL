@@ -6,6 +6,9 @@
 - intelli J 툴 안에서 단축키 확인하는 방법
   - settings - keymap 확인가능
 
+
+- 해당하는 괄호 찾기. 예르 들어 
+
 - 현재 클래스의 멤버변수들 확인하기. outline. 롬복이 실행되었는지도 확인가능
 ```
 command + fn + f12
