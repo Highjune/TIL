@@ -7145,13 +7145,15 @@ session.setMaxInactiveInterval(1800); //1800초
   - return true
     - true 면 정상 호출이다. 다음 인터셉터나 컨트롤러가 호출된다.
   - log.error("afterCompletion error!!", ex);
-    - 오류를 로그로 남길 때는 log.error("afterCompletion error!!`{}`", ex);처럼 괄호 {} 안 넣어도 된다. 그냥 ex 오류 찍으면
+    - 오류를 로그로 남길 때는 log.error("afterCompletion error!!`{}`", ex);처럼 괄호 {} 안 넣어도 된다.
 
-  ```
-  if (handler instanceof HandlerMethod) {
-      HandlerMethod hm = (HandlerMethod) handler; //호출할 컨트롤러 메서드의 모든 정보가
-  포함되어 있다. }
-  ```
+
+
+```
+if (handler instanceof HandlerMethod) {
+HandlerMethod hm = (HandlerMethod) handler; //호출할 컨트롤러 메서드의 모든 정보가
+포함되어 있다. }
+```
 
 - HandlerMethod
 
