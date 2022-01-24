@@ -14,7 +14,7 @@ ctrl + m
 
 - 현재 클래스의 멤버변수들 확인하기. outline. 롬복이 실행되었는지도 확인가능
 ```
-command + fn + f12
+command + f12
 ```
 
 - 단축키 템플릿은 Live templates 에서 적용하면 됨
