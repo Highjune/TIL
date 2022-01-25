@@ -4,15 +4,15 @@
 - 기존에 존재하는 key값을 제외하고(중복제외) insert 하고 싶을 때
 ```
 INSERT INTO db.user_table(
-			id
-			, `name`
-			, admin_pw
+					id
+					, `name`
+					, admin_pw
 			) 
 			
 			SELECT 
-			'google_login_id'
-			, 'google'
-			, SHA2(1q2w3e4r, 256)
+				'google_login_id'
+				, 'google'
+				, SHA2(1q2w3e4r, 256)
 			FROM DUAL
 			WHERE NOT EXISTS (
 						SELECT id
@@ -160,15 +160,15 @@ WHERE 1=1
 AND insert_time BETWEEN DATE_FORMAT(@specific_day_from, '%Y-%m-%d %H:%i:%s') AND DATE_FORMAT(@specific_day_to, '%Y-%m-%d %H:%i:%s')
 ```
 
-- SubQuery의 명칭이 동일할 경우, 제일 바깥에서 쓴 쿼리의 명칭이 유효하다. 아래에서 T1.column 에서의 컬럼은 제일 바깥 FROM (A)를 의미하는 것임. 
+- SubQuery의 명칭이 동일할 경우, 제일 바깥에서 쓴 쿼리의 명칭이 유효하다. 아래 GROUP BY으 T1.column 에서의 컬럼은 제일 바깥 A 테이블을 의미하는 것임. 
 
 ```
 SELCET *
-FROM(A) (
+FROM A (
         SELECT *
-        FROM(B) (
+        FROM B (
                 SELECT *
-                FROM(C)
+                FROM C
         ) T1
 ) T1
 GROUP BY T1.column
