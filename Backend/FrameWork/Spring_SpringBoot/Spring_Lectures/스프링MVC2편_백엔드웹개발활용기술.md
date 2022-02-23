@@ -4365,7 +4365,7 @@ public class ItemValidator implements Validator {
 - 하이버네이트 Validator 관련 링크
   - 공식 사이트: http://hibernate.org/validator/
   - 공식 메뉴얼: https://docs.jboss.org/hibernate/validator/6.2/reference/en-US/html_single/
-  - 검증 애노테이션 모음: https://docs.jboss.org/hibernate/validator/6.2/reference/en-US/ html_single/#validator-defineconstraints-spec
+  - 검증 애노테이션 모음: https://docs.jboss.org/hibernate/validator/6.2/reference/en-US/html_single/#validator-defineconstraints-spec
     - 꼭 확인해서 보기!! 유용한 것들 매우 많음!
 
 ## Bean Validation - 시작
