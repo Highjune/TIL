@@ -57,6 +57,6 @@
 
 
 ## 알고리즘 관련 좋은 글
-- https://kwiki.devserum.com/ko/articles/tech-articles/2021-05-31-518-consecutive-days-algorithm-challenge
+- https://gmlwjd9405.github.io/2018/05/14/how-to-study-algorithms.html
 
 
