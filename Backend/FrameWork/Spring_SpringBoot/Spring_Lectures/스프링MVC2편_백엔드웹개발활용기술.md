@@ -3846,11 +3846,11 @@ button.cancel=Cancel
   void reject(String errorCode, @Nullable Object[] errorArgs, @Nullable String
   defaultMessage);
   ```
-  - ejectValue() 파라미터 설명과 동일
+  - rejectValue() 파라미터 설명과 동일
 
 ## 오류 코드와 메시지 처리3
 
-- 오류 코드를 어떻게 설계할 것인가에 대한 강의 (제일 중오)
+- 오류 코드를 어떻게 설계할 것인가에 대한 강의 (제일 중요)
 - 오류 코드를 만들 때 다음과 같이 자세히 만들 수도 있고,
   - required.item.itemName : 상품 이름은 필수 입니다.
   - range.item.price : 상품의 가격 범위 오류 입니다.
