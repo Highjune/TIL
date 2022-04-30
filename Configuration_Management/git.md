@@ -84,13 +84,47 @@
 
   - 만약 위와 같은 작업을 하지 않은 상태에서 push를 하게 되면 에러가 생기는데, 그것을 해결하는 방법
 
-  ```
-  git push origin 브런치명 --allow-unrelated-histories
+    1. 밀어 넣기
 
-  (또는 아래처럼 '+' 붙여서)
+    ```
+    git push origin 브런치명 --allow-unrelated-histories
 
-  git push origin +브런치명
-  ```
+    (또는 아래처럼 '+' 붙여서)
+
+    git push origin +브런치명
+    ```
+
+    2. stash 사용(현재 디렉토리의 파일을 임시로 백업하고 깨끗한 상태로 돌린다, 버전관리 되는 대상 파일들을 임시저장 해둔다고 보면 된다)
+
+    - 해당 명령어를 통해 현재 Staging 영역에 있는 파일의 변경사항을 스택에 넣어 둔다.
+
+    ```
+    git stash
+    ```
+
+    - main 에서 pull 하거나, git checkout 등 원격 저장소에서 내 로컬 브런치로 변경사항을 저장한다
+
+    ```
+    git pull origin main
+    ```
+
+    - 변경 사항을 적용하고, 스택에서 제거한다.
+
+    ```
+    git stash pop
+    ```
+
+    - 위의 명령어들을 다음 명령어처럼 한 번에 실행해도 된다
+
+    ```
+    git stash && git pull origin main && git stash pop
+    ```
+
+    - 이후 다시 스테이징에 올리고 커밋 후 push 하면 된다.
+
+    ```
+    git add . && git commit -m "commit" && git push origin main
+    ```
 
   - 위 명령 옵션은 이미 존재하는 두 프로젝트의 기록(history)을 저장하는 드문 상황에 사용된다고 한다. 즉, git에서는 서로 관련 기록이 없는 이질적인 두 프로젝트를 병합할 때 기본적으로 거부하는데, 이것을 허용해 주는 것이다.
 
@@ -439,6 +473,7 @@
     ```
 
 ## GitLab 코드관리
+
 - NAS서버를 별도로 설치해서 그 곳에 GitLab. 내부IP사용
 - [NAS란?](https://itblogpro.tistory.com/81)
 - 순서
@@ -452,10 +487,10 @@
     ```
     git branch -r
     ```
-    - 만약 안 보이면 아래 명령 후 다시  `git branch -r`로 확인
+    - 만약 안 보이면 아래 명령 후 다시 `git branch -r`로 확인
     ```
     git remote update
-    ``` 
+    ```
     - 현재 local에는 `login_issue1` 브런치 없는 상태임
     ```
     git branch
@@ -484,8 +519,6 @@
     - cf) 기존 브런치 삭제한다고 체크하면 merge가 되면서 `login_issue1` branch는 사라짐
   - 만약 충돌이 나면?
     - merge버튼이 안 뜨고 경고가 뜬다. 그런 경우에는 경고 부분 해결하기.
-
-
 
 ## 참고 자료
 
