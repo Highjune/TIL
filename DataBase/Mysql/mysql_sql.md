@@ -1,5 +1,6 @@
 # SQL 
 > 유용하거나 생소한 SQL 기록
+> 기본적인 개념들도 정리(감으로 얼추 알고만 있었던 개념들)
 
 - 기존에 존재하는 key값을 제외하고(중복제외) insert 하고 싶을 때
 ```
@@ -240,3 +241,17 @@ LEFT OUTER JOIN game_team_table t2 ON t1.home_team_id = t2.id
 LEFT OUTER JOIN game_team_table t3 ON t1.away_team_id = t3.id
 LEFT OUTER JOIN game_team_table t4 ON t1.winner_team_id = t4.id
 ```
+
+- group by
+  - group by 에서 지정한 열 이외의 열은 집계함수(ex. sum(), count())를 사용하지 않은 채 select 구에 지정할 수 없다.
+
+- Mysql 에서는 데이터를 추가하거나 갱신할 경우, 동일한 테이블을 서브쿼리에서 사용할 수 없도록 되어있다. 
+  - 그래서 아래와 같은 쿼리는 에러가 난다(You Can’t specify target table ‘(테이블이름)’ for update in FROM clause
+  - 에러나는 쿼리
+  ```
+  DELETE FROM sampleTable WHERE a = (SELECT MIN(a) FROM sampleTable)
+  ```
+  - 그래서 변수를 사용하거나 인라인 뷸 임시 테이블을 만들도록 처리하면 된다.
+  ```
+  DELETE FROM sampleTable WHERE a = (SELECT a FROM (SELECT MIN(a) AS a FROM sampleTable) AS x);
+  ```
