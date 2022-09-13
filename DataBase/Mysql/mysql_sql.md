@@ -1,6 +1,6 @@
 # SQL 
 > 유용하거나 생소한 SQL 기록
-> 기본적인 개념들도 정리(감으로 얼추 알고만 있었던 개념들)
+
 
 - 기존에 존재하는 key값을 제외하고(중복제외) insert 하고 싶을 때
 ```
@@ -242,20 +242,6 @@ LEFT OUTER JOIN game_team_table t3 ON t1.away_team_id = t3.id
 LEFT OUTER JOIN game_team_table t4 ON t1.winner_team_id = t4.id
 ```
 
-- group by
-  - group by 에서 지정한 열 이외의 열은 집계함수(ex. sum(), count())를 사용하지 않은 채 select 구에 지정할 수 없다.
-
-- Mysql 에서는 데이터를 추가하거나 갱신할 경우, 동일한 테이블을 서브쿼리에서 사용할 수 없도록 되어있다. 
-  - 그래서 아래와 같은 쿼리는 에러가 난다(You Can’t specify target table ‘(테이블이름)’ for update in FROM clause
-  - 에러나는 쿼리
-  ```
-  DELETE FROM sampleTable WHERE a = (SELECT MIN(a) FROM sampleTable)
-  ```
-  - 그래서 변수를 사용하거나 인라인 뷸 임시 테이블을 만들도록 처리하면 된다.
-  ```
-  DELETE FROM sampleTable WHERE a = (SELECT a FROM (SELECT MIN(a) AS a FROM sampleTable) AS x);
-  ```
-
 - 쉼표로 inner join 걸기 (구식 방법이라 쓰지 말기)
   - From 절에서 , 로 테이블을 연결하면 단순 곱집합(가로 방향으로 테이블을 결합)이 나온다. 그런데 그 중에서 where 조건에 필요한 조합만 검색하게 되면 우리가 흔히 보는 ‘inner join ~ on ~’ 과 동일하다.
   - ex)
@@ -266,4 +252,21 @@ LEFT OUTER JOIN game_team_table t4 ON t1.winner_team_id = t4.id
   AND 상품.주문날짜 > '2022-01-01' // -> 검색 조건
   ```
 
-  
+
+- EXPLAIN
+  - 해당하는 쿼리에 대한 설명을 볼 수 있다.
+  - 표준 SQL에는 존재하지 않고, 데이터베이스 제품 의존형 명령이다.
+  - sql문이 실제로 실행된 것이 아니라, 어떤 상태로 실행되는지 데이터베이스가 설명해준다.
+  - 사용 예시 (EXPLAINN + sql문)
+  ```
+  EXPLAIN select * from User where u.uid = 'aaaa-bbbb-cccc'
+  ```
+  - 결과
+    - possible_keys는 사용될 수 있는 인덱스가 표시되고, key는 실제로 사용된 인덱스가 표시된다.
+
+
+- CURRENT_TIMESTAMP
+  - 시스템 날짜
+```
+SELECT CURRENT_TIMESTAMP;
+```
