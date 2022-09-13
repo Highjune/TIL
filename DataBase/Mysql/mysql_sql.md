@@ -256,4 +256,14 @@ LEFT OUTER JOIN game_team_table t4 ON t1.winner_team_id = t4.id
   DELETE FROM sampleTable WHERE a = (SELECT a FROM (SELECT MIN(a) AS a FROM sampleTable) AS x);
   ```
 
-- 쉼표로 inner join 걸기 (오래된 방법이라 쓰지 말기)
+- 쉼표로 inner join 걸기 (구식 방법이라 쓰지 말기)
+  - From 절에서 , 로 테이블을 연결하면 단순 곱집합(가로 방향으로 테이블을 결합)이 나온다. 그런데 그 중에서 where 조건에 필요한 조합만 검색하게 되면 우리가 흔히 보는 ‘inner join ~ on ~’ 과 동일하다.
+  - ex)
+  ``` 
+  SELECT *
+  FROM 상품, 유저 // -> inner join 
+  WHERE 상품.주문자 = 유저.이름 // -> join 조건
+  AND 상품.주문날짜 > '2022-01-01' // -> 검색 조건
+  ```
+
+  
