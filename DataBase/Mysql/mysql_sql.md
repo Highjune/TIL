@@ -256,4 +256,4 @@ LEFT OUTER JOIN game_team_table t4 ON t1.winner_team_id = t4.id
   DELETE FROM sampleTable WHERE a = (SELECT a FROM (SELECT MIN(a) AS a FROM sampleTable) AS x);
   ```
 
-- 쉼표로 inner join 걸기 (오래된 방법이라 쓰지 말
+- 쉼표로 inner join 걸기 (오래된 방법이라 쓰지 말기)
