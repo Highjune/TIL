@@ -3,6 +3,26 @@
 ## 단축키
 - [단축키참고링크](https://gmlwjd9405.github.io/2019/05/21/intellij-shortkey.html)
 
+
+- 변수 선언 후 리턴을, 바로 인라인 리턴으로 변경
+  - command + option + n
+
+- 커서 있는 부분에 대한 리팩토링 옵션
+  - (맥) control(^) + t
+
+- 원하는 파일 바로 찾는 방법
+  - 클래스
+    - command + o
+  - 파일
+    - command + shift + o
+
+- 주석
+  - 블럭 지정한 영역 각 라인마다 // 로 다 주석처리
+    - command + /
+  - 블럭 지정한 영역의 처음과 끝 부분에 /* */ 주석 처리
+    - command + option + /
+
+
 - intelli J 툴 안에서 단축키 확인하는 방법
   - settings - keymap 확인가능
 
