@@ -4,6 +4,10 @@
 - [단축키참고링크](https://gmlwjd9405.github.io/2019/05/21/intellij-shortkey.html)
 
 
+- 해당하는 메서드 위치 순서 옮기기 (메서드 크기 단위)
+  - command + shift + (위아래 화살표)
+
+
 - 변수 선언 후 리턴을, 바로 인라인 리턴으로 변경
   - command + option + n
 
