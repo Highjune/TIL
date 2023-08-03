@@ -4,7 +4,8 @@
 - [단축키참고링크](https://gmlwjd9405.github.io/2019/05/21/intellij-shortkey.html)
 
 - 클래스 창 full로 크게 만드는 것(좌측 프로젝트 hierachy 감추고)
-  - (맥) command + shift + f12
+  - (맥) `command + shift + f12`
+  - 반대로 다시 hierachy 창 보이게 하면서 화면 나누르면 `command + 1`
 
 - 해당하는 메서드 위치 순서 옮기기 (메서드 크기 단위)
   - command + shift + (위아래 화살표)
