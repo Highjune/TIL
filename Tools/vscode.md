@@ -4,6 +4,14 @@
     - 위 홈페이지에 들어가서 중간에 있는 download로 말고 우층 상단 다운로드 - system 64bit 
     - c/users/ 에 설치되면 user용이고, c/program files/microsoft visual studio 는 관리자용
 
+## 단축키
+- 여러 커서 만들기
+    - (맥) command + option + 화살표 위아래
+
+- 띄워쓰기마다 블럭 잡기
+    - ex) member1 member2 member3 member4 ... => 사이에 한번에 쉼표 넣기
+    - 방법
+        - 제일 처음 띄워쓰기 블럭 지정 후 `command + d` 누를 때마다 블럭이 연속으로 잡힌다.
 
 ## 유용한 extension 종류
 1. Open in Browser
