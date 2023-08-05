@@ -3,8 +3,11 @@
 ## 단축키
 - [단축키참고링크](https://gmlwjd9405.github.io/2019/05/21/intellij-shortkey.html)
 
+- 해당 메서드 구현체로 가기(ex. 인터페이스의 함수)
+  - 함수 위에 커서 두고 option + command + b
+
 - {} 블럭 자동 생성하기
-  - ex) if문 선언부 쪽에서 `command + shift + enter` 자동으로 { } 블록 새로 생성해줌
+  - ex) if문, 메서드 등 선언부 쪽에서 `command + shift + enter` 자동으로 { } 블록 새로 생성해줌
 
 - 클래스 창 full로 크게 만드는 것(좌측 프로젝트 hierachy 감추고)
   - (맥) `command + shift + f12` 또는 ₩command + 1`
