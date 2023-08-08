@@ -3,6 +3,16 @@
 ## 단축키
 - [단축키참고링크](https://gmlwjd9405.github.io/2019/05/21/intellij-shortkey.html)
 
+- 변수 할당, 선언부 생성하기
+  ```
+  memberRepository.findAll(member);
+  ```
+  - 위에서 member 에 커서 두고 `option + command + v` 누르면
+  ```
+  QMember member = QMember.member; // 생성되었음
+  memberRepository.findAll(member);
+  ```
+
 - 해당 메서드 구현체로 가기(ex. 인터페이스의 함수)
   - 함수 위에 커서 두고 option + command + b
 
