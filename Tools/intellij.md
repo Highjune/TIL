@@ -3,6 +3,12 @@
 ## 단축키
 - [단축키참고링크](https://gmlwjd9405.github.io/2019/05/21/intellij-shortkey.html)
 
+- override 구현할 메서드 리스트 
+  - control(^) + o
+
+- 단축키 찾는 것
+  - control(^) + t 하면 후보들 뜨고 창 뜨자마자 검색하면 된다.
+
 - 변수 할당, 선언부 생성하기
   ```
   memberRepository.findAll(member);
